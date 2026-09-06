@@ -65,6 +65,11 @@ The central objective is to monitor resource usage metrics, rate limits, and pla
     - Comprehensive comparison between WPF (.NET 10) and WinUI 3 for edge notches.
     - Full solution folder layout (`TokenHound.Core`, `TokenHound.Infrastructure`, `TokenHound.App`).
 
+11. **[Provider Specification: GitHub Copilot (Lightweight Internal Quota)](11-PROVIDER-COPILOT.md)**
+    - Borrowed `gh` / Copilot CLI OAuth token discovery (PATs rejected with 403).
+    - Lightweight quota endpoint `copilot_internal/user` and defensive `quota_snapshots` parsing.
+    - Heuristic activity tracking via CLI `session-state/events.jsonl` writes plus process liveness.
+
 ---
 
 ## Provider Comparison Matrix
@@ -77,6 +82,7 @@ The central objective is to monitor resource usage metrics, rate limits, and pla
 | **Antigravity** | Windows Credential Manager (`gemini:antigravity`) | Local HTTPS (Language Server) or Cloud Code | % Weekly per model or daily request counts | Yes (recent activity in `transcript.jsonl`) |
 | **GLM (Z.ai)** | Config files (Claude Code / ZCode / OpenCode) | HTTPS GET `api.z.ai` / `bigmodel.cn` | % Session (5h), % Weekly, MCP Quota | Not directly available |
 | **Perplexity** | Isolated WebView2 session profile | JS execution in authenticated page context | Absolute remaining count (Pro, Labs, etc.) | N/A |
+| **Copilot** | `gh` OAuth token (OS keychain) / `%USERPROFILE%\.copilot\config.json` | HTTPS GET `api.github.com/copilot_internal/user` | % Monthly premium interactions, reset date | Heuristic (`session-state/events.jsonl` writes + host process liveness) |
 
 ---
 

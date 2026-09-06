@@ -28,10 +28,11 @@ Phase 2: Parallel Provider Swarms (Independent Git Worktrees)
 ├── [PRD 04] tasks/prd-provider-glm/            # Z.ai GLM Coding Plan (config key discovery + multi-cluster REST)
 ├── [PRD 05] tasks/prd-provider-cursor/         # Cursor (SafeSqliteReader on state.vscdb + WorkOS cookie)
 ├── [PRD 06] tasks/prd-provider-antigravity/    # Antigravity / Gemini (CredReadW + ephemeral TCP port + gRPC-Web)
-└── [PRD 07] tasks/prd-provider-perplexity/     # Perplexity (WebView2 isolated profile + unidirectional counters)
+├── [PRD 07] tasks/prd-provider-perplexity/     # Perplexity (WebView2 isolated profile + unidirectional counters)
+└── [PRD 08] tasks/prd-provider-copilot/        # GitHub Copilot (borrowed gh OAuth token + copilot_internal/user + events.jsonl heuristic)
 
 Phase 3: Presentation Polish & Settings (Final)
-└── [PRD 08] tasks/prd-hud-polish-settings/
+└── [PRD 09] tasks/prd-hud-polish-settings/
          ├── Bézier capsule geometry (NotchGeometry) and Windows 11 DWM Mica/Acrylic styling
          ├── Screen edge and multi-monitor detection (ScreenEdgeDetector)
          ├── System Tray integration (NotifyIcon) with context menu and 'Refresh Now'
