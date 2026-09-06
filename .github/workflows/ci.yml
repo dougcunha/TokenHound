@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build + test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore TokenHound.slnx --nologo
+
+      - name: Build (Release)
+        run: dotnet build TokenHound.slnx --no-restore -c Release --nologo
+
+      - name: Test
+        run: dotnet test TokenHound.slnx --no-build --no-restore -c Release --nologo
+
+      - name: Publish single-file (framework-dependent, win-x64)
+        run: dotnet publish src/TokenHound.App/TokenHound.App.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/win-x64 --nologo
+
+      - name: Upload single-file artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TokenHound-win-x64-singlefile
+          path: publish/win-x64/
+          retention-days: 7
