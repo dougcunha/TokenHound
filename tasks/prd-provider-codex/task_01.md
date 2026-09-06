@@ -16,10 +16,10 @@ Implements `CodexAuthDiscovery` reading `%USERPROFILE%\.codex\auth.json`, decodi
 
 ## Work
 
-- [ ] T01.1 Implement `CodexAuthDiscovery.cs` under `TokenHound.Infrastructure/Providers/Codex/`.
-- [ ] T01.2 Use `SharedFileReader.ReadAllTextAsync` to read `auth.json`.
-- [ ] T01.3 Decode Base64Url payload of JWT and parse JSON properties `email` and `https://api.openai.com/auth` -> `chatgpt_plan_type`.
-- [ ] T01.4 Implement `CodexAuthDiscoveryTests.cs` verifying parsing, missing files, and invalid tokens.
+- [x] T01.1 Implement `CodexAuthDiscovery.cs` under `TokenHound.Infrastructure/Providers/Codex/`.
+- [x] T01.2 Use `SharedFileReader.ReadAllTextAsync` to read `auth.json`.
+- [x] T01.3 Decode Base64Url payload of JWT and parse JSON properties `email` and `https://api.openai.com/auth` -> `chatgpt_plan_type`.
+- [x] T01.4 Implement `CodexAuthDiscoveryTests.cs` verifying parsing, missing files, and invalid tokens.
 
 ## Acceptance criteria
 
@@ -33,11 +33,11 @@ Implements `CodexAuthDiscovery` reading `%USERPROFILE%\.codex\auth.json`, decodi
 
 ## Handoff
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Implemented read-only Codex auth discovery with null-safe JWT Base64Url claim parsing.
+- Changed files: `src/TokenHound.Infrastructure/Providers/Codex/CodexAuthDiscovery.cs`; `tests/TokenHound.Infrastructure.Tests/Providers/Codex/CodexAuthDiscoveryTests.cs`.
+- Checks: `rtk dotnet restore tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --nologo --verbosity:minimal`; `rtk dotnet build tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-restore --nologo --verbosity:minimal`; `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1 --filter-class "*CodexAuthDiscoveryTests*"`.
+- Validated state: Build passed with 0 errors; focused MTP test run passed 7 tests with 0 test warnings. Restore/build reported the pre-existing NU1903 SQLitePCLRaw vulnerability warning.
+- Open items: None for T01. T02-T05 remain pending in the provider plan.
 
 ### ADR candidates
 

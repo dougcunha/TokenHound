@@ -25,8 +25,8 @@
 
 ## State
 
-- [ ] T01 — pending
-- [ ] T02 — pending
-- [ ] T03 — pending
-- [ ] T04 — pending
-- [ ] T05 — pending
+- [x] T01 — done
+- [x] T02 — done
+- [x] T03 — done
+- [x] T04 — done
+- [x] T05 — done
