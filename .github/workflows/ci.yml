@@ -32,8 +32,9 @@ jobs:
       - name: Build (Release)
         run: dotnet build TokenHound.slnx --no-restore -c Release --nologo
 
-      # MTP does not discover tests at solution level (zero tests, exit 5),
-      # so each test project runs on the repo-sanctioned per-project route.
+      # MTP executable route: `dotnet test` orchestration discovers zero tests
+      # with this xunit.v3 MTP host (exit 5), at solution and project level,
+      # so each test project runs as an MTP executable after the Release build.
       - name: Test
         shell: pwsh
         run: |
@@ -42,7 +43,7 @@ jobs:
             'tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj'
           )
           foreach ($project in $projects) {
-            dotnet test --project $project --no-build --no-restore -c Release --nologo -- --minimum-expected-tests 1
+            dotnet run --project $project --no-build --no-restore -c Release -- --minimum-expected-tests 1
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 
