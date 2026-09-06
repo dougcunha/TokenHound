@@ -25,6 +25,8 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
         _usageStore = new UsageStore(autoStart: true);
 
         var claudeProvider = new ClaudeOAuthProvider();
@@ -70,6 +72,7 @@ public partial class App : Application
             DataContext = _notchViewModel
         };
 
+        MainWindow = _notchWindow;
         _notchWindow.Show();
 
         _ = _usageStore.RefreshNowAsync();
@@ -78,7 +81,6 @@ public partial class App : Application
     /// <inheritdoc />
     protected override void OnExit(ExitEventArgs e)
     {
-
         _notchViewModel?.Dispose();
         _usageStore?.Dispose();
         base.OnExit(e);

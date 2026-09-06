@@ -28,7 +28,7 @@ public static class WindowStyles
     /// </summary>
     public const int WS_EX_TOPMOST = 0x00000008;
 
-    private const uint SWP_FLAGS = 0x0002 | 0x0001 | 0x0010 | 0x0020 | 0x0040;
+    private const uint SWP_FLAGS = 0x0002 | 0x0001 | 0x0004 | 0x0010 | 0x0020;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
 
     /// <summary>

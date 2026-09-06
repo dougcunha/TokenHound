@@ -13,6 +13,8 @@
         ShowInTaskbar="False"
         SizeToContent="WidthAndHeight"
         ResizeMode="NoResize"
+        MinWidth="180"
+        MinHeight="48"
         WindowStartupLocation="Manual">
 
     <Grid Margin="12">
@@ -30,7 +32,6 @@
                                   Opacity="0.65"
                                   Direction="270" />
             </Border.Effect>
-
             <ItemsControl ItemsSource="{Binding Rings}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>

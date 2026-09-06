@@ -9,6 +9,8 @@ Write code, comments, documentation, and repository-facing text in English. The 
 - Never write or refresh credentials owned by other tools; borrow read-only with `FileShare.ReadWrite | FileShare.Delete`.
 - Open SQLite WAL databases using `Mode=ReadOnly`; fall back to `immutable=1` when `-shm` sidecar is missing.
 - Persist and respect 429 rate-limit deadlines before dispatching network calls; never retry immediately on `Retry-After: 0`.
+- Hook `WM_MOUSEACTIVATE` returning `MA_NOACTIVATE` (3) on HUD windows to prevent stealing focus on click or drag.
+- In `WindowStyles.EnableNonActivating`, use `SWP_NOZORDER` (0x0004); omit `SWP_SHOWWINDOW` to preserve WPF layered window composition.
 
 ## C# structure & style
 
@@ -39,6 +41,11 @@ Write code, comments, documentation, and repository-facing text in English. The 
 - Inspect test failures directly from stdout; rerun with `rtk proxy` targeting the failing test if token filtering hides error details or stack traces.
 - Preserve and verify `$LASTEXITCODE` after test commands; never suppress output with `Out-Null`.
 - Follow the `dotnet-efficient-validation` skill (`references/mtp.md`) for runner detection, discovery flags, and extended options.
+
+## Running & validating desktop HUD
+
+- Launch `TokenHound.App` via Windows MCP `App` tool (`mode="launch_executable"`); shell `Start-Process` runs in an isolated desktop and will not render to the user screen.
+- Verify HUD positioning with Windows MCP `Screenshot` on the primary monitor (`display: [2]`).
 
 ## Skills to load first
 

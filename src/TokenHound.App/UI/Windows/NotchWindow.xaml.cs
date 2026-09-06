@@ -13,6 +13,9 @@ public sealed partial class NotchWindow : Window
 {
     private const double TOP_OFFSET = 8.0;
 
+    private const int WM_MOUSEACTIVATE = 0x0021;
+    private const int MA_NOACTIVATE = 3;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="NotchWindow"/> class.
     /// </summary>
@@ -30,9 +33,25 @@ public sealed partial class NotchWindow : Window
     {
 
         var hwnd = new WindowInteropHelper(this).Handle;
+        WindowStyles.EnableNonActivating(hwnd);
 
         if (hwnd != IntPtr.Zero)
-            WindowStyles.EnableNonActivating(hwnd);
+        {
+            var source = HwndSource.FromHwnd(hwnd);
+            source?.AddHook(WndProc);
+        }
+    }
+
+    private static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+
+        if (msg == WM_MOUSEACTIVATE)
+        {
+            handled = true;
+            return new IntPtr(MA_NOACTIVATE);
+        }
+
+        return IntPtr.Zero;
     }
 
     private void OnLoaded(object? sender, RoutedEventArgs e)
