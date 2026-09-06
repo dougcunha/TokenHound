@@ -49,3 +49,8 @@ Thumbs.db
 
 # Symlinks
 .claude/
+.agents/skills/grill-me/
+.agents/skills/grill-with-docs/
+.agents/skills/handoff/
+.agents/skills/grilling/
+skills-lock.json
