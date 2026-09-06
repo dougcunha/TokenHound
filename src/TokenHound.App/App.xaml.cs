@@ -3,6 +3,7 @@ using System.Windows;
 using TokenHound.App.UI.Windows;
 using TokenHound.App.ViewModels;
 using TokenHound.Infrastructure.Engine;
+using TokenHound.Infrastructure.Providers.Antigravity;
 using TokenHound.Infrastructure.Providers.Claude;
 using TokenHound.Infrastructure.Providers.Mock;
 
@@ -29,6 +30,12 @@ public partial class App : Application
 
         var claudeMonitor = new ClaudeSessionMonitor();
         _usageStore.RegisterActivityMonitor(claudeMonitor);
+
+        var antigravityProvider = new AntigravityUsageProvider();
+        _usageStore.RegisterProvider(antigravityProvider);
+
+        var antigravityMonitor = new AntigravityActivityMonitor();
+        _usageStore.RegisterActivityMonitor(antigravityMonitor);
 
         var mockProvider = new MockUsageProvider();
 

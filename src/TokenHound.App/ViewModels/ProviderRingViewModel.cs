@@ -259,16 +259,24 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
     private static string ResolveDefaultName(string providerId)
         => string.Equals(providerId, "claude", StringComparison.OrdinalIgnoreCase)
             ? DEFAULT_CLAUDE_NAME
-            : string.Equals(providerId, "mock", StringComparison.OrdinalIgnoreCase)
-                ? DEFAULT_MOCK_NAME
-                : providerId;
+            : string.Equals(providerId, "gemini", StringComparison.OrdinalIgnoreCase)
+                ? "Antigravity"
+                : string.Equals(providerId, "codex", StringComparison.OrdinalIgnoreCase)
+                    ? "Codex"
+                    : string.Equals(providerId, "mock", StringComparison.OrdinalIgnoreCase)
+                        ? DEFAULT_MOCK_NAME
+                        : providerId;
 
     private static string ResolveDefaultBadge(string providerId)
         => string.Equals(providerId, "claude", StringComparison.OrdinalIgnoreCase)
             ? DEFAULT_CLAUDE_BADGE
-            : string.Equals(providerId, "mock", StringComparison.OrdinalIgnoreCase)
-                ? DEFAULT_MOCK_BADGE
-                : providerId.Length > 0 ? providerId[..1].ToUpperInvariant() : "?";
+            : string.Equals(providerId, "gemini", StringComparison.OrdinalIgnoreCase)
+                ? "G"
+                : string.Equals(providerId, "codex", StringComparison.OrdinalIgnoreCase)
+                    ? "X"
+                    : string.Equals(providerId, "mock", StringComparison.OrdinalIgnoreCase)
+                        ? DEFAULT_MOCK_BADGE
+                        : providerId.Length > 0 ? providerId[..1].ToUpperInvariant() : "?";
 
     private bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
     {
