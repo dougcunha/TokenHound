@@ -11,6 +11,10 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <Company>Douglas Cunha</Company>
+    <Product>TokenHound</Product>
+    <Copyright>Copyright (c) 2026 Douglas Cunha</Copyright>
+    <Description>Windows 11 desktop HUD monitoring LLM usage, rate limits, and agent activity.</Description>
   </PropertyGroup>
 
 </Project>

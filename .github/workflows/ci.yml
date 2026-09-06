@@ -47,8 +47,20 @@ jobs:
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
 
+      - name: Resolve version
+        id: version
+        shell: pwsh
+        run: |
+          $refName = '${{ github.ref_name }}'
+          if ($refName -match '^v(?<v>.+)$') {
+            $version = $Matches.v
+          } else {
+            $version = "0.0.0-ci.${{ github.run_number }}"
+          }
+          "value=$version" >> $env:GITHUB_OUTPUT
+
       - name: Publish single-file (framework-dependent, win-x64)
-        run: dotnet publish src/TokenHound.App/TokenHound.App.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/win-x64 --nologo
+        run: dotnet publish src/TokenHound.App/TokenHound.App.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }} -o publish/win-x64 --nologo
 
       - name: Upload single-file artifact
         uses: actions/upload-artifact@v4
@@ -56,3 +68,21 @@ jobs:
           name: TokenHound-win-x64-singlefile
           path: publish/win-x64/
           retention-days: 7
+
+      - name: Install Inno Setup 6
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          $arch = 'x64'
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ steps.version.outputs.value }}" "/DPublishDir=$PWD\publish\win-x64" "/DOutputDir=$PWD\dist" "/DMyAppArch=$arch" installer/TokenHound.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: TokenHound-Setup-win-x64
+          path: dist/TokenHound-Setup-*.exe
+          retention-days: 30

@@ -52,11 +52,25 @@ jobs:
         shell: pwsh
         run: Compress-Archive -Path publish/${{ matrix.rid }}/* -DestinationPath TokenHound-${{ steps.version.outputs.value }}-${{ matrix.rid }}-fxdependent.zip
 
+      - name: Install Inno Setup 6
+        shell: pwsh
+        run: choco install innosetup --no-progress -y
+
+      - name: Build installer (Inno Setup)
+        shell: pwsh
+        run: |
+          $arch = 'x64'
+          if ('${{ matrix.rid }}' -eq 'win-arm64') { $arch = 'arm64' }
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=${{ steps.version.outputs.value }}" "/DPublishDir=$PWD\publish\${{ matrix.rid }}" "/DOutputDir=$PWD\dist" "/DMyAppArch=$arch" installer/TokenHound.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: TokenHound-${{ matrix.rid }}
-          path: TokenHound-*.zip
+          path: |
+            TokenHound-*.zip
+            dist/*.exe
           retention-days: 30
 
   release:
@@ -74,5 +88,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*.zip
+          files: |
+            dist/*.zip
+            dist/*Setup*.exe
           generate_release_notes: true
