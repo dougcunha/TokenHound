@@ -36,14 +36,14 @@
 
 ## Tasks
 
-- [T01 — Core Domain Models & Enums](task_01.md): Defines pure C# records and enums with immutability and Zero Fake Data enforcement.
-- [T02 — Core Domain Contracts](task_02.md): Defines standard asynchronous interfaces for providers, activity monitors, and credentials.
-- [T03 — Core Resilience & Scheduling Policies](task_03.md): Implements stateless algorithms for exponential backoff, rate limit floors, and refresh scheduling.
-- [T04 — Infrastructure SharedFileReader](task_04.md): Implements non-locking file reading with FileShare.ReadWrite \| FileShare.Delete.
-- [T05 — Infrastructure SafeSqliteReader & Dependencies](task_05.md): Adds Microsoft.Data.Sqlite and implements concurrent read-only WAL reader with immutable fallback.
-- [T06 — Infrastructure WindowsCredentialManager](task_06.md): Implements non-prompting advapi32.dll CredReadW / CredFree P/Invoke wrapper.
-- [T07 — Infrastructure ProcessLiveness](task_07.md): Implements PID existence and StartTimeUtc verification to prevent false positives on recycled PIDs.
-- [T08 — Infrastructure MockUsageProvider & Fixtures](task_08.md): Implements configurable offline test provider with realistic snapshot fixtures.
+- [T01 — Core Domain Models & Enums](done/task_01.md): Defines pure C# records and enums with immutability and Zero Fake Data enforcement.
+- [T02 — Core Domain Contracts](done/task_02.md): Defines standard asynchronous interfaces for providers, activity monitors, and credentials.
+- [T03 — Core Resilience & Scheduling Policies](done/task_03.md): Implements stateless algorithms for exponential backoff, rate limit floors, and refresh scheduling.
+- [T04 — Infrastructure SharedFileReader](done/task_04.md): Implements non-locking file reading with FileShare.ReadWrite \| FileShare.Delete.
+- [T05 — Infrastructure SafeSqliteReader & Dependencies](done/task_05.md): Adds Microsoft.Data.Sqlite and implements concurrent read-only WAL reader with immutable fallback.
+- [T06 — Infrastructure WindowsCredentialManager](done/task_06.md): Implements non-prompting advapi32.dll CredReadW / CredFree P/Invoke wrapper.
+- [T07 — Infrastructure ProcessLiveness](done/task_07.md): Implements PID existence and StartTimeUtc verification to prevent false positives on recycled PIDs.
+- [T08 — Infrastructure MockUsageProvider & Fixtures](done/task_08.md): Implements configurable offline test provider with realistic snapshot fixtures.
 
 ## Coverage gate
 
@@ -63,14 +63,14 @@
 
 ## State
 
-- [ ] T01 — pending
-- [ ] T02 — pending
-- [ ] T03 — pending
-- [ ] T04 — pending
-- [ ] T05 — pending
-- [ ] T06 — pending
-- [ ] T07 — pending
-- [ ] T08 — pending
+- [x] T01 — Core Domain Models & Enums
+- [x] T02 — Core Domain Contracts
+- [x] T03 — Core Resilience & Scheduling Policies
+- [x] T04 — Infrastructure SharedFileReader
+- [x] T05 — Infrastructure SafeSqliteReader & Dependencies
+- [x] T06 — Infrastructure WindowsCredentialManager
+- [x] T07 — Infrastructure ProcessLiveness
+- [x] T08 — Infrastructure MockUsageProvider & Fixtures
 
 ## Problems and solutions
 

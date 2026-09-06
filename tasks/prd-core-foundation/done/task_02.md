@@ -73,12 +73,21 @@ Defines the standard asynchronous interfaces in `TokenHound.Core/Contracts/` (`I
 
 ## Handoff
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Defined standard asynchronous domain interfaces in `TokenHound.Core/Contracts/` (`IUsageProvider`, `IActivityMonitor`, `ICredentialStore`) returning `ValueTask<T>` and accepting `CancellationToken`, fully compliant with `AGENTS.md` (XML doc comments, file-scoped namespaces, alphabetized usings, zero OS/UI dependencies). Implemented comprehensive smoke tests in `ContractsSmokeTests.cs` validating mock substitution via NSubstitute and interface reflection signatures.
+- Changed files:
+  - `src/TokenHound.Core/Contracts/IUsageProvider.cs`
+  - `src/TokenHound.Core/Contracts/IActivityMonitor.cs`
+  - `src/TokenHound.Core/Contracts/ICredentialStore.cs`
+  - `tests/TokenHound.Core.Tests/Contracts/ContractsSmokeTests.cs`
+  - `tasks/prd-core-foundation/task_02.md`
+- Checks:
+  - `rtk dotnet build src/TokenHound.Core/TokenHound.Core.csproj`: Exit code 0, 1 project built, 0 errors, 0 warnings.
+  - `rtk dotnet build tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj`: Exit code 0, 2 projects built, 0 errors, 0 warnings.
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1`: Exit code 0, 15 tests passed (6 contracts smoke tests + 8 domain model tests + 1 core smoke test).
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --filter-class "*ContractsSmokeTests*" --minimum-expected-tests 1`: Exit code 0, 6 tests passed.
+- Validated state: All acceptance criteria met. Interfaces define `ProviderId` properties and asynchronous methods returning `ValueTask<Snapshot>`, `ValueTask<AgentSession?>`, and `ValueTask<string?>`. Zero compiler warnings.
+- Open items: None.
 
 ### ADR candidates
 
-Pending execution.
+None.

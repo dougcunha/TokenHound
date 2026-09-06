@@ -78,12 +78,24 @@ Delivers the immutable domain models and enums in `TokenHound.Core/Models/`, enf
 
 ## Handoff
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Implemented core domain models and enums (`ProviderStatus`, `Fidelity`, `AgentSessionState`, `LimitWindow`, `UsageBlock`, `AgentSession`, `Snapshot`) conforming to `AGENTS.md` standards (sealed records, file-scoped namespaces, XML documentation, zero UI/OS dependencies). Enforced the Zero Fake Data policy on `LimitWindow` where `UsedFraction` evaluates to `null` when `TotalUnits` is null or not provided. Added unit tests in `DomainModelsTests.cs` verifying immutability, `with` expressions, Zero Fake Data preservation, and JSON round-trip serialization.
+- Changed files:
+  - `src/TokenHound.Core/Models/ProviderStatus.cs`
+  - `src/TokenHound.Core/Models/Fidelity.cs`
+  - `src/TokenHound.Core/Models/AgentSessionState.cs`
+  - `src/TokenHound.Core/Models/LimitWindow.cs`
+  - `src/TokenHound.Core/Models/UsageBlock.cs`
+  - `src/TokenHound.Core/Models/AgentSession.cs`
+  - `src/TokenHound.Core/Models/Snapshot.cs`
+  - `tests/TokenHound.Core.Tests/Models/DomainModelsTests.cs`
+  - `tasks/prd-core-foundation/task_01.md`
+- Checks:
+  - `rtk dotnet build tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj`: Exit code 0, 2 projects built, 0 errors, 0 warnings.
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1`: Exit code 0, 9 tests passed (8 domain model tests + 1 smoke test).
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --filter-class "*DomainModelsTests*" --minimum-expected-tests 1`: Exit code 0, 8 tests passed.
+- Validated state: All acceptance criteria met. Pure BCL `net10.0` models compiled and verified.
+- Open items: None.
 
 ### ADR candidates
 
-Pending execution.
+None.

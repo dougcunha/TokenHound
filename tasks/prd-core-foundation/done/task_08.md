@@ -68,12 +68,19 @@ Implements `MockUsageProvider` in `TokenHound.Infrastructure/Providers/Mock/` al
 
 ## Handoff
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Implemented `MockUsageProvider` and `MockScenario` in `TokenHound.Infrastructure.Providers.Mock` implementing `IUsageProvider` with deterministic, allocation-free snapshot querying and runtime scenario switching. Configured predefined scenario presets: `Normal` (session 20%, weekly 15%), `Warning` (session 20%, weekly 85%), `RateLimited` (HTTP 429 block with 600s countdown), `NeedsAuth` (unauthenticated with error description), `Stale` (fetched 20 minutes prior), and `Unidirectional` (strictly enforcing Zero Fake Data with null total units and null used fraction). Provided `SetScenario(MockScenario)` and `SetCustomSnapshot(Snapshot)` runtime mutation methods. Added comprehensive unit tests in `MockUsageProviderTests` covering default initialization, custom provider identifiers, all six scenario presets, Zero Fake Data preservation, custom snapshot overrides, argument validation, and cancellation token propagation.
+- Changed files:
+  - `src/TokenHound.Infrastructure/Providers/Mock/MockUsageProvider.cs`
+  - `tests/TokenHound.Infrastructure.Tests/Providers/MockUsageProviderTests.cs`
+  - `tasks/prd-core-foundation/task_08.md`
+- Checks:
+  - `rtk dotnet build tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj` (exit code: 0, 0 errors)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1 --filter-class "*MockUsageProviderTests*"` (exit code: 0, 15 passed, 0 failed, 0 skipped)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1` (exit code: 0, 67 passed, 0 failed, 0 skipped)
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1` (exit code: 0, 34 passed, 0 failed, 0 skipped)
+- Validated state: All acceptance criteria met; `MockUsageProvider` faithfully implements `IUsageProvider` with zero network I/O; returns valid snapshots matching each active scenario; query path operates without allocations via cached snapshots; Zero Fake Data policy strictly enforced for unidirectional quotas; `AGENTS.md` rules strictly followed (sealed class, file-scoped namespaces, alphabetized usings, XML documentation on all public members, methods <= 30 lines, files <= 300 lines, nesting <= 3 levels, blank line formatting, cancellation token propagation).
+- Open items: None.
 
 ### ADR candidates
 
-Pending execution.
+None.

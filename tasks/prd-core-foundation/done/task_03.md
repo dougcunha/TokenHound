@@ -73,12 +73,24 @@ Implements stateless domain algorithms in `TokenHound.Core/Policies/` for expone
 
 ## Handoff
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Implemented pure, stateless domain policies in `TokenHound.Core/Policies/` (`BackoffCalculator`, `RateLimitPolicy`, `RefreshSchedulePolicy`) complying strictly with `AGENTS.md` (sealed static classes, file-scoped namespaces, alphabetized usings, XML documentation on all public members, methods <= 30 lines, nesting <= 3 levels, zero UI/OS dependencies). `BackoffCalculator` implements exponential backoff with full jitter, a 60s minimum floor, a 3600s maximum ceiling, and monotonically increasing expected intervals. `RateLimitPolicy` provides `CanDispatch` (blocking calls prior to deadline expiration) and `CalculateDeadline` (enforcing a 60-second floor on `Retry-After: 0` or values under 60 seconds, while delegating to `BackoffCalculator` when `retryAfterSeconds` is null). `RefreshSchedulePolicy` evaluates `ShouldRefresh` using `isBusy || timeSinceLastAttempt >= idleInterval` alongside standard interval defaults (60s active, 300s idle, 900s stale). Implemented comprehensive unit test suites in `TokenHound.Core.Tests/Policies/` (`BackoffCalculatorTests`, `RateLimitPolicyTests`, `RefreshSchedulePolicyTests`) validating edge cases, 0, 1, and 5 consecutive failures, ceiling caps, jitter variance, and idle/busy cadences.
+- Changed files:
+  - `src/TokenHound.Core/Policies/BackoffCalculator.cs`
+  - `src/TokenHound.Core/Policies/RateLimitPolicy.cs`
+  - `src/TokenHound.Core/Policies/RefreshSchedulePolicy.cs`
+  - `tests/TokenHound.Core.Tests/Policies/BackoffCalculatorTests.cs`
+  - `tests/TokenHound.Core.Tests/Policies/RateLimitPolicyTests.cs`
+  - `tests/TokenHound.Core.Tests/Policies/RefreshSchedulePolicyTests.cs`
+  - `tasks/prd-core-foundation/task_03.md`
+- Checks:
+  - `rtk dotnet build tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj`: Exit code 0, 0 errors, 0 warnings.
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1`: Exit code 0, 34 tests passed, 0 warnings.
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --filter-class "*BackoffCalculatorTests*" --minimum-expected-tests 1`: Exit code 0, 6 tests passed.
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --filter-class "*RateLimitPolicyTests*" --minimum-expected-tests 1`: Exit code 0, 8 tests passed.
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --filter-class "*RefreshSchedulePolicyTests*" --minimum-expected-tests 1`: Exit code 0, 5 tests passed.
+- Validated state: All acceptance criteria satisfied. 19 new unit tests passing under MTP (total 34 in test project), zero build warnings, zero runtime failures.
+- Open items: None.
 
 ### ADR candidates
 
-Pending execution.
+None. Pure stateless policies implement existing design specifications from PRD FR-04..06 and TechSpec DEC-04 without architectural divergence.

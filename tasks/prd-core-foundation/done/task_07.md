@@ -66,12 +66,19 @@ Implements `ProcessLiveness` in `TokenHound.Infrastructure/System/` to check whe
 
 ## Handoff
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Implemented `ProcessLiveness` in `TokenHound.Infrastructure.System` to check OS process liveness and match start timestamps against expected UTC values within a tolerance (default 1.0s), preventing misattribution caused by aggressive Windows PID recycling. Handled non-existent, terminated, and inaccessible processes safely by catching `ArgumentException`, `InvalidOperationException`, and `Win32Exception` without throwing unhandled exceptions. Provided helper `GetProcessStartTimeUtc(int pid)` returning UTC `DateTimeOffset?`. Implemented comprehensive unit tests in `ProcessLivenessTests` covering active current PID matching, mismatched start time, non-existent PID, zero/negative PID, null start time (existence-only check), custom tolerance boundaries, and invalid PID handling in `GetProcessStartTimeUtc`.
+- Changed files:
+  - `src/TokenHound.Infrastructure/System/ProcessLiveness.cs`
+  - `tests/TokenHound.Infrastructure.Tests/System/ProcessLivenessTests.cs`
+  - `tasks/prd-core-foundation/task_07.md`
+- Checks:
+  - `rtk dotnet build tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj` (exit code: 0, 0 errors)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1 --filter-class "*ProcessLivenessTests*"` (exit code: 0, 13 passed, 0 failed, 0 skipped)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1` (exit code: 0, 52 passed, 0 failed, 0 skipped)
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1` (exit code: 0, 34 passed, 0 failed, 0 skipped)
+- Validated state: All acceptance criteria met; returns true for valid PID and matching start time within tolerance; returns false for non-existent PID, negative/zero PID, or mismatched start time exceeding tolerance; never throws on terminated or inaccessible processes; C# architecture and style invariants in `AGENTS.md` strictly verified (sealed static class, file-scoped namespaces, alphabetized usings, XML doc comments on all public members, files <= 300 lines, methods <= 30 lines, nesting <= 3 levels, blank line formatting).
+- Open items: None.
 
 ### ADR candidates
 
-Pending execution.
+None.

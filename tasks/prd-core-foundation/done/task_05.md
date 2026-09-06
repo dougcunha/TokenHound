@@ -69,12 +69,21 @@ Adds `Microsoft.Data.Sqlite` to `TokenHound.Infrastructure.csproj` and implement
 
 ## Handoff
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Implemented non-locking `SafeSqliteReader` in `TokenHound.Infrastructure.Storage` configured with `Mode=ReadOnly`, `Cache=Shared`, `Default Timeout=2`, and `Pooling=False` for concurrent WAL mode reads, with automatic fallback to `immutable=1` URI mode when the `-shm` sidecar file is absent or on `SQLITE_BUSY`/`SQLITE_LOCKED`/`SQLITE_CANTOPEN` error codes. Added `Microsoft.Data.Sqlite` 10.0.0 to `TokenHound.Infrastructure.csproj`. Implemented safe asynchronous and synchronous query methods (`OpenReadOnly`, `OpenReadOnlyConnectionAsync`, `ExecuteScalarAsync<T>`, `QueryAsync<T>` with row mapper delegate, and connection string builders). Validated with 11 automated integration tests in `SafeSqliteReaderTests.cs`.
+- Changed files:
+  - `src/TokenHound.Infrastructure/TokenHound.Infrastructure.csproj`
+  - `src/TokenHound.Infrastructure/Storage/SafeSqliteReader.cs`
+  - `tests/TokenHound.Infrastructure.Tests/Storage/SafeSqliteReaderTests.cs`
+  - `tasks/prd-core-foundation/task_05.md`
+- Checks:
+  - `rtk dotnet restore src/TokenHound.Infrastructure/TokenHound.Infrastructure.csproj --nologo --verbosity:minimal` (exit code: 0)
+  - `rtk dotnet build tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-restore --nologo --verbosity:minimal` (exit code: 0, 0 errors)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1 --filter-class "*SafeSqliteReaderTests*"` (exit code: 0, 11 passed, 0 failed, 0 skipped)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1` (exit code: 0, 27 passed, 0 failed, 0 skipped)
+  - `rtk dotnet test --solution TokenHound.slnx --no-build --no-restore -- --minimum-expected-tests 1` (exit code: 0, 61 passed across all test projects)
+- Validated state: All acceptance criteria met; non-locking concurrent reads verified during active uncommitted external WAL transaction; graceful fallback to immutable mode verified when `-shm` is absent without sidecar recreation; C# structure and invariants verified (files <= 300 lines, methods <= 30 lines, nesting <= 3 levels, alphabetized usings, file-scoped namespaces, XML doc comments, `.ConfigureAwait(false)` on all awaits, CancellationToken propagation).
+- Open items: None.
 
 ### ADR candidates
 
-Pending execution.
+None.
