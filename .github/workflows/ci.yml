@@ -32,8 +32,19 @@ jobs:
       - name: Build (Release)
         run: dotnet build TokenHound.slnx --no-restore -c Release --nologo
 
+      # MTP does not discover tests at solution level (zero tests, exit 5),
+      # so each test project runs on the repo-sanctioned per-project route.
       - name: Test
-        run: dotnet test TokenHound.slnx --no-build --no-restore -c Release --nologo
+        shell: pwsh
+        run: |
+          $projects = @(
+            'tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj',
+            'tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj'
+          )
+          foreach ($project in $projects) {
+            dotnet test --project $project --no-build --no-restore -c Release --nologo -- --minimum-expected-tests 1
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
 
       - name: Publish single-file (framework-dependent, win-x64)
         run: dotnet publish src/TokenHound.App/TokenHound.App.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/win-x64 --nologo

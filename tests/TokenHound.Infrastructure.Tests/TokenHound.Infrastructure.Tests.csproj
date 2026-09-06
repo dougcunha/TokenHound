@@ -38,4 +38,10 @@
     <ProjectReference Include="..\..\src\TokenHound.Infrastructure\TokenHound.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\..\src\TokenHound.App\Interop\WindowStyles.cs" Link="Interop\WindowStyles.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderRingViewModel.cs" Link="ViewModels\ProviderRingViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\NotchViewModel.cs" Link="ViewModels\NotchViewModel.cs" />
+  </ItemGroup>
+
 </Project>
