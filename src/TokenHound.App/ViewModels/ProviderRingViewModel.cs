@@ -263,9 +263,11 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
                 ? "Antigravity"
                 : string.Equals(providerId, "codex", StringComparison.OrdinalIgnoreCase)
                     ? "Codex"
-                    : string.Equals(providerId, "mock", StringComparison.OrdinalIgnoreCase)
-                        ? DEFAULT_MOCK_NAME
-                        : providerId;
+                    : string.Equals(providerId, "cursor", StringComparison.OrdinalIgnoreCase)
+                        ? "Cursor"
+                        : string.Equals(providerId, "mock", StringComparison.OrdinalIgnoreCase)
+                            ? DEFAULT_MOCK_NAME
+                            : providerId;
 
     private static string ResolveDefaultBadge(string providerId)
         => string.Equals(providerId, "claude", StringComparison.OrdinalIgnoreCase)
@@ -274,9 +276,11 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
                 ? "G"
                 : string.Equals(providerId, "codex", StringComparison.OrdinalIgnoreCase)
                     ? "X"
-                    : string.Equals(providerId, "mock", StringComparison.OrdinalIgnoreCase)
-                        ? DEFAULT_MOCK_BADGE
-                        : providerId.Length > 0 ? providerId[..1].ToUpperInvariant() : "?";
+                    : string.Equals(providerId, "cursor", StringComparison.OrdinalIgnoreCase)
+                        ? "Cu"
+                        : string.Equals(providerId, "mock", StringComparison.OrdinalIgnoreCase)
+                            ? DEFAULT_MOCK_BADGE
+                            : providerId.Length > 0 ? providerId[..1].ToUpperInvariant() : "?";
 
     private bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
     {

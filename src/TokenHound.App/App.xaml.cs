@@ -5,6 +5,7 @@ using TokenHound.App.ViewModels;
 using TokenHound.Infrastructure.Engine;
 using TokenHound.Infrastructure.Providers.Antigravity;
 using TokenHound.Infrastructure.Providers.Claude;
+using TokenHound.Infrastructure.Providers.Cursor;
 using TokenHound.Infrastructure.Providers.Mock;
 
 namespace TokenHound.App;
@@ -36,6 +37,12 @@ public partial class App : Application
 
         var antigravityMonitor = new AntigravityActivityMonitor();
         _usageStore.RegisterActivityMonitor(antigravityMonitor);
+
+        var cursorProvider = new CursorUsageProvider();
+        _usageStore.RegisterProvider(cursorProvider);
+
+        var cursorMonitor = new CursorActivityMonitor();
+        _usageStore.RegisterActivityMonitor(cursorMonitor);
 
         var mockProvider = new MockUsageProvider();
 
