@@ -2,6 +2,7 @@
 
 > **A non-intrusive Windows 11 desktop HUD monitoring LLM usage, rate limits, and agent activity across AI coding tools.**
 
+[![CI](https://github.com/dougcunha/TokenHound/actions/workflows/ci.yml/badge.svg)](https://github.com/dougcunha/TokenHound/actions/workflows/ci.yml)
 [![.NET 10](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet)](https://dotnet.microsoft.com/)
 [![Windows 11](https://img.shields.io/badge/Platform-Windows%2011-0078D4?logo=windows11)](https://www.microsoft.com/windows)
 [![WPF](https://img.shields.io/badge/UI-WPF-blue)](https://github.com/dotnet/wpf)
