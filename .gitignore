@@ -1,0 +1,51 @@
+# Build outputs
+[Bb]in/
+[Oo]bj/
+[Aa]rtifacts/
+[Pp]ublish/
+
+# Test and coverage outputs
+[Tt]est[Rr]esults/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+coverage*.info
+*.opencover.xml
+
+# NuGet packages and generated package artifacts
+packages/
+*.nupkg
+*.snupkg
+
+# Visual Studio
+.vs/
+*.suo
+*.user
+*.rsuser
+*.userosscache
+*.sln.docstates
+*.pubxml.user
+
+# JetBrains Rider and ReSharper
+.idea/
+_ReSharper*/
+*.DotSettings.user
+
+# BenchmarkDotNet
+BenchmarkDotNet.Artifacts/
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+appsettings.*.local.json
+
+# Logs and operating-system files
+*.log
+.DS_Store
+Thumbs.db
+
+# Symlinks
+.claude/

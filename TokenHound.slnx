@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/TokenHound.App/TokenHound.App.csproj" />
+    <Project Path="src/TokenHound.Core/TokenHound.Core.csproj" />
+    <Project Path="src/TokenHound.Infrastructure/TokenHound.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj" />
+    <Project Path="tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj" />
+  </Folder>
+</Solution>

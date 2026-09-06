@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "generation": 1,
+  "feature": "",
+  "workspace": "",
+  "phase": "product",
+  "status": "active",
+  "safe_to_stop": false,
+  "owner_session": null,
+  "objective": "",
+  "constraints": [],
+  "sources": {
+    "workflow": "workflow.md",
+    "prd": null,
+    "techspec": null,
+    "tasks": null,
+    "review": null
+  },
+  "approved_sources": [],
+  "decisions_to_read": [],
+  "git_base": null,
+  "worktree_evidence": null,
+  "active_work": [],
+  "pending_hil": null,
+  "blockers": [],
+  "correction_round": 0,
+  "rounds_without_progress": 0,
+  "next_action": {
+    "kind": "await-decision",
+    "instruction": "",
+    "read": []
+  }
+}

@@ -1,0 +1,13 @@
+# C#/.NET profile
+
+Record the profile in the TechSpec so planning, execution, and review can reuse the discovery.
+
+- Identify affected projects, TFM, effective SDK, imports, and runner from repository files. `UseWPF`, `UseWindowsForms`, Avalonia/WinUI/MAUI desktop references, and startup code are evidence; `.csproj` or a Windows TFM alone does not prove a desktop application. In a mixed solution, classify each target and its tests.
+- Preserve the existing framework, architecture, and runner. Prefer domain logic, services, and ViewModels/Presenters testable without opening the application. Consider UI thread, dispatcher, events/bindings, cancellation, resource disposal, and persistence when the diff affects them.
+- .NET desktop: record `E2E: omitted by .NET desktop policy`. Exclude full-application, browser/WebView, and desktop UI automation, including aggregate suites that trigger it. The policy also applies to existing tests; do not delete them. If a command mixes levels, select projects or proven filters without E2E; if they cannot be separated, record a blocker and use independent checks.
+- Preserve the functional obligation with unit tests, relevant integration tests, and a manual UI script when needed. Record steps, expected result, and owner for manual evidence; until executed, essential acceptance remains pending. Do not rename E2E as integration to run it.
+- Discover commands in the project/CI. If `dotnet-efficient-validation` is installed, read it before running .NET validation. Otherwise, confirm the runner and options from local help: VSTest and Microsoft.Testing.Platform do not necessarily share arguments. Include the existing MSBuild/test runner for legacy .NET Framework, without imposing migration to `dotnet test`.
+- Build only affected projects and necessary dependencies. Reuse restore/build only when code, packages, configuration, TFM, and runtime remain compatible; a new diff invalidates the corresponding evidence. Serialize validations that share `bin/`, `obj/`, or fixtures. Check exit code and test count; zero tests and a listing do not prove acceptance.
+- Keep real contracts visible: an in-memory fake does not prove SQL, driver, or external-service semantics. Identify required infrastructure, existing authorization, and gaps. Request a decision only for an indispensable unauthorized prerequisite; continue with independent checks.
+
+The profile must contain evidence of the stack, projects, runner/route, effective commands, E2E exclusions, prerequisites, and covered obligations. For separate web/backend targets, determine E2E by contract relevance; the presence of a desktop project does not waive tests for the whole solution.
