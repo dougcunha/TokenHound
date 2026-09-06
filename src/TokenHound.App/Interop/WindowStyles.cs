@@ -28,6 +28,9 @@ public static class WindowStyles
     /// </summary>
     public const int WS_EX_TOPMOST = 0x00000008;
 
+    private const uint SWP_FLAGS = 0x0002 | 0x0001 | 0x0010 | 0x0020 | 0x0040;
+    private static readonly IntPtr HWND_TOPMOST = new(-1);
+
     /// <summary>
     /// Applies non-activating extended styles (<see cref="WS_EX_NOACTIVATE"/>, <see cref="WS_EX_TOOLWINDOW"/>, and <see cref="WS_EX_TOPMOST"/>)
     /// to the specified current style bitmask without removing existing styles.
@@ -62,6 +65,16 @@ public static class WindowStyles
 
         if (newStyle != currentStyle)
             SetWindowLongW(hwnd, GWL_EXSTYLE, newStyle);
+
+        SetWindowPos(
+            hwnd,
+            HWND_TOPMOST,
+            0,
+            0,
+            0,
+            0,
+            SWP_FLAGS
+        );
     }
 
     [DllImport("user32.dll", EntryPoint = "GetWindowLongW", SetLastError = true)]
@@ -69,4 +82,15 @@ public static class WindowStyles
 
     [DllImport("user32.dll", EntryPoint = "SetWindowLongW", SetLastError = true)]
     private static extern int SetWindowLongW(IntPtr hWnd, int nIndex, int dwNewLong);
+
+    [DllImport("user32.dll", EntryPoint = "SetWindowPos", SetLastError = true)]
+    private static extern bool SetWindowPos(
+        IntPtr hWnd,
+        IntPtr hWndInsertAfter,
+        int x,
+        int y,
+        int cx,
+        int cy,
+        uint uFlags
+    );
 }

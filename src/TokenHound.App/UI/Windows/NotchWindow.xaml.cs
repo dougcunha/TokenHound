@@ -1,5 +1,6 @@
 using System;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using TokenHound.App.Interop;
 
@@ -10,6 +11,8 @@ namespace TokenHound.App.UI.Windows;
 /// </summary>
 public sealed partial class NotchWindow : Window
 {
+    private const double TOP_OFFSET = 8.0;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="NotchWindow"/> class.
     /// </summary>
@@ -20,6 +23,7 @@ public sealed partial class NotchWindow : Window
         SourceInitialized += OnSourceInitialized;
         Loaded += OnLoaded;
         SizeChanged += OnSizeChanged;
+        MouseLeftButtonDown += OnMouseLeftButtonDown;
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e)
@@ -43,11 +47,18 @@ public sealed partial class NotchWindow : Window
         RepositionTopCenter();
     }
 
+    private void OnMouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
+    {
+
+        if (e.ButtonState == MouseButtonState.Pressed)
+            DragMove();
+    }
+
     private void RepositionTopCenter()
     {
 
         var workArea = SystemParameters.WorkArea;
         Left = workArea.Left + ((workArea.Width - ActualWidth) / 2.0);
-        Top = workArea.Top;
+        Top = workArea.Top + TOP_OFFSET;
     }
 }
