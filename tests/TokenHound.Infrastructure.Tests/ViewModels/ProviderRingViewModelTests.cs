@@ -101,4 +101,81 @@ public sealed class ProviderRingViewModelTests
         ring.SessionResetText.Should().Be("~42 requests");
         ring.StatusMessage.Should().Be("~42 requests today · no limit published");
     }
+
+    /// <summary>Verifies unsupported Copilot snapshots remain explicitly unavailable in the generic ring.</summary>
+    [Fact]
+    public void UpdateFromSnapshot_WhenUnsupportedPreservesUnavailableStatus()
+    {
+        var ring = new ProviderRingViewModel("copilot");
+        var snapshot = new Snapshot
+        {
+            ProviderId = "copilot",
+            Status = ProviderStatus.Unsupported,
+            Fidelity = Fidelity.Official,
+            FetchedAtUtc = DateTimeOffset.UtcNow,
+            LimitWindows = [],
+            ErrorDescription = "Copilot has no usable finite quota or entitlement."
+        };
+
+        ring.UpdateFromSnapshot(snapshot);
+
+        ring.ProviderName.Should().Be("Copilot");
+        ring.GlyphKey.Should().Be("Glyph.Copilot");
+        ring.UsedFraction.Should().BeNull();
+        ring.Status.Should().Be(ProviderStatus.Unsupported);
+        ring.StatusMessage.Should().Be(snapshot.ErrorDescription);
+    }
+
+    /// <summary>Verifies generic status guidance surfaces both blocking and non-blocking quota blocks.</summary>
+    [Fact]
+    public void UpdateFromSnapshot_WhenActiveBlockExistsSurfacesItsReason()
+    {
+        var ring = new ProviderRingViewModel("copilot");
+        var snapshot = new Snapshot
+        {
+            ProviderId = "copilot",
+            Status = ProviderStatus.Ok,
+            Fidelity = Fidelity.Official,
+            FetchedAtUtc = DateTimeOffset.UtcNow,
+            LimitWindows =
+            [
+                new LimitWindow
+                {
+                    Name = "Monthly Premium Interactions",
+                    UsedFraction = 1.0,
+                    RemainingUnits = 0,
+                    TotalUnits = 100,
+                    ResetTimeUtc = DateTimeOffset.UtcNow.AddHours(1)
+                }
+            ],
+            ActiveBlock = new UsageBlock
+            {
+                IsBlocked = false,
+                Reason = "Quota exhausted; metered overage continues."
+            }
+        };
+
+        ring.UpdateFromSnapshot(snapshot);
+
+        ring.StatusMessage.Should().Be("Quota exhausted; metered overage continues.");
+    }
+
+    /// <summary>Verifies activity events update the existing generic ring activity properties.</summary>
+    [Fact]
+    public void UpdateActivity_WhenBusySessionProvidedSetsBusyAndDescription()
+    {
+        var ring = new ProviderRingViewModel("copilot");
+        var session = new AgentSession
+        {
+            Pid = 42,
+            StartTimeUtc = DateTimeOffset.UtcNow,
+            State = AgentSessionState.Busy,
+            LastActivityUtc = DateTimeOffset.UtcNow
+        };
+
+        ring.UpdateActivity(session);
+
+        ring.IsBusy.Should().BeTrue();
+        ring.ActiveSessionText.Should().Contain("PID 42");
+    }
 }

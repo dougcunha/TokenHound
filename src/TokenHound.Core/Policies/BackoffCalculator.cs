@@ -3,7 +3,7 @@ using System;
 namespace TokenHound.Core.Policies;
 
 /// <summary>
-/// Computes exponential backoff intervals with full jitter for rate-limit and fault resilience.
+/// Computes exponential backoff intervals with positive jitter for rate-limit and fault resilience.
 /// </summary>
 public static class BackoffCalculator
 {
@@ -13,9 +13,9 @@ public static class BackoffCalculator
     public static readonly TimeSpan MINIMUM_FLOOR = TimeSpan.FromSeconds(60);
 
     /// <summary>
-    /// The maximum ceiling interval cap (3600 seconds / 1 hour).
+    /// The maximum ceiling interval cap (900 seconds / 15 minutes).
     /// </summary>
-    public static readonly TimeSpan MAXIMUM_CEILING = TimeSpan.FromSeconds(3600);
+    public static readonly TimeSpan MAXIMUM_CEILING = TimeSpan.FromSeconds(900);
 
     /// <summary>
     /// Gets the minimum base interval floor (60 seconds).
@@ -24,14 +24,14 @@ public static class BackoffCalculator
         => MINIMUM_FLOOR;
 
     /// <summary>
-    /// Gets the maximum ceiling interval cap (3600 seconds).
+    /// Gets the maximum ceiling interval cap (900 seconds).
     /// </summary>
     public static TimeSpan Ceiling
         => MAXIMUM_CEILING;
 
     /// <summary>
     /// Calculates the deterministic exponential backoff interval before jitter is applied.
-    /// Formula: <c>min(Ceiling, Floor * 2^(consecutiveFailures - 1))</c>.
+    /// Formula: <c>min(Ceiling, Floor * 2^min(consecutiveFailures - 1, 4))</c>.
     /// </summary>
     /// <param name="consecutiveFailures">The number of consecutive failures encountered.</param>
     /// <returns>A <see cref="TimeSpan"/> representing the capped exponential interval, or <see cref="TimeSpan.Zero"/> if failures is zero or negative.</returns>
@@ -41,7 +41,7 @@ public static class BackoffCalculator
         if (consecutiveFailures <= 0)
             return TimeSpan.Zero;
 
-        var exponent = Math.Min(consecutiveFailures - 1, 10);
+        var exponent = Math.Min(consecutiveFailures - 1, 4);
         var unjitteredSeconds = MINIMUM_FLOOR.TotalSeconds * Math.Pow(2, exponent);
         var cappedSeconds = Math.Min(MAXIMUM_CEILING.TotalSeconds, unjitteredSeconds);
 
@@ -57,10 +57,10 @@ public static class BackoffCalculator
         => CalculateExponentialInterval(consecutiveFailures);
 
     /// <summary>
-    /// Computes exponential backoff with full jitter applied using a specified jitter factor between 0.0 and 1.0.
+    /// Computes exponential backoff with positive one-to-five-second jitter.
     /// </summary>
     /// <param name="consecutiveFailures">The number of consecutive failures encountered.</param>
-    /// <param name="jitterFactor">A factor between 0.0 (inclusive) and 1.0 (inclusive) specifying the uniform jitter position.</param>
+    /// <param name="jitterFactor">A factor between 0.0 (inclusive) and 1.0 (inclusive) selecting a deterministic jitter value.</param>
     /// <returns>A <see cref="TimeSpan"/> representing the jittered backoff interval.</returns>
     public static TimeSpan CalculateBackoff(int consecutiveFailures, double jitterFactor)
     {
@@ -68,10 +68,11 @@ public static class BackoffCalculator
         if (consecutiveFailures <= 0)
             return TimeSpan.Zero;
 
-        var maxInterval = CalculateExponentialInterval(consecutiveFailures);
+        var baseInterval = CalculateExponentialInterval(consecutiveFailures);
         var clampedFactor = Math.Clamp(jitterFactor, 0.0, 1.0);
+        var jitterSeconds = 1 + (int)Math.Floor(clampedFactor * 4);
 
-        return TimeSpan.FromSeconds(maxInterval.TotalSeconds * clampedFactor);
+        return baseInterval.Add(TimeSpan.FromSeconds(jitterSeconds));
     }
 
     /// <summary>
@@ -82,8 +83,13 @@ public static class BackoffCalculator
     /// <returns>A <see cref="TimeSpan"/> representing the jittered backoff interval.</returns>
     public static TimeSpan CalculateBackoff(int consecutiveFailures, Random? random = null)
     {
-        var rng = random ?? Random.Shared;
+        if (consecutiveFailures <= 0)
+            return TimeSpan.Zero;
 
-        return CalculateBackoff(consecutiveFailures, rng.NextDouble());
+        var rng = random ?? Random.Shared;
+        var baseInterval = CalculateExponentialInterval(consecutiveFailures);
+        var jitterSeconds = rng.Next(1, 6);
+
+        return baseInterval.Add(TimeSpan.FromSeconds(jitterSeconds));
     }
 }

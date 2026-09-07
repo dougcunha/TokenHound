@@ -43,14 +43,14 @@ The Infrastructure Copilot provider discovers a borrowed token in the approved o
 
 ## Work
 
-- [ ] T03.1 Satisfy IP-01 before coding the plaintext branch: obtain a sanitized fixture produced by the installed official Copilot CLI in an isolated `COPILOT_HOME`, or record the config fallback as unavailable with the exact acceptance gap. Never store a real token in the repository.
-- [ ] T03.2 Implement `CopilotCredentialDiscovery` with exact precedence: `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, `GITHUB_TOKEN`, read-only `gh auth token`, Copilot CLI keychain, then verified JSONC config fallback; stop probing lower sources after a usable source.
-- [ ] T03.3 Implement `CopilotCredentialTargetResolver` using `copilot-cli` service evidence and validated `loggedInUsers`/`lastLoggedInUser` host/login pairs. Support the observed qualified Windows target shape without hard-coding an account or enumerating arbitrary credentials.
-- [ ] T03.4 Implement `CopilotConfigReader` with shared file access and an allowlisted property from the verified fixture only. Treat malformed, missing, locked, or unverified state as unavailable and never recursively select token-shaped strings.
-- [ ] T03.5 Implement `CopilotApiClient` for one GET request with Bearer authorization, JSON accept header, 15-second timeout, cancellation, typed 401/403/429/other failures, and no token/body logging.
-- [ ] T03.6 Implement open-map DTO/parser behavior: prefer finite `premium_interactions`, fall back to another finite category, omit unlimited/non-entitled entries, preserve `quota_remaining`, calculate `UsedFraction`, validate reset/entitlement, and classify schema drift separately from Unsupported.
-- [ ] T03.7 Implement `CopilotUsageProvider` mapping for Ok, NeedsAuth, Unsupported, Stale, overage, sign-in guidance, and archive interaction through existing contracts.
-- [ ] T03.8 Add provider, credential, config, HTTP, parser, and error tests with fake handlers/processes/files and assertions that borrowed files and secrets remain unchanged/unlogged.
+- [x] T03.1 Satisfy IP-01 before coding the plaintext branch: obtain a sanitized fixture produced by the installed official Copilot CLI in an isolated `COPILOT_HOME`, or record the config fallback as unavailable with the exact acceptance gap. Never store a real token in the repository.
+- [x] T03.2 Implement `CopilotCredentialDiscovery` with exact precedence: `COPILOT_GITHUB_TOKEN`, `GH_TOKEN`, `GITHUB_TOKEN`, read-only `gh auth token`, Copilot CLI keychain, then verified JSONC config fallback; stop probing lower sources after a usable source.
+- [x] T03.3 Implement `CopilotCredentialTargetResolver` using `copilot-cli` service evidence and validated `loggedInUsers`/`lastLoggedInUser` host/login pairs. Support the observed qualified Windows target shape without hard-coding an account or enumerating arbitrary credentials.
+- [x] T03.4 Implement `CopilotConfigReader` with shared file access and an allowlisted property from the verified fixture only. Treat malformed, missing, locked, or unverified state as unavailable and never recursively select token-shaped strings.
+- [x] T03.5 Implement `CopilotApiClient` for one GET request with Bearer authorization, JSON accept header, 15-second timeout, cancellation, typed 401/403/429/other failures, and no token/body logging.
+- [x] T03.6 Implement open-map DTO/parser behavior: prefer finite `premium_interactions`, fall back to another finite category, omit unlimited/non-entitled entries, preserve `quota_remaining`, calculate `UsedFraction`, validate reset/entitlement, and classify schema drift separately from Unsupported.
+- [x] T03.7 Implement `CopilotUsageProvider` mapping for Ok, NeedsAuth, Unsupported, Stale, overage, sign-in guidance, and archive interaction through existing contracts.
+- [x] T03.8 Add provider, credential, config, HTTP, parser, and error tests with fake handlers/processes/files and assertions that borrowed files and secrets remain unchanged/unlogged.
 
 ## Acceptance criteria
 
@@ -78,6 +78,7 @@ The Infrastructure Copilot provider discovers a borrowed token in the approved o
 - Create: `src/TokenHound.Infrastructure/Providers/Copilot/CopilotCredentialDiscovery.cs`
 - Create: `src/TokenHound.Infrastructure/Providers/Copilot/CopilotCredentialTargetResolver.cs`
 - Create: `src/TokenHound.Infrastructure/Providers/Copilot/CopilotConfigReader.cs`
+- Create: `src/TokenHound.Infrastructure/Providers/Copilot/CopilotConfigReader.Models.cs`
 - Create: `src/TokenHound.Infrastructure/Providers/Copilot/CopilotCredential.cs`
 - Create: `src/TokenHound.Infrastructure/Providers/Copilot/CopilotQuotaResponse.cs`
 - Create: `src/TokenHound.Infrastructure/Providers/Copilot/CopilotQuotaSnapshotDto.cs`
@@ -97,12 +98,12 @@ The Infrastructure Copilot provider discovers a borrowed token in the approved o
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
-- Open items: Pending execution.
+- Produced result: Implemented the Copilot Infrastructure provider, strict credential discovery, validated Windows target derivation, JSONC reader boundary, bounded HTTP client, open-map quota parser, status/overage mapping, and focused tests. The default plaintext config fallback remains disabled because IP-01 could not produce a sanitized official fixture or verify a token property.
+- Changed files: `src/TokenHound.Infrastructure/Providers/Copilot/CopilotCredential.cs`, `CopilotCredentialDiscovery.cs`, `CopilotCredentialTargetResolver.cs`, `CopilotConfigReader.cs`, `CopilotConfigReader.Models.cs`, `CopilotApiClient.cs`, `CopilotQuotaResponse.cs`, `CopilotQuotaSnapshotDto.cs`, `CopilotQuotaParser.cs`, `CopilotUsageProvider.cs`; tests under `tests/TokenHound.Infrastructure.Tests/Providers/Copilot/` for credentials, config, HTTP, parser, and provider status/error behavior.
+- Checks: current Infrastructure build exit 0 with the pre-existing NU1903 and xUnit1051 advisories; `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1 --filter-class "*Copilot*"` — 24 passed; same command without filter — 324 passed; Core tests — 43 passed; `git diff --check` — clean.
+- Validated state: .NET SDK 10.0.400/native Microsoft.Testing.Platform, Infrastructure project build and full test project pass. HTTP tests use fake handlers only; credential tests use fake stores and temporary files; no live Copilot endpoint or real token was used. Installed official Copilot CLI 1.0.83 was run with an isolated `COPILOT_HOME` and a deliberately fake token; it returned 401 without creating a config. The existing config was inspected only for property names/state shape and no secret value was read into the repository.
+- Open items: IP-01 remains a concrete acceptance gap: the official CLI's plaintext fallback property is undocumented and could not be verified, so `CopilotConfigReader` accepts a token only when a caller supplies an explicit verified property path. T05 may use keychain/env/gh paths; enabling plaintext fallback requires a sanitized official fixture and a follow-up change. App registration and integrated/manual acceptance remain for T05/T06.
 
 ### ADR candidates
 
-Pending execution. `sdd-execute-task` replaces this text with structured candidates or `None - direct TechSpec implementation or local decision`.
+None - direct TechSpec implementation; IP-01 is an explicit prerequisite gap, not an architectural decision.

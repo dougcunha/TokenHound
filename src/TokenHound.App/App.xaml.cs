@@ -8,6 +8,7 @@ using TokenHound.Infrastructure.Engine;
 using TokenHound.Infrastructure.Providers.Antigravity;
 using TokenHound.Infrastructure.Providers.Claude;
 using TokenHound.Infrastructure.Providers.Codex;
+using TokenHound.Infrastructure.Providers.Copilot;
 using TokenHound.Infrastructure.Providers.Cursor;
 
 namespace TokenHound.App;
@@ -32,7 +33,7 @@ public partial class App : Application
 
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-        _usageStore = new UsageStore(autoStart: true);
+        _usageStore = new UsageStore(archive: new UsageArchive());
 
         var disposableResources = new List<IDisposable>();
 
@@ -61,6 +62,14 @@ public partial class App : Application
 
         var cursorMonitor = new CursorActivityMonitor();
         _usageStore.RegisterActivityMonitor(cursorMonitor);
+
+        var copilotProvider = new CopilotUsageProvider();
+        _usageStore.RegisterProvider(copilotProvider);
+        disposableResources.Add(copilotProvider);
+
+        var copilotMonitor = new CopilotActivityMonitor();
+        _usageStore.RegisterActivityMonitor(copilotMonitor);
+        disposableResources.Add(copilotMonitor);
 
         _dialogService = new DialogService(() => _notchWindow);
 
@@ -99,6 +108,7 @@ public partial class App : Application
         MainWindow = _notchWindow;
         _notchWindow.Show();
 
+        _usageStore.Start();
         var startupTask = _usageStore.RefreshNowAsync(_lifetime.LifetimeToken);
         _lifetime.TrackStartupTask(startupTask);
     }

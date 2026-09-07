@@ -43,6 +43,7 @@
     <Compile Include="..\..\src\TokenHound.App\Presentation\ApplicationInfo.cs" Link="Presentation\ApplicationInfo.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderCatalog.cs" Link="ViewModels\ProviderCatalog.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderRingViewModel.cs" Link="ViewModels\ProviderRingViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderRingViewModel.Status.cs" Link="ViewModels\ProviderRingViewModel.Status.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\NotchViewModel.cs" Link="ViewModels\NotchViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\HudActionsViewModel.cs" Link="ViewModels\HudActionsViewModel.cs" />
   </ItemGroup>

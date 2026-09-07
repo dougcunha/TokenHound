@@ -42,11 +42,11 @@ Copilot activity is reported Busy only when recent read-only session/log writes 
 
 ## Work
 
-- [ ] T04.1 Implement read-only timestamp inspection over `.copilot/session-state/*/events.jsonl` and `.copilot/logs/` with shared file access and a 30-second freshness threshold.
-- [ ] T04.2 Implement `CopilotProcessHostDetector` for `copilot`, `gh`, and `Code.exe` only when a supported GitHub Copilot extension directory exists; validate process liveness and avoid process-content writes.
-- [ ] T04.3 Implement `FileSystemWatcher` session-state observation with 120 ms debounce, safe disposal, and no UI work in watcher callbacks.
-- [ ] T04.4 Return Busy only for recent write plus qualifying host; return Idle/null on either missing signal, stale data, access failure, or abrupt host exit.
-- [ ] T04.5 Add temporary-file, injected-detector, clock, burst-write, unsupported-extension, and disposal tests without modifying fixture timestamps/content.
+- [x] T04.1 Implement read-only timestamp inspection over `.copilot/session-state/*/events.jsonl` and `.copilot/logs/` with shared file access and a 30-second freshness threshold.
+- [x] T04.2 Implement `CopilotProcessHostDetector` for `copilot`, `gh`, and `Code.exe` only when a supported GitHub Copilot extension directory exists; validate process liveness and avoid process-content writes.
+- [x] T04.3 Implement `FileSystemWatcher` session-state observation with 120 ms debounce, safe disposal, and no UI work in watcher callbacks.
+- [x] T04.4 Return Busy only for recent write plus qualifying host; return Idle/null on either missing signal, stale data, access failure, or abrupt host exit.
+- [x] T04.5 Add temporary-file, injected-detector, clock, burst-write, unsupported-extension, and disposal tests without modifying fixture timestamps/content.
 
 ## Acceptance criteria
 
@@ -82,12 +82,12 @@ Copilot activity is reported Busy only when recent read-only session/log writes 
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
-- Open items: Pending execution.
+- Produced result: T04 complete. Copilot activity now requires a fresh read-only file write and a live qualifying host, with deterministic stale/idle recovery and debounced session-state notifications.
+- Changed files: `src/TokenHound.Infrastructure/Providers/Copilot/CopilotActivityMonitor.cs`; `src/TokenHound.Infrastructure/Providers/Copilot/CopilotProcessHostDetector.cs`; `tests/TokenHound.Infrastructure.Tests/Providers/Copilot/CopilotActivityMonitorTests.cs`; `tests/TokenHound.Infrastructure.Tests/Providers/Copilot/CopilotProcessHostDetectorTests.cs`.
+- Checks: Infrastructure build exit 0 with the pre-existing NU1903 SQLite package advisory; focused activity tests passed (4); focused process-host tests passed (5); complete Infrastructure test project passed with 292 tests; `git diff --check` passed.
+- Validated state: Recent write plus copilot/gh host is Busy; missing host, stale write, unsupported Code.exe extension, inaccessible discovery, and dead process are idle; Code.exe requires a supported Copilot extension; watcher bursts consolidate at 120 ms; monitor reads use shared access and do not mutate fixture content or timestamps; disposal detaches and releases watcher/timer resources.
+- Open items: None for T04. T03 remains gated by IP-01; T05 remains blocked on T03 and T04 completion.
 
 ### ADR candidates
 
-Pending execution. `sdd-execute-task` replaces this text with structured candidates or `None - direct TechSpec implementation or local decision`.
+None - direct TechSpec implementation or local decision.

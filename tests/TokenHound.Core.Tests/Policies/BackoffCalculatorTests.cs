@@ -5,7 +5,7 @@ using TokenHound.Core.Policies;
 namespace TokenHound.Core.Tests.Policies;
 
 /// <summary>
-/// Verifies exponential backoff progression, full jitter distribution, and boundary caps in <see cref="BackoffCalculator"/>.
+/// Verifies exponential backoff progression, positive jitter, and boundary caps in <see cref="BackoffCalculator"/>.
 /// </summary>
 public sealed class BackoffCalculatorTests
 {
@@ -38,13 +38,13 @@ public sealed class BackoffCalculatorTests
         var maxJitter = BackoffCalculator.CalculateBackoff(1, 1.0);
 
         expectedInterval.Should().Be(TimeSpan.FromSeconds(60));
-        minJitter.Should().Be(TimeSpan.Zero);
-        halfJitter.Should().Be(TimeSpan.FromSeconds(30));
-        maxJitter.Should().Be(TimeSpan.FromSeconds(60));
+        minJitter.Should().Be(TimeSpan.FromSeconds(61));
+        halfJitter.Should().Be(TimeSpan.FromSeconds(63));
+        maxJitter.Should().Be(TimeSpan.FromSeconds(65));
     }
 
     /// <summary>
-    /// Verifies that 5 consecutive failures calculate a 960-second base interval (60 * 2^4).
+    /// Verifies that 5 consecutive failures calculate the 900-second base ceiling.
     /// </summary>
     [Fact]
     public void CalculateBackoff_WhenFiveFailures_CalculatesNineHundredSixtySeconds()
@@ -54,14 +54,14 @@ public sealed class BackoffCalculatorTests
         var halfJitter = BackoffCalculator.CalculateBackoff(5, 0.5);
         var maxJitter = BackoffCalculator.CalculateBackoff(5, 1.0);
 
-        expectedInterval.Should().Be(TimeSpan.FromSeconds(960));
-        minJitter.Should().Be(TimeSpan.Zero);
-        halfJitter.Should().Be(TimeSpan.FromSeconds(480));
-        maxJitter.Should().Be(TimeSpan.FromSeconds(960));
+        expectedInterval.Should().Be(TimeSpan.FromSeconds(900));
+        minJitter.Should().Be(TimeSpan.FromSeconds(901));
+        halfJitter.Should().Be(TimeSpan.FromSeconds(903));
+        maxJitter.Should().Be(TimeSpan.FromSeconds(905));
     }
 
     /// <summary>
-    /// Verifies that exponential intervals increase monotonically and cap at the 3600-second ceiling.
+    /// Verifies that exponential intervals increase monotonically and cap at the 900-second ceiling.
     /// </summary>
     [Fact]
     public void CalculateExponentialInterval_IncreasesMonotonicallyAndCapsAtCeiling()
@@ -79,19 +79,19 @@ public sealed class BackoffCalculatorTests
         interval2.Should().Be(TimeSpan.FromSeconds(120));
         interval3.Should().Be(TimeSpan.FromSeconds(240));
         interval4.Should().Be(TimeSpan.FromSeconds(480));
-        interval5.Should().Be(TimeSpan.FromSeconds(960));
-        interval6.Should().Be(TimeSpan.FromSeconds(1920));
-        interval7.Should().Be(TimeSpan.FromSeconds(3600));
-        interval20.Should().Be(TimeSpan.FromSeconds(3600));
+        interval5.Should().Be(TimeSpan.FromSeconds(900));
+        interval6.Should().Be(TimeSpan.FromSeconds(900));
+        interval7.Should().Be(TimeSpan.FromSeconds(900));
+        interval20.Should().Be(TimeSpan.FromSeconds(900));
     }
 
     /// <summary>
-    /// Verifies that random jitter produces values strictly bounded between zero and the calculated exponential ceiling.
+    /// Verifies that random jitter produces values bounded one to five seconds above the calculated interval.
     /// </summary>
     [Fact]
     public void CalculateBackoff_WithRandomJitter_StaysWithinBoundsAndExhibitsVariance()
     {
-        var maxInterval = BackoffCalculator.CalculateExponentialInterval(5);
+        var baseInterval = BackoffCalculator.CalculateExponentialInterval(5);
         var random = new Random(12345);
         var minObserved = TimeSpan.MaxValue;
         var maxObserved = TimeSpan.MinValue;
@@ -100,8 +100,8 @@ public sealed class BackoffCalculatorTests
         {
             var sample = BackoffCalculator.CalculateBackoff(5, random);
 
-            sample.Should().BeGreaterThanOrEqualTo(TimeSpan.Zero);
-            sample.Should().BeLessThanOrEqualTo(maxInterval);
+            sample.Should().BeGreaterThanOrEqualTo(baseInterval.Add(TimeSpan.FromSeconds(1)));
+            sample.Should().BeLessThanOrEqualTo(baseInterval.Add(TimeSpan.FromSeconds(5)));
 
             if (sample < minObserved)
                 minObserved = sample;
@@ -120,8 +120,8 @@ public sealed class BackoffCalculatorTests
     public void BackoffCalculator_Properties_MatchExpectedLimits()
     {
         BackoffCalculator.Floor.Should().Be(TimeSpan.FromSeconds(60));
-        BackoffCalculator.Ceiling.Should().Be(TimeSpan.FromSeconds(3600));
+        BackoffCalculator.Ceiling.Should().Be(TimeSpan.FromSeconds(900));
         BackoffCalculator.MINIMUM_FLOOR.Should().Be(TimeSpan.FromSeconds(60));
-        BackoffCalculator.MAXIMUM_CEILING.Should().Be(TimeSpan.FromSeconds(3600));
+        BackoffCalculator.MAXIMUM_CEILING.Should().Be(TimeSpan.FromSeconds(900));
     }
 }

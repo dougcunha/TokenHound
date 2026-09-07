@@ -43,12 +43,12 @@ TokenHound.Core can represent Copilot's unsupported state and fractional remaind
 
 ## Work
 
-- [ ] T01.1 Add `ProviderStatus.Unsupported` and nullable `LimitWindow.RemainingValue` without changing existing provider call contracts.
-- [ ] T01.2 Add `SnapshotRetentionPolicy` and encode success replacement, stale last-good retention, and NeedsAuth/Unsupported clearing as pure decisions.
-- [ ] T01.3 Align `RateLimitPolicy` and `BackoffCalculator` with the shared 60-second floor, 900-second ceiling, positive jitter, server Retry-After floor-raising, and future deadline for zero/negative values.
-- [ ] T01.4 Preserve existing 60-second active and 300-second idle cadence behavior in `RefreshSchedulePolicy`.
-- [ ] T01.5 Add focused Core tests for optional serialization, Unsupported, RemainingValue, retention outcomes, cadence, and every Retry-After edge.
-- [ ] T01.6 Inspect the Core project references and changed files to confirm no OS, UI, HTTP, filesystem, process, or WPF dependency was introduced.
+- [x] T01.1 Add `ProviderStatus.Unsupported` and nullable `LimitWindow.RemainingValue` without changing existing provider call contracts.
+- [x] T01.2 Add `SnapshotRetentionPolicy` and encode success replacement, stale last-good retention, and NeedsAuth/Unsupported clearing as pure decisions.
+- [x] T01.3 Align `RateLimitPolicy` and `BackoffCalculator` with the shared 60-second floor, 900-second ceiling, positive jitter, server Retry-After floor-raising, and future deadline for zero/negative values.
+- [x] T01.4 Preserve existing 60-second active and 300-second idle cadence behavior in `RefreshSchedulePolicy`.
+- [x] T01.5 Add focused Core tests for optional serialization, Unsupported, RemainingValue, retention outcomes, cadence, and every Retry-After edge.
+- [x] T01.6 Inspect the Core project references and changed files to confirm no OS, UI, HTTP, filesystem, process, or WPF dependency was introduced.
 
 ## Acceptance criteria
 
@@ -90,12 +90,12 @@ TokenHound.Core can represent Copilot's unsupported state and fractional remaind
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
-- Open items: Pending execution.
+- Produced result: T01 complete. Core now exposes additive Unsupported and fractional remainder seams, pure retention decisions, and the shared 60/120/240/480/900-second deadline policy with positive one-to-five-second jitter.
+- Changed files: `src/TokenHound.Core/Models/ProviderStatus.cs`; `src/TokenHound.Core/Models/LimitWindow.cs`; `src/TokenHound.Core/Policies/BackoffCalculator.cs`; `src/TokenHound.Core/Policies/RateLimitPolicy.cs`; `src/TokenHound.Core/Policies/SnapshotRetentionPolicy.cs`; `tests/TokenHound.Core.Tests/Models/DomainModelsTests.cs`; `tests/TokenHound.Core.Tests/Policies/BackoffCalculatorTests.cs`; `tests/TokenHound.Core.Tests/Policies/RateLimitPolicyTests.cs`; `tests/TokenHound.Core.Tests/Policies/SnapshotRetentionPolicyTests.cs`.
+- Checks: `rtk dotnet restore tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --nologo --verbosity:minimal` exit 0; `rtk dotnet build tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-restore --nologo --verbosity:minimal` exit 0; `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1` exit 0 with 43 tests passed; `git diff --check` passed; Core project and dependency inspection passed.
+- Validated state: T01-owned code and tests are implemented and validated on .NET SDK 10.0.400 with native Microsoft.Testing.Platform. Existing 60-second active and 300-second idle cadence tests pass unchanged. Core has no project/package references or UI, OS, HTTP, filesystem, process, or WPF dependency.
+- Open items: None for T01. T02 may consume `SnapshotRetentionPolicy.Apply`; IP-01 remains scoped to T03's plaintext credential fallback.
 
 ### ADR candidates
 
-Pending execution. `sdd-execute-task` replaces this text with structured candidates or `None - direct TechSpec implementation or local decision`.
+None - direct TechSpec implementation or local decision.

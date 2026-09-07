@@ -42,12 +42,12 @@ UsageStore restores last-good readings and absolute Copilot deadlines, prevents 
 
 ## Work
 
-- [ ] T02.1 Create `UsageArchive` for `%LOCALAPPDATA%/TokenHound/last_readings.json` and `state.json`, loading missing state safely and preserving unrelated provider/deadline keys.
-- [ ] T02.2 Serialize archive writes, use atomic replacement, retain last successful snapshots with original `FetchedAtUtc`, and never write borrowed credentials.
-- [ ] T02.3 Integrate startup archive loading and stale conversion into UsageStore without fabricating a quota or silently clearing a future deadline.
-- [ ] T02.4 Gate every provider dispatch, including forced refresh, on current and persisted absolute deadlines; persist 429 deadlines before publishing stale results.
-- [ ] T02.5 Add `ProviderActivityChangedEventArgs`, a separate two-second activity timer, cancellation/drain behavior, and event publication without UI work on timer threads.
-- [ ] T02.6 Preserve the existing 60-second busy and 300-second idle quota cadence and add engine tests with fake providers, monitors, clocks, and archive files.
+- [x] T02.1 Create `UsageArchive` for `%LOCALAPPDATA%/TokenHound/last_readings.json` and `state.json`, loading missing state safely and preserving unrelated provider/deadline keys.
+- [x] T02.2 Serialize archive writes, use atomic replacement, retain last successful snapshots with original `FetchedAtUtc`, and never write borrowed credentials.
+- [x] T02.3 Integrate startup archive loading and stale conversion into UsageStore without fabricating a quota or silently clearing a future deadline.
+- [x] T02.4 Gate every provider dispatch, including forced refresh, on current and persisted absolute deadlines; persist 429 deadlines before publishing stale results.
+- [x] T02.5 Add `ProviderActivityChangedEventArgs`, a separate two-second activity timer, cancellation/drain behavior, and event publication without UI work on timer threads.
+- [x] T02.6 Preserve the existing 60-second busy and 300-second idle quota cadence and add engine tests with fake providers, monitors, clocks, and archive files.
 
 ## Acceptance criteria
 
@@ -70,9 +70,13 @@ UsageStore restores last-good readings and absolute Copilot deadlines, prevents 
 ## Affected files
 
 - Create: `src/TokenHound.Infrastructure/Engine/UsageArchive.cs`
+- Create: `src/TokenHound.Infrastructure/Engine/UsageArchive.Persistence.cs`
 - Create: `src/TokenHound.Infrastructure/Engine/ProviderActivityChangedEventArgs.cs`
 - Modify: `src/TokenHound.Infrastructure/Engine/UsageStore.cs`
+- Create: `src/TokenHound.Infrastructure/Engine/UsageStore.Refresh.cs`
+- Create: `src/TokenHound.Infrastructure/Engine/UsageStore.Activity.cs`
 - Modify: `src/TokenHound.Infrastructure/Engine/UsageStoreLifetime.cs`
+- Create: `src/TokenHound.Infrastructure/Engine/UsageStoreLifetime.Activity.cs`
 - Create: `tests/TokenHound.Infrastructure.Tests/Engine/UsageArchiveTests.cs`
 - Modify: `tests/TokenHound.Infrastructure.Tests/Engine/UsageStoreTests.cs`
 - Create: `tests/TokenHound.Infrastructure.Tests/Engine/UsageStoreActivityTests.cs`
@@ -86,12 +90,12 @@ UsageStore restores last-good readings and absolute Copilot deadlines, prevents 
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
-- Open items: Pending execution.
+- Produced result: T02 complete. TokenHound-owned snapshot/deadline archives, restart recovery, pre-dispatch deadline gating, and independent activity polling/event plumbing are implemented.
+- Changed files: `src/TokenHound.Infrastructure/Engine/UsageArchive.cs`; `src/TokenHound.Infrastructure/Engine/UsageArchive.Persistence.cs`; `src/TokenHound.Infrastructure/Engine/ProviderActivityChangedEventArgs.cs`; `src/TokenHound.Infrastructure/Engine/UsageStore.cs`; `src/TokenHound.Infrastructure/Engine/UsageStore.Refresh.cs`; `src/TokenHound.Infrastructure/Engine/UsageStore.Activity.cs`; `src/TokenHound.Infrastructure/Engine/UsageStoreLifetime.cs`; `tests/TokenHound.Infrastructure.Tests/Engine/UsageArchiveTests.cs`; `tests/TokenHound.Infrastructure.Tests/Engine/UsageStoreTests.cs`; `tests/TokenHound.Infrastructure.Tests/Engine/UsageStoreActivityTests.cs`.
+- Checks: Infrastructure build exit 0 with the pre-existing NU1903 and xUnit1051 advisories; current Core build/test remained green at 43 tests; current full Infrastructure test project passed with 324 tests; focused UsageStore and archive/activity runs passed; `git diff --check` passed.
+- Validated state: Missing archives are safe, malformed state exposes `ArchiveErrorDescription`, writes are serialized/atomic, unrelated state keys survive, archived readings restore as stale with original timestamps, future persisted deadlines block forced refresh after restart, NeedsAuth clears archive history, and activity failures publish idle/null. Quota refresh cadence remains 60 seconds active and 300 seconds idle.
+- Open items: None for T02. T03 and T04 are complete; the provider's IP-01 plaintext Copilot CLI fallback gap remains recorded in T03.
 
 ### ADR candidates
 
-Pending execution. `sdd-execute-task` replaces this text with structured candidates or `None - direct TechSpec implementation or local decision`.
+None - direct TechSpec implementation or local decision.

@@ -112,6 +112,7 @@ The coordinator must present techspec.md for technical approval. The decision co
 - The reassigned Epicurus handle (`01a07d09-bf7c-7663-a09e-a82d487b1ce4`) was also stopped after extended inactivity and produced no task artifacts or partial diff. A completed planner may be reused for the next attempt.
 - The reused Hubble handle (`01a07ca0-4798-7a60-a1cc-6c73c6b17364`) was stopped after the same no-output condition and produced no task artifacts or partial diff.
 - Three delegated planning attempts produced no writer output. The coordinator therefore assumes the authorized task-planning stage locally, using the same PRD, TechSpec, templates, scope, IP-01 condition, and validation policy; this changes execution ownership only, not the approved contract.
+- The first delegated implementation attempt for T01, Lorentz (`01a07d1a-54b3-7943-815d-0fed228b5e9a`), also produced no source/test diff or handoff and was stopped after reconciliation. The coordinator assumes T01 locally under the existing exclusive task scope; no other implementation task is active.
 
 ## Task planning handoff
 
@@ -124,3 +125,72 @@ The coordinator must present techspec.md for technical approval. The decision co
 - Validation: project-scoped native MTP commands use `--minimum-expected-tests 1`; the WPF app is built separately; desktop E2E is omitted.
 - Open items: IP-01 and the six explicit HIL1 deferrals remain unchanged. T03 must stop with a concrete gap if the sanitized plaintext fixture cannot be obtained.
 - Next authorization: DEC-0004 already authorizes implementation within this plan; task-level execution must use the manifest and one exclusive executor per eligible task.
+
+## T01 implementation handoff
+
+- Agent: coordinator, after reconciling the inactive delegated T01 attempt.
+- Result: complete; no product, architecture, or validation scope was added.
+- Delivery: Core model and policy seams, pure snapshot retention, and focused Core tests are implemented under T01 ownership.
+- Validation: .NET SDK 10.0.400 native Microsoft.Testing.Platform; Core build exit 0; 43 Core tests passed with `--minimum-expected-tests 1`; `git diff --check` passed; Core dependency inspection found no external references.
+- Changed files: the nine T01-owned source/test files listed in `task_01.md`; no T02 or later implementation files were changed.
+- Decision: `None - direct TechSpec implementation or local decision`; the retention result preserves a visible NeedsAuth/Unsupported current snapshot while marking archive history for clearing.
+- Next action: execute T02 with exclusive ownership of its listed archive, UsageStore, and Infrastructure engine test files.
+
+## T02 implementation handoff
+
+- Agent: coordinator, after local execution under the T02 exclusive scope.
+- Result: complete; no product, architecture, or validation scope was added.
+- Delivery: TokenHound-owned JSON archive, serialized atomic writes, startup stale recovery, durable deadline gate, independent activity timer, and `ActivityUpdated` event args.
+- Validation: Core 43 tests passed; Infrastructure build exit 0; all 283 Infrastructure tests passed with the native MTP minimum-test guard; `git diff --check` passed. The restore/build output retains the pre-existing NU1903 SQLite package advisory.
+- Changed files: the T02-owned source/test files listed in `task_02.md`, including `UsageArchive.Persistence.cs`, `UsageStore.Refresh.cs`, and `UsageStore.Activity.cs`; no provider, activity-monitor heuristic, App, or WPF files were changed.
+- Decision: `None - direct TechSpec implementation or local decision`; an optional archive injection keeps existing in-memory UsageStore callers side-effect free while the App composition root can provide the TokenHound archive. Partial files keep each implementation file within the repository's 300-line limit without changing the class contract.
+- Next action: execute T04 now; execute T03 only after IP-01 fixture evidence is resolved or its acceptance gap is explicitly recorded.
+
+## T04 implementation handoff
+
+- Agent: coordinator, after local execution under the T04 exclusive scope.
+- Result: complete; no product, architecture, or validation scope was added.
+- Delivery: Copilot activity monitor, shared timestamp reads, 120 ms watcher debounce, qualifying host detector, and injected deterministic tests.
+- Validation: focused T04 tests passed (4 activity, 5 process-host); complete Infrastructure validation passed with 292 tests; build exit 0; `git diff --check` passed. The only build warnings are the pre-existing NU1903 SQLite advisory.
+- Changed files: the four T04-owned source/test files listed in `task_04.md`; no provider HTTP, credential, UsageStore, App, or WPF files were changed.
+- Decision: `None - direct TechSpec implementation or local decision`; Code.exe is accepted only with a supported GitHub Copilot extension directory, while copilot and gh qualify directly.
+- Next action: resolve IP-01 in an isolated Copilot CLI home before executing T03; if no sanitized official plaintext fixture can be obtained, record the concrete acceptance gap and leave that fallback unavailable.
+
+## T03 implementation handoff
+
+- Agent: coordinator, after local execution with the explicit IP-01 gap recorded.
+- Result: complete with one scoped acceptance gap; no product or architecture scope was added.
+- Delivery: Copilot credential precedence, validated keychain target derivation, disabled-by-default unverified config fallback, bounded HTTP client, open-map parser, status/overage mapping, and provider tests.
+- Validation: Infrastructure build exit 0; Copilot-focused tests passed with 37 tests; the then-current full Infrastructure suite passed with 320 tests; current integrated validation passes with 324 Infrastructure tests; `git diff --check` passed. No live endpoint or real token was used.
+- Changed files: the ten T03-owned provider source files, including `CopilotConfigReader.Models.cs`, and the seven Copilot test files listed in `task_03.md`.
+- Decision: `None - direct TechSpec implementation`; IP-01 is an explicit prerequisite gap, not an architectural decision.
+- Open item: the official CLI plaintext token property remains unverified. `CopilotConfigReader` accepts a token only when a caller supplies an explicit verified property path, so the default fallback remains unavailable and must not be enabled by guessing.
+- Next action: execute T05, then T06 integrated validation.
+
+## T05 implementation handoff
+
+- Agent: coordinator, after local execution under the T05 exclusive scope.
+- Result: complete; no provider-specific HUD or deferred product decision was added.
+- Delivery: App composition registration for Copilot provider/monitor and TokenHound archive, ActivityUpdated routing through the existing dispatcher/ring, generic Unsupported/ActiveBlock presentation, and disposal ownership.
+- Validation: Core build exit 0 and 43 tests passed; Infrastructure build exit 0 with pre-existing NU1903 advisory and 324 tests passed; App build exit 0 with the same advisory; Copilot and UsageStore filters each passed with 24 tests; `git diff --check` passed. Desktop E2E was omitted by policy.
+- Changed files: `src/TokenHound.App/App.xaml.cs`; `src/TokenHound.App/ViewModels/NotchViewModel.cs`; `src/TokenHound.App/ViewModels/ProviderRingViewModel.cs`; `tests/TokenHound.Infrastructure.Tests/ViewModels/NotchViewModelTests.cs`; `tests/TokenHound.Infrastructure.Tests/ViewModels/ProviderRingViewModelTests.cs`.
+- Validated state: `NotchWindow.xaml.cs` and `WindowStyles.cs` have no diff, preserving WM_MOUSEACTIVATE/MA_NOACTIVATE, WS_EX_NOACTIVATE, click-through geometry, and SWP_NOZORDER behavior. Existing provider paths remain source-compatible.
+- Open items: T06 manual Windows MCP evidence is not available in this session and remains essential for completion. IP-01 and HIL1-01 through HIL1-06 remain open as documented.
+- Next action: execute T06 automated integrated checks and record the manual-validation limitation without claiming completion.
+
+## T06 integrated validation handoff
+
+- Agent: coordinator, after local integrated validation and code review preparation.
+- Result: automated validation and static integration review complete; T06 remains incomplete because the essential Windows MCP/manual acceptance route is unavailable in this session.
+- Validation: Core build exit 0 and 43 tests passed; Infrastructure build exit 0 with the pre-existing NU1903 SQLite and xUnit1051 advisories; App build exit 0 with the pre-existing NU1903 advisory; Copilot filter passed with 37 tests; UsageStore filter passed with 24 tests; full Infrastructure tests passed with 324 tests; `git diff --check` passed. No E2E target or aggregate desktop automation was run.
+- Coverage: Core purity, credential ownership, project scope, App registration/disposal, ActivityUpdated routing, generic presentation, and unchanged WM_MOUSEACTIVATE/SWP_NOZORDER code were statically reviewed. The code review is `codereview_001/codereview.md`.
+- Open items: T06.5 App launch/Screenshot display `[2]`, T06.6 approved-session Busy/Idle transition, and T06.7 foreground focus/drag confirmation are not verifiable without Windows MCP tools. IP-01 remains the explicitly reported plaintext-config fallback gap. These essential items prevent approval.
+- Next action: provide the Windows MCP route and an approved existing Copilot session, then rerun only T06.5 through T06.7 and the review status decision.
+
+## T06 review handoff
+
+- Review: `codereview_001/codereview.md`.
+- Status: REJECTED, based only on essential unverified acceptance, not on an automated build or test failure.
+- Findings: `CR-01` covers unavailable Windows MCP manual evidence; `CR-02` covers the explicitly documented IP-01 plaintext-config fallback gap.
+- Automated evidence: Core 43 tests, Copilot 37 tests, UsageStore 24 tests, and full Infrastructure 324 tests passed; Core, Infrastructure, and App builds passed; final `git diff HEAD --check` is clean.
+- Required next step: execute T06.5 through T06.7 through the required Windows MCP App/Screenshot route and resolve IP-01 with sanitized official fixture evidence before requesting re-review.

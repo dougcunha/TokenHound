@@ -37,6 +37,7 @@ public sealed class NotchViewModel : INotifyPropertyChanged, IDisposable
         _mockProvider = mockProvider;
 
         _usageStore.SnapshotUpdated += OnSnapshotUpdated;
+        _usageStore.ActivityUpdated += OnActivityUpdated;
 
         foreach (var snapshot in _usageStore.CurrentSnapshots.Values)
         {
@@ -89,6 +90,7 @@ public sealed class NotchViewModel : INotifyPropertyChanged, IDisposable
 
         _disposed = true;
         _usageStore.SnapshotUpdated -= OnSnapshotUpdated;
+        _usageStore.ActivityUpdated -= OnActivityUpdated;
     }
 
     private void OnSnapshotUpdated(object? sender, Snapshot snapshot)
@@ -101,6 +103,19 @@ public sealed class NotchViewModel : INotifyPropertyChanged, IDisposable
 
             if (_mockProvider is not null && snapshot.Status == ProviderStatus.NeedsAuth && !_isFallbackActive)
                 LoadMockFallback();
+        });
+    }
+
+    private void OnActivityUpdated(
+        object? sender,
+        ProviderActivityChangedEventArgs args)
+    {
+        _uiDispatcher(() =>
+        {
+            var ring = Rings.FirstOrDefault(r =>
+                string.Equals(r.ProviderId, args.ProviderId, StringComparison.OrdinalIgnoreCase));
+
+            ring?.UpdateActivity(args.AgentSession);
         });
     }
 

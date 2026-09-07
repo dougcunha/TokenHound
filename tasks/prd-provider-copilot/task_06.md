@@ -41,10 +41,10 @@ The integrated Copilot feature has project-scoped automated evidence, an App com
 
 ## Work
 
-- [ ] T06.1 Confirm restore assets are valid; restore only affected projects when assets are missing or package references changed.
-- [ ] T06.2 Build Core tests, Infrastructure tests, and the WPF App separately with the exact no-restore commands from the TechSpec; preserve each exit code.
-- [ ] T06.3 Run Core tests and the Infrastructure Copilot/UsageStore filters with native MTP and `--minimum-expected-tests 1`; record executed counts and stdout failures.
-- [ ] T06.4 Review the integrated diff against PRD/TechSpec and confirm no E2E target entered an aggregate command, no Core dependency was added, and no credential-owned file changed.
+- [x] T06.1 Confirm restore assets are valid; restore only affected projects when assets are missing or package references changed.
+- [x] T06.2 Build Core tests, Infrastructure tests, and the WPF App separately with the exact no-restore commands from the TechSpec; preserve each exit code.
+- [x] T06.3 Run Core tests and the Infrastructure Copilot/UsageStore filters with native MTP and `--minimum-expected-tests 1`; record executed counts and stdout failures.
+- [x] T06.4 Review the integrated diff against PRD/TechSpec and confirm no E2E target entered an aggregate command, no Core dependency was added, and no credential-owned file changed.
 - [ ] T06.5 Launch `TokenHound.App` through Windows MCP App with `mode="launch_executable"`, inspect the primary monitor with Screenshot `display: [2]`, and record the Copilot ring/status/activity result.
 - [ ] T06.6 Exercise a local Copilot session with an approved existing auth state; confirm recent qualifying write plus host is Busy, freshness/host loss returns Idle, and quota refresh cadence remains unchanged.
 - [ ] T06.7 Click and drag the Notch while another application is foreground; confirm focus remains with that application. Record any manual limitation without masking it.
@@ -81,12 +81,12 @@ The integrated Copilot feature has project-scoped automated evidence, an App com
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
-- Open items: Pending execution.
+- Produced result: T06 automated validation and integrated review complete, but T06 remains incomplete because essential Windows MCP/manual acceptance could not be executed in this session.
+- Changed files: None for product code. Validation evidence is recorded here and in `codereview_001/codereview.md`; task artifacts were updated by the coordinator.
+- Checks: Core build exit 0; Infrastructure build exit 0 with pre-existing NU1903 SQLite and xUnit1051 advisories; App build exit 0 with pre-existing NU1903 advisory; Core tests passed with 43 tests; Copilot filter passed with 37 tests; UsageStore filter passed with 24 tests; full Infrastructure tests passed with 324 tests; `git diff --check` passed. No desktop E2E command was run.
+- Validated state: Native Microsoft.Testing.Platform on .NET SDK 10.0.400; Core remains dependency-pure; project-scoped automated coverage and source review found no credential-owned file changes. The App composition and unchanged non-activating window code are verified statically and by App compilation.
+- Open items: Essential manual checks T06.5 through T06.7 remain not verifiable because Windows MCP App/Screenshot tools are unavailable: App launch and Screenshot display `[2]`, Busy/Idle transition with an approved existing Copilot session, and foreground focus/drag behavior. IP-01 remains the explicit unverified plaintext-config fallback gap. These items prevent feature completion/review approval.
 
 ### ADR candidates
 
-Pending execution. `sdd-execute-task` replaces this text with structured candidates or `None - direct TechSpec implementation or local decision`.
+None - direct TechSpec implementation or local decision; missing Windows MCP is an environment limitation, not an architectural decision.

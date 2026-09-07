@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generation": 14,
+  "generation": 16,
   "feature": "provider-copilot",
   "workspace": "C:\\Users\\Admin\\.herdr\\worktrees\\TokenHound\\copilot-provider",
-  "phase": "plan-project",
+  "phase": "implementation",
   "status": "active",
   "safe_to_stop": false,
   "owner_session": null,
@@ -19,7 +19,7 @@
     "workflow": "workflow.md",
     "prd": "prd.md",
     "techspec": "techspec.md",
-    "tasks": null,
+    "tasks": "tasks.md",
     "review": null
   },
   "review_status": null,
@@ -62,14 +62,22 @@
   ],
   "git_base": "5b7622a2586794c193aa140c2064c47faa52fa55",
   "worktree_evidence": "tasks/prd-provider-copilot/workflow.md#reconciliation",
-  "active_work": [],
+  "active_work": [
+    {
+      "kind": "task-execution",
+      "handle": "01a07d1a-54b3-7943-815d-0fed228b5e9a",
+      "owner": "Lorentz",
+      "scope": "T01 Core models/policies and Core tests; task_01.md handoff only",
+      "state": "running"
+    }
+  ],
   "pending_hil": null,
   "blockers": [],
   "correction_round": 0,
   "rounds_without_progress": 0,
   "next_action": {
-    "kind": "validate",
-    "instruction": "Complete the authorized provider-copilot task DAG locally using the approved PRD, revised TechSpec, task templates, IP-01 condition, and exclusive task-artifact scope; validate coverage and links before scheduling implementation.",
+    "kind": "delegate",
+    "instruction": "Execute the first eligible task T01 through sdd-execute-task with exclusive ownership; review its handoff and diff before scheduling T02.",
     "read": [
       {
         "path": "tasks/prd-provider-copilot/prd.md",

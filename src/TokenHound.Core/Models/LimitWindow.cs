@@ -29,6 +29,11 @@ public sealed record LimitWindow
     public long? RemainingUnits { get; init; }
 
     /// <summary>
+    /// Gets the exact fractional number of remaining units, if the provider reports one.
+    /// </summary>
+    public double? RemainingValue { get; init; }
+
+    /// <summary>
     /// Gets the total capacity or maximum units for the window, if known.
     /// </summary>
     public long? TotalUnits { get; init; }

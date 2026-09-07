@@ -106,12 +106,12 @@ T03 and T04 are independent after T02 and have disjoint source and test ownershi
 
 ## State
 
-- [ ] T01 - pending
-- [ ] T02 - pending
-- [ ] T03 - pending
-- [ ] T04 - pending
-- [ ] T05 - pending
-- [ ] T06 - pending
+- [x] T01 - complete
+- [x] T02 - complete
+- [x] T03 - complete with IP-01 acceptance gap recorded
+- [x] T04 - complete
+- [x] T05 - complete
+- [ ] T06 - incomplete, manual Windows MCP acceptance pending
 
 ## Problems and solutions
 

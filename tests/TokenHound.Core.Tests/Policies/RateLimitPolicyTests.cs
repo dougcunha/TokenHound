@@ -52,7 +52,7 @@ public sealed class RateLimitPolicyTests
     }
 
     /// <summary>
-    /// Verifies that Retry-After values less than 60 seconds (including 0 and negatives) are elevated to the 60-second minimum floor.
+    /// Verifies that Retry-After values less than 60 seconds (including 0 and negatives) retain the floor and positive jitter.
     /// </summary>
     [Fact]
     public void CalculateDeadline_WhenRetryAfterIsBelowSixty_EnforcesSixtySecondFloor()
@@ -78,13 +78,13 @@ public sealed class RateLimitPolicyTests
             1.0
         );
 
-        deadlineZero.Should().Be(BASE_TIME.AddSeconds(60));
-        deadlineNegative.Should().Be(BASE_TIME.AddSeconds(60));
-        deadlineThirty.Should().Be(BASE_TIME.AddSeconds(60));
+        deadlineZero.Should().Be(BASE_TIME.AddSeconds(65));
+        deadlineNegative.Should().Be(BASE_TIME.AddSeconds(65));
+        deadlineThirty.Should().Be(BASE_TIME.AddSeconds(65));
     }
 
     /// <summary>
-    /// Verifies that Retry-After values exceeding 60 seconds are preserved exactly.
+    /// Verifies that Retry-After values above the floor are raised by positive jitter.
     /// </summary>
     [Fact]
     public void CalculateDeadline_WhenRetryAfterExceedsSixty_PreservesProvidedSeconds()
@@ -96,7 +96,7 @@ public sealed class RateLimitPolicyTests
             1.0
         );
 
-        deadline.Should().Be(BASE_TIME.AddSeconds(180));
+        deadline.Should().Be(BASE_TIME.AddSeconds(185));
     }
 
     /// <summary>
@@ -127,8 +127,8 @@ public sealed class RateLimitPolicyTests
         );
 
         zeroFailuresDeadline.Should().Be(BASE_TIME);
-        oneFailureDeadline.Should().Be(BASE_TIME.AddSeconds(60));
-        fiveFailuresDeadline.Should().Be(BASE_TIME.AddSeconds(960));
+        oneFailureDeadline.Should().Be(BASE_TIME.AddSeconds(65));
+        fiveFailuresDeadline.Should().Be(BASE_TIME.AddSeconds(905));
     }
 
     /// <summary>
@@ -146,8 +146,8 @@ public sealed class RateLimitPolicyTests
             random
         );
 
-        deadline.Should().BeOnOrAfter(BASE_TIME);
-        deadline.Should().BeOnOrBefore(BASE_TIME.AddSeconds(60));
+        deadline.Should().BeOnOrAfter(BASE_TIME.AddSeconds(61));
+        deadline.Should().BeOnOrBefore(BASE_TIME.AddSeconds(65));
     }
 
     /// <summary>
@@ -157,5 +157,38 @@ public sealed class RateLimitPolicyTests
     public void RateLimitPolicy_Constants_MatchExpected()
     {
         RateLimitPolicy.MINIMUM_RETRY_FLOOR.Should().Be(TimeSpan.FromSeconds(60));
+        RateLimitPolicy.MAXIMUM_RETRY_CEILING.Should().Be(TimeSpan.FromSeconds(900));
+    }
+
+    /// <summary>
+    /// Verifies that the calculated exponential interval remains the lower bound for server values.
+    /// </summary>
+    [Fact]
+    public void CalculateDeadline_WhenServerValueIsLowerThanBackoff_UsesBackoffFloor()
+    {
+        var deadline = RateLimitPolicy.CalculateDeadline(
+            BASE_TIME,
+            30,
+            3,
+            0.0
+        );
+
+        deadline.Should().Be(BASE_TIME.AddSeconds(241));
+    }
+
+    /// <summary>
+    /// Verifies that server values above the ceiling cannot extend the base wait beyond the shared cap.
+    /// </summary>
+    [Fact]
+    public void CalculateDeadline_WhenServerValueExceedsCeiling_UsesCeilingBeforeJitter()
+    {
+        var deadline = RateLimitPolicy.CalculateDeadline(
+            BASE_TIME,
+            2_000,
+            1,
+            0.0
+        );
+
+        deadline.Should().Be(BASE_TIME.AddSeconds(901));
     }
 }
