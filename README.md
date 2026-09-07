@@ -122,6 +122,8 @@ For in-depth specifications and implementation guides, explore the `docs/` folde
 
 TokenHound was inspired by [codenotch](https://github.com/vinzdg/codenotch), a macOS notch-based monitor for AI coding tools. TokenHound is an independent implementation built from scratch for Windows 11.
 
+The monochrome provider marks in `src/TokenHound.App/Assets/Logos/ProviderGlyphs.xaml` (Claude, Codex, Cursor, Antigravity, GLM and Perplexity) are ported from codenotch's `GlyphOutline`, used under its MIT license.
+
 ---
 
 ## License

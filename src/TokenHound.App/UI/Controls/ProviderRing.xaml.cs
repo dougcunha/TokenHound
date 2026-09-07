@@ -1,4 +1,3 @@
-using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -12,9 +11,7 @@ namespace TokenHound.App.UI.Controls;
 /// </summary>
 public sealed partial class ProviderRing : UserControl
 {
-    private const double CENTER_X = 22.0;
-    private const double CENTER_Y = 22.0;
-    private const double RADIUS = 18.0;
+    private const double BASE_GLYPH_SIZE = 18.0;
 
     private static readonly SolidColorBrush GREEN_BRUSH = CreateFrozenBrush(0x10, 0xB9, 0x81);
     private static readonly SolidColorBrush AMBER_BRUSH = CreateFrozenBrush(0xF5, 0x9E, 0x0B);
@@ -44,13 +41,22 @@ public sealed partial class ProviderRing : UserControl
             new PropertyMetadata(string.Empty, OnBadgePropertyChanged)
         );
 
-    /// <summary>Identifies the <see cref="LogoSource"/> dependency property.</summary>
-    public static readonly DependencyProperty LogoSourceProperty =
+    /// <summary>Identifies the <see cref="GlyphKey"/> dependency property.</summary>
+    public static readonly DependencyProperty GlyphKeyProperty =
         DependencyProperty.Register(
-            nameof(LogoSource),
+            nameof(GlyphKey),
             typeof(string),
             typeof(ProviderRing),
-            new PropertyMetadata(null, OnLogoPropertyChanged)
+            new PropertyMetadata(null, OnGlyphPropertyChanged)
+        );
+
+    /// <summary>Identifies the <see cref="GlyphScale"/> dependency property.</summary>
+    public static readonly DependencyProperty GlyphScaleProperty =
+        DependencyProperty.Register(
+            nameof(GlyphScale),
+            typeof(double),
+            typeof(ProviderRing),
+            new PropertyMetadata(1.0, OnGlyphPropertyChanged)
         );
 
     /// <summary>Identifies the <see cref="Status"/> dependency property.</summary>
@@ -78,7 +84,7 @@ public sealed partial class ProviderRing : UserControl
         InitializeComponent();
         _pulseStoryboard = TryFindResource("PulseStoryboard") as Storyboard;
         UpdateVisuals();
-        UpdateLogoVisuals();
+        UpdateGlyphVisuals();
     }
 
     /// <summary>Gets or sets the quota utilization fraction (0.0 to 1.0), or null if unmeasured.</summary>
@@ -99,13 +105,22 @@ public sealed partial class ProviderRing : UserControl
             => SetValue(ProviderBadgeProperty, value);
     }
 
-    /// <summary>Gets or sets the pack URI for the provider logo image, or null to display text badge.</summary>
-    public string? LogoSource
+    /// <summary>Gets or sets the resource key of the provider vector mark, or null to display the text badge.</summary>
+    public string? GlyphKey
     {
         get
-            => (string?)GetValue(LogoSourceProperty);
+            => (string?)GetValue(GlyphKeyProperty);
         set
-            => SetValue(LogoSourceProperty, value);
+            => SetValue(GlyphKeyProperty, value);
+    }
+
+    /// <summary>Gets or sets the optical size multiplier applied to the provider vector mark.</summary>
+    public double GlyphScale
+    {
+        get
+            => (double)GetValue(GlyphScaleProperty);
+        set
+            => SetValue(GlyphScaleProperty, value);
     }
 
     /// <summary>Gets or sets the operational and health status of the provider.</summary>
@@ -143,12 +158,12 @@ public sealed partial class ProviderRing : UserControl
         }
     }
 
-    private static void OnLogoPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnGlyphPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
 
         if (d is ProviderRing ring)
         {
-            ring.UpdateLogoVisuals();
+            ring.UpdateGlyphVisuals();
             ring.UpdateBusyIndicator();
         }
     }
@@ -160,12 +175,17 @@ public sealed partial class ProviderRing : UserControl
             ring.UpdateBusyIndicator();
     }
 
-    private void UpdateLogoVisuals()
+    private void UpdateGlyphVisuals()
     {
 
-        var hasLogo = !string.IsNullOrWhiteSpace(LogoSource);
-        LogoImage.Visibility = hasLogo ? Visibility.Visible : Visibility.Collapsed;
-        BadgeTextBlock.Visibility = hasLogo ? Visibility.Collapsed : Visibility.Visible;
+        var geometry = string.IsNullOrWhiteSpace(GlyphKey) ? null : TryFindResource(GlyphKey) as Geometry;
+        var size = BASE_GLYPH_SIZE * (GlyphScale > 0.0 ? GlyphScale : 1.0);
+
+        GlyphPath.Data = geometry;
+        GlyphPath.Width = size;
+        GlyphPath.Height = size;
+        GlyphPath.Visibility = geometry is null ? Visibility.Collapsed : Visibility.Visible;
+        BadgeTextBlock.Visibility = geometry is null ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void UpdateVisuals()
@@ -177,7 +197,7 @@ public sealed partial class ProviderRing : UserControl
 
         if (UsedFraction.HasValue && UsedFraction.Value > 0.0)
         {
-            ArcProgressPath.Data = CreateArcGeometry(UsedFraction.Value);
+            ArcProgressPath.Data = RingArcGeometry.Create(UsedFraction.Value);
             ArcProgressPath.Stroke = brush;
             ArcProgressPath.Visibility = Visibility.Visible;
             StatusDot.Visibility = Visibility.Collapsed;
@@ -209,7 +229,7 @@ public sealed partial class ProviderRing : UserControl
 
         BusyIndicator.Visibility = Visibility.Visible;
 
-        if (string.IsNullOrWhiteSpace(ProviderBadge) && string.IsNullOrWhiteSpace(LogoSource))
+        if (string.IsNullOrWhiteSpace(ProviderBadge) && GlyphPath.Data is null)
         {
             BusyIndicator.VerticalAlignment = VerticalAlignment.Center;
             BusyIndicator.Margin = new Thickness(0);
@@ -221,41 +241,6 @@ public sealed partial class ProviderRing : UserControl
         }
 
         _pulseStoryboard?.Begin(this, true);
-    }
-
-    private static Geometry? CreateArcGeometry(double fraction)
-    {
-
-        if (fraction <= 0.0001)
-            return null;
-
-        var clamped = Math.Min(fraction, 1.0);
-        var angle = clamped >= 0.9999 ? 359.99 : clamped * 360.0;
-        var radians = angle * Math.PI / 180.0;
-        var endX = CENTER_X + RADIUS * Math.Sin(radians);
-        var endY = CENTER_Y - RADIUS * Math.Cos(radians);
-
-        var segment = new ArcSegment
-        {
-            Point = new Point(endX, endY),
-            Size = new Size(RADIUS, RADIUS),
-            RotationAngle = 0.0,
-            IsLargeArc = angle > 180.0,
-            SweepDirection = SweepDirection.Clockwise,
-            IsStroked = true
-        };
-
-        var figure = new PathFigure
-        {
-            StartPoint = new Point(CENTER_X, CENTER_Y - RADIUS),
-            Segments = [segment],
-            IsClosed = false
-        };
-
-        var geometry = new PathGeometry([figure]);
-        geometry.Freeze();
-
-        return geometry;
     }
 
     private static SolidColorBrush ResolveStatusBrush(

@@ -1,8 +1,6 @@
-using System;
-
 namespace TokenHound.App.ViewModels;
 
-/// <summary>Provides catalog lookup for known AI providers, including display names, badges, and logo resources.</summary>
+/// <summary>Provides catalog lookup for known AI providers, including display names, badges, and glyph marks.</summary>
 internal static class ProviderCatalog
 {
     private const string DEFAULT_CLAUDE_NAME = "Claude Code";
@@ -46,20 +44,41 @@ internal static class ProviderCatalog
             _ => providerId.Length > 0 ? providerId[..1].ToUpperInvariant() : "?"
         };
 
-    /// <summary>Resolves the pack URI for the official provider logo resource.</summary>
+    /// <summary>Resolves the resource key of the monochrome vector mark for a given provider identifier.</summary>
     /// <param name="providerId">The unique identifier of the provider.</param>
-    /// <returns>The WPF pack URI to the embedded PNG asset, or null if no logo is available.</returns>
-    public static string? ResolveLogoSource(string providerId)
+    /// <returns>The key into <c>Assets/Logos/ProviderGlyphs.xaml</c>, or null if no mark is available.</returns>
+    public static string? ResolveGlyphKey(string providerId)
         => providerId.ToLowerInvariant() switch
         {
-            "claude" => "pack://application:,,,/TokenHound.App;component/Assets/Logos/claude.png",
-            "gemini" or "antigravity" => "pack://application:,,,/TokenHound.App;component/Assets/Logos/antigravity.png",
-            "codex" => "pack://application:,,,/TokenHound.App;component/Assets/Logos/codex.png",
-            "cursor" => "pack://application:,,,/TokenHound.App;component/Assets/Logos/cursor.png",
-            "copilot" => "pack://application:,,,/TokenHound.App;component/Assets/Logos/copilot.png",
-            "glm" => "pack://application:,,,/TokenHound.App;component/Assets/Logos/glm.png",
-            "grok" => "pack://application:,,,/TokenHound.App;component/Assets/Logos/grok.png",
-            "perplexity" => "pack://application:,,,/TokenHound.App;component/Assets/Logos/perplexity.png",
+            "claude" => "Glyph.Claude",
+            "gemini" or "antigravity" => "Glyph.Antigravity",
+            "codex" => "Glyph.Codex",
+            "cursor" => "Glyph.Cursor",
+            "copilot" => "Glyph.Copilot",
+            "glm" => "Glyph.Glm",
+            "grok" => "Glyph.Grok",
+            "perplexity" => "Glyph.Perplexity",
             _ => null
+        };
+
+    /// <summary>Resolves the optical size multiplier that evens out the ink extent of a provider mark.</summary>
+    /// <remarks>
+    /// Marks normalized into the same box are not marks of equal size: a thin spark reads smaller than a
+    /// solid knot. Each factor brings the glyph's ink to the same extent as the Claude mark.
+    /// </remarks>
+    /// <param name="providerId">The unique identifier of the provider.</param>
+    /// <returns>The multiplier applied to the base glyph size.</returns>
+    public static double ResolveGlyphScale(string providerId)
+        => providerId.ToLowerInvariant() switch
+        {
+            "claude" => 0.9676,
+            "gemini" or "antigravity" => 1.0,
+            "codex" => 0.9748,
+            "cursor" => 0.9699,
+            "copilot" => 1.0,
+            "glm" => 0.95,
+            "grok" => 1.0,
+            "perplexity" => 1.0344,
+            _ => 1.0
         };
 }

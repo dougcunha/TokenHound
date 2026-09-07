@@ -42,7 +42,8 @@
                     <DataTemplate>
                         <controls:ProviderRing UsedFraction="{Binding UsedFraction}"
                                                ProviderBadge="{Binding ProviderBadge}"
-                                               LogoSource="{Binding LogoSource}"
+                                               GlyphKey="{Binding GlyphKey}"
+                                               GlyphScale="{Binding GlyphScale}"
                                                Status="{Binding Status}"
                                                IsBusy="{Binding IsBusy}"
                                                Margin="3,0" />

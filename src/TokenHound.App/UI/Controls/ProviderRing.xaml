@@ -74,14 +74,14 @@
                    HorizontalAlignment="Center"
                    VerticalAlignment="Center" />
 
-        <Image x:Name="LogoImage"
-               Source="{Binding LogoSource, RelativeSource={RelativeSource AncestorType=UserControl}}"
-               Width="18"
-               Height="18"
-               RenderOptions.BitmapScalingMode="HighQuality"
-               HorizontalAlignment="Center"
-               VerticalAlignment="Center"
-               Visibility="Collapsed" />
+        <Path x:Name="GlyphPath"
+              Fill="#F4F4F5"
+              Stretch="Uniform"
+              Width="18"
+              Height="18"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center"
+              Visibility="Collapsed" />
 
         <Ellipse x:Name="StatusDot"
                  Width="6"

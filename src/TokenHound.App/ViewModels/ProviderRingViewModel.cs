@@ -11,7 +11,8 @@ namespace TokenHound.App.ViewModels;
 public sealed class ProviderRingViewModel : INotifyPropertyChanged
 {
     private readonly string _providerId;
-    private readonly string? _logoSource;
+    private readonly string? _glyphKey;
+    private readonly double _glyphScale;
     private string _providerName;
     private string _providerBadge;
     private double? _usedFraction;
@@ -28,12 +29,12 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
     /// <param name="providerId">The unique identifier of the provider.</param>
     /// <param name="providerName">Optional display name, or null for default.</param>
     /// <param name="providerBadge">Optional badge glyph, or null for default.</param>
-    /// <param name="logoSource">Optional pack URI for provider logo, or null for default.</param>
+    /// <param name="glyphKey">Optional resource key for the provider mark, or null for default.</param>
     public ProviderRingViewModel(
         string providerId,
         string? providerName = null,
         string? providerBadge = null,
-        string? logoSource = null)
+        string? glyphKey = null)
     {
 
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
@@ -41,7 +42,8 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
         _providerId = providerId;
         _providerName = providerName ?? ProviderCatalog.ResolveDefaultName(providerId);
         _providerBadge = providerBadge ?? ProviderCatalog.ResolveDefaultBadge(providerId);
-        _logoSource = logoSource ?? ProviderCatalog.ResolveLogoSource(providerId);
+        _glyphKey = glyphKey ?? ProviderCatalog.ResolveGlyphKey(providerId);
+        _glyphScale = ProviderCatalog.ResolveGlyphScale(providerId);
         _status = ProviderStatus.Ok;
     }
 
@@ -70,9 +72,13 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
             => SetProperty(ref _providerBadge, value);
     }
 
-    /// <summary>Gets the pack URI for the provider logo image, or null to display text badge.</summary>
-    public string? LogoSource
-        => _logoSource;
+    /// <summary>Gets the resource key of the provider vector mark, or null to display the text badge.</summary>
+    public string? GlyphKey
+        => _glyphKey;
+
+    /// <summary>Gets the optical size multiplier applied to the provider vector mark.</summary>
+    public double GlyphScale
+        => _glyphScale;
 
     /// <summary>Gets or sets the primary quota utilization fraction (0.0 to 1.0), or null if unmeasured.</summary>
     public double? UsedFraction

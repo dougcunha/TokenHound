@@ -5,53 +5,54 @@ using Xunit;
 
 namespace TokenHound.Infrastructure.Tests.ViewModels;
 
-/// <summary>Verifies that <see cref="ProviderRingViewModel"/> correctly resolves logos, badges, and names.</summary>
+/// <summary>Verifies that <see cref="ProviderRingViewModel"/> correctly resolves glyphs, badges, and names.</summary>
 public sealed class ProviderRingViewModelTests
 {
-    /// <summary>Verifies that known providers resolve their respective pack URI logo sources.</summary>
+    /// <summary>Verifies that known providers resolve their respective vector mark resource keys.</summary>
     /// <param name="providerId">The identifier of the provider under test.</param>
-    /// <param name="expectedLogoName">The expected PNG asset name in the pack URI.</param>
+    /// <param name="expectedGlyphKey">The expected resource key of the provider mark.</param>
     [Theory]
-    [InlineData("claude", "claude.png")]
-    [InlineData("gemini", "antigravity.png")]
-    [InlineData("antigravity", "antigravity.png")]
-    [InlineData("codex", "codex.png")]
-    [InlineData("cursor", "cursor.png")]
-    [InlineData("copilot", "copilot.png")]
-    [InlineData("glm", "glm.png")]
-    [InlineData("grok", "grok.png")]
-    [InlineData("perplexity", "perplexity.png")]
-    public void Constructor_WhenKnownProvider_ResolvesLogoSource(string providerId, string expectedLogoName)
+    [InlineData("claude", "Glyph.Claude")]
+    [InlineData("gemini", "Glyph.Antigravity")]
+    [InlineData("antigravity", "Glyph.Antigravity")]
+    [InlineData("codex", "Glyph.Codex")]
+    [InlineData("cursor", "Glyph.Cursor")]
+    [InlineData("copilot", "Glyph.Copilot")]
+    [InlineData("glm", "Glyph.Glm")]
+    [InlineData("grok", "Glyph.Grok")]
+    [InlineData("perplexity", "Glyph.Perplexity")]
+    public void Constructor_WhenKnownProvider_ResolvesGlyphKey(string providerId, string expectedGlyphKey)
     {
 
         var ring = new ProviderRingViewModel(providerId);
 
-        ring.LogoSource.Should().NotBeNull();
-        ring.LogoSource.Should().Contain(expectedLogoName);
+        ring.GlyphKey.Should().Be(expectedGlyphKey);
+        ring.GlyphScale.Should().BeGreaterThan(0.0);
     }
 
-    /// <summary>Verifies that unknown or mock providers resolve null logo sources to fall back to text badge.</summary>
-    /// <param name="providerId">The provider identifier without an official logo.</param>
+    /// <summary>Verifies that unknown or mock providers resolve null glyph keys to fall back to text badge.</summary>
+    /// <param name="providerId">The provider identifier without an official mark.</param>
     [Theory]
     [InlineData("mock")]
     [InlineData("unknown-provider")]
-    public void Constructor_WhenUnmappedProvider_ResolvesNullLogoSource(string providerId)
+    public void Constructor_WhenUnmappedProvider_ResolvesNullGlyphKey(string providerId)
     {
 
         var ring = new ProviderRingViewModel(providerId);
 
-        ring.LogoSource.Should().BeNull();
+        ring.GlyphKey.Should().BeNull();
+        ring.GlyphScale.Should().Be(1.0);
     }
 
-    /// <summary>Verifies that passing a custom logo source in the constructor overrides default resolution.</summary>
+    /// <summary>Verifies that passing a custom glyph key in the constructor overrides default resolution.</summary>
     [Fact]
-    public void Constructor_WhenCustomLogoSourcePassed_OverridesDefault()
+    public void Constructor_WhenCustomGlyphKeyPassed_OverridesDefault()
     {
 
-        const string customUri = "pack://application:,,,/Custom/logo.png";
-        var ring = new ProviderRingViewModel("mock", logoSource: customUri);
+        const string customKey = "Glyph.Custom";
+        var ring = new ProviderRingViewModel("mock", glyphKey: customKey);
 
-        ring.LogoSource.Should().Be(customUri);
+        ring.GlyphKey.Should().Be(customKey);
     }
 
     /// <summary>Verifies default badge fallbacks for mapped and unmapped providers.</summary>
