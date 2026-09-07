@@ -44,6 +44,15 @@ public sealed partial class ProviderRing : UserControl
             new PropertyMetadata(string.Empty, OnBadgePropertyChanged)
         );
 
+    /// <summary>Identifies the <see cref="LogoSource"/> dependency property.</summary>
+    public static readonly DependencyProperty LogoSourceProperty =
+        DependencyProperty.Register(
+            nameof(LogoSource),
+            typeof(string),
+            typeof(ProviderRing),
+            new PropertyMetadata(null, OnLogoPropertyChanged)
+        );
+
     /// <summary>Identifies the <see cref="Status"/> dependency property.</summary>
     public static readonly DependencyProperty StatusProperty =
         DependencyProperty.Register(
@@ -69,6 +78,7 @@ public sealed partial class ProviderRing : UserControl
         InitializeComponent();
         _pulseStoryboard = TryFindResource("PulseStoryboard") as Storyboard;
         UpdateVisuals();
+        UpdateLogoVisuals();
     }
 
     /// <summary>Gets or sets the quota utilization fraction (0.0 to 1.0), or null if unmeasured.</summary>
@@ -87,6 +97,15 @@ public sealed partial class ProviderRing : UserControl
             => (string)GetValue(ProviderBadgeProperty);
         set
             => SetValue(ProviderBadgeProperty, value);
+    }
+
+    /// <summary>Gets or sets the pack URI for the provider logo image, or null to display text badge.</summary>
+    public string? LogoSource
+    {
+        get
+            => (string?)GetValue(LogoSourceProperty);
+        set
+            => SetValue(LogoSourceProperty, value);
     }
 
     /// <summary>Gets or sets the operational and health status of the provider.</summary>
@@ -124,11 +143,29 @@ public sealed partial class ProviderRing : UserControl
         }
     }
 
+    private static void OnLogoPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+
+        if (d is ProviderRing ring)
+        {
+            ring.UpdateLogoVisuals();
+            ring.UpdateBusyIndicator();
+        }
+    }
+
     private static void OnBusyPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
 
         if (d is ProviderRing ring)
             ring.UpdateBusyIndicator();
+    }
+
+    private void UpdateLogoVisuals()
+    {
+
+        var hasLogo = !string.IsNullOrWhiteSpace(LogoSource);
+        LogoImage.Visibility = hasLogo ? Visibility.Visible : Visibility.Collapsed;
+        BadgeTextBlock.Visibility = hasLogo ? Visibility.Collapsed : Visibility.Visible;
     }
 
     private void UpdateVisuals()
@@ -172,7 +209,7 @@ public sealed partial class ProviderRing : UserControl
 
         BusyIndicator.Visibility = Visibility.Visible;
 
-        if (string.IsNullOrWhiteSpace(ProviderBadge))
+        if (string.IsNullOrWhiteSpace(ProviderBadge) && string.IsNullOrWhiteSpace(LogoSource))
         {
             BusyIndicator.VerticalAlignment = VerticalAlignment.Center;
             BusyIndicator.Margin = new Thickness(0);
@@ -224,31 +261,15 @@ public sealed partial class ProviderRing : UserControl
     private static SolidColorBrush ResolveStatusBrush(
         ProviderStatus status,
         double? fraction)
-    {
-
-        if (status == ProviderStatus.NeedsAuth)
-            return PURPLE_BRUSH;
-
-        if (status == ProviderStatus.Stale)
-            return GREY_BRUSH;
-
-        if (status is ProviderStatus.RateLimited or ProviderStatus.AccessDenied)
-            return RED_BRUSH;
-
-        if (fraction.HasValue)
+        => status switch
         {
-
-            if (fraction.Value >= 0.9)
-                return RED_BRUSH;
-
-            if (fraction.Value >= 0.7)
-                return AMBER_BRUSH;
-
-            return GREEN_BRUSH;
-        }
-
-        return GREEN_BRUSH;
-    }
+            ProviderStatus.NeedsAuth => PURPLE_BRUSH,
+            ProviderStatus.Stale => GREY_BRUSH,
+            ProviderStatus.RateLimited or ProviderStatus.AccessDenied => RED_BRUSH,
+            _ when fraction >= 0.9 => RED_BRUSH,
+            _ when fraction >= 0.7 => AMBER_BRUSH,
+            _ => GREEN_BRUSH
+        };
 
     private static SolidColorBrush CreateFrozenBrush(byte r, byte g, byte b)
     {

@@ -10,12 +10,8 @@ namespace TokenHound.App.ViewModels;
 /// <summary>Represents the observable view model for an individual provider indicator ring and hover card.</summary>
 public sealed class ProviderRingViewModel : INotifyPropertyChanged
 {
-    private const string DEFAULT_CLAUDE_NAME = "Claude Code";
-    private const string DEFAULT_CLAUDE_BADGE = "C";
-    private const string DEFAULT_MOCK_NAME = "Mock Provider";
-    private const string DEFAULT_MOCK_BADGE = "M";
-
     private readonly string _providerId;
+    private readonly string? _logoSource;
     private string _providerName;
     private string _providerBadge;
     private double? _usedFraction;
@@ -32,17 +28,20 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
     /// <param name="providerId">The unique identifier of the provider.</param>
     /// <param name="providerName">Optional display name, or null for default.</param>
     /// <param name="providerBadge">Optional badge glyph, or null for default.</param>
+    /// <param name="logoSource">Optional pack URI for provider logo, or null for default.</param>
     public ProviderRingViewModel(
         string providerId,
         string? providerName = null,
-        string? providerBadge = null)
+        string? providerBadge = null,
+        string? logoSource = null)
     {
 
         ArgumentException.ThrowIfNullOrWhiteSpace(providerId);
 
         _providerId = providerId;
-        _providerName = providerName ?? ResolveDefaultName(providerId);
-        _providerBadge = providerBadge ?? ResolveDefaultBadge(providerId);
+        _providerName = providerName ?? ProviderCatalog.ResolveDefaultName(providerId);
+        _providerBadge = providerBadge ?? ProviderCatalog.ResolveDefaultBadge(providerId);
+        _logoSource = logoSource ?? ProviderCatalog.ResolveLogoSource(providerId);
         _status = ProviderStatus.Ok;
     }
 
@@ -70,6 +69,10 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
         set
             => SetProperty(ref _providerBadge, value);
     }
+
+    /// <summary>Gets the pack URI for the provider logo image, or null to display text badge.</summary>
+    public string? LogoSource
+        => _logoSource;
 
     /// <summary>Gets or sets the primary quota utilization fraction (0.0 to 1.0), or null if unmeasured.</summary>
     public double? UsedFraction
@@ -255,32 +258,6 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
             ProviderStatus.Stale => snapshot.ErrorDescription ?? "Telemetry is stale",
             _ => null
         };
-
-    private static string ResolveDefaultName(string providerId)
-        => string.Equals(providerId, "claude", StringComparison.OrdinalIgnoreCase)
-            ? DEFAULT_CLAUDE_NAME
-            : string.Equals(providerId, "gemini", StringComparison.OrdinalIgnoreCase)
-                ? "Antigravity"
-                : string.Equals(providerId, "codex", StringComparison.OrdinalIgnoreCase)
-                    ? "Codex"
-                    : string.Equals(providerId, "cursor", StringComparison.OrdinalIgnoreCase)
-                        ? "Cursor"
-                        : string.Equals(providerId, "mock", StringComparison.OrdinalIgnoreCase)
-                            ? DEFAULT_MOCK_NAME
-                            : providerId;
-
-    private static string ResolveDefaultBadge(string providerId)
-        => string.Equals(providerId, "claude", StringComparison.OrdinalIgnoreCase)
-            ? DEFAULT_CLAUDE_BADGE
-            : string.Equals(providerId, "gemini", StringComparison.OrdinalIgnoreCase)
-                ? "G"
-                : string.Equals(providerId, "codex", StringComparison.OrdinalIgnoreCase)
-                    ? "X"
-                    : string.Equals(providerId, "cursor", StringComparison.OrdinalIgnoreCase)
-                        ? "Cu"
-                        : string.Equals(providerId, "mock", StringComparison.OrdinalIgnoreCase)
-                            ? DEFAULT_MOCK_BADGE
-                            : providerId.Length > 0 ? providerId[..1].ToUpperInvariant() : "?";
 
     private bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
     {

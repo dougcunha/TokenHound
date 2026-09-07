@@ -5,6 +5,10 @@
     <ProjectReference Include="..\TokenHound.Infrastructure\TokenHound.Infrastructure.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Resource Include="Assets\Logos\*.png" />
+  </ItemGroup>
+
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows</TargetFramework>
