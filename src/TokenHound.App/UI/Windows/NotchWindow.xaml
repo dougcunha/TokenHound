@@ -18,13 +18,35 @@
         WindowStartupLocation="Manual">
 
     <Grid Margin="12">
-        <Border Background="#18181B"
+        <Border x:Name="CapsuleBorder"
+                Background="#18181B"
                 BorderBrush="#3F3F46"
                 BorderThickness="1.5"
                 CornerRadius="24"
                 Padding="8,5"
                 Cursor="Hand"
                 SnapsToDevicePixels="True">
+            <Border.ContextMenu>
+                <ContextMenu x:Name="CapsuleContextMenu"
+                             Style="{StaticResource HudContextMenuStyle}">
+                    <MenuItem x:Name="CloseMenuItem"
+                              Header="Close"
+                              Style="{StaticResource HudMenuItemStyle}"
+                              Click="OnCloseClick" />
+                    <MenuItem x:Name="RefreshMenuItem"
+                              Header="Refresh"
+                              Style="{StaticResource HudMenuItemStyle}"
+                              Click="OnRefreshClick" />
+                    <MenuItem x:Name="SettingsMenuItem"
+                              Header="Settings"
+                              Style="{StaticResource HudMenuItemStyle}"
+                              Click="OnSettingsClick" />
+                    <MenuItem x:Name="AboutMenuItem"
+                              Header="About"
+                              Style="{StaticResource HudMenuItemStyle}"
+                              Click="OnAboutClick" />
+                </ContextMenu>
+            </Border.ContextMenu>
             <Border.Effect>
                 <DropShadowEffect Color="#000000"
                                   BlurRadius="20"
@@ -50,6 +72,40 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </Border>
+
+        <Popup x:Name="StatusPopup"
+               PlacementTarget="{Binding ElementName=CapsuleBorder}"
+               Placement="Bottom"
+               VerticalOffset="4"
+               AllowsTransparency="True"
+               Focusable="False"
+               PopupAnimation="Fade">
+            <Border Background="#18181B"
+                    BorderBrush="#3F3F46"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12,6"
+                    SnapsToDevicePixels="True"
+                    Focusable="False"
+                    Cursor="Hand"
+                    MouseLeftButtonDown="OnStatusPopupMouseDown">
+                <Border.Effect>
+                    <DropShadowEffect Color="#000000"
+                                      BlurRadius="12"
+                                      ShadowDepth="2"
+                                      Opacity="0.5"
+                                      Direction="270" />
+                </Border.Effect>
+                <TextBlock x:Name="StatusText"
+                           Foreground="#A1A1AA"
+                           FontSize="11"
+                           FontFamily="Segoe UI"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           TextWrapping="Wrap"
+                           Focusable="False" />
+            </Border>
+        </Popup>
     </Grid>
 
 </Window>
