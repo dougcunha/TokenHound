@@ -3,15 +3,8 @@
   <ItemGroup>
     <None Remove="Assets\logo.ico" />
     <None Remove="Assets\logo.png" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="Assets\logo.ico">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="Assets\logo.png">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <Resource Include="Assets\logo.ico" />
+    <Resource Include="Assets\logo.png" />
   </ItemGroup>
 
   <ItemGroup>
