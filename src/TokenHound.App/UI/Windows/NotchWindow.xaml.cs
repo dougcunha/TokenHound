@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,7 +14,6 @@ namespace TokenHound.App.UI.Windows;
 /// </summary>
 public sealed partial class NotchWindow : Window
 {
-    private const double TOP_OFFSET = 8.0;
     private const int WM_MOUSEACTIVATE = 0x0021;
     private const int MA_NOACTIVATE = 3;
 
@@ -180,6 +179,6 @@ public sealed partial class NotchWindow : Window
 
         var workArea = SystemParameters.WorkArea;
         Left = workArea.Left + ((workArea.Width - ActualWidth) / 2.0);
-        Top = workArea.Top + TOP_OFFSET;
+        Top = workArea.Top;
     }
 }
