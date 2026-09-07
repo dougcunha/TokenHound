@@ -118,6 +118,12 @@ For in-depth specifications and implementation guides, explore the `docs/` folde
 
 ---
 
+## Acknowledgements
+
+TokenHound was inspired by [codenotch](https://github.com/vinzdg/codenotch), a macOS notch-based monitor for AI coding tools. TokenHound is an independent implementation built from scratch for Windows 11.
+
+---
+
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
