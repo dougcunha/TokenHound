@@ -125,12 +125,12 @@ public sealed class UsageStoreLifecycleTests
         store.RegisterProvider(provider);
         var refreshTask = store.RefreshNowAsync(CancellationToken.None);
 
-        await startedTcs.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        await startedTcs.Task.WaitAsync(TimeSpan.FromSeconds(3), TestContext.Current.CancellationToken);
 
         var stopTask = store.StopAsync(TestContext.Current.CancellationToken);
 
-        await canceledTcs.Task.WaitAsync(TimeSpan.FromSeconds(3));
-        await stopTask.WaitAsync(TimeSpan.FromSeconds(3));
+        await canceledTcs.Task.WaitAsync(TimeSpan.FromSeconds(3), TestContext.Current.CancellationToken);
+        await stopTask.WaitAsync(TimeSpan.FromSeconds(3), TestContext.Current.CancellationToken);
 
         var actRefresh = async () => await refreshTask;
         await actRefresh.Should().ThrowAsync<OperationCanceledException>();
@@ -161,7 +161,7 @@ public sealed class UsageStoreLifecycleTests
         store.RegisterProvider(provider);
 
         var task1 = store.RefreshNowAsync(CancellationToken.None);
-        await firstEnteredTcs.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        await firstEnteredTcs.Task.WaitAsync(TimeSpan.FromSeconds(3), TestContext.Current.CancellationToken);
 
         var task2 = store.RefreshNowAsync(CancellationToken.None);
 
@@ -214,7 +214,7 @@ public sealed class UsageStoreLifecycleTests
         store.RegisterProvider(provider);
         var refreshTask = store.RefreshNowAsync(CancellationToken.None);
 
-        await startedTcs.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        await startedTcs.Task.WaitAsync(TimeSpan.FromSeconds(3), TestContext.Current.CancellationToken);
 
         store.Dispose();
 

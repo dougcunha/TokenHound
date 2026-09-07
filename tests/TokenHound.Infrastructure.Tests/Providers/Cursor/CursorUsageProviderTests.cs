@@ -26,7 +26,7 @@ public sealed class CursorUsageProviderTests
         using var provider = new CursorUsageProvider(discovery, client);
 
         // Act
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(snapshot);
@@ -76,7 +76,7 @@ public sealed class CursorUsageProviderTests
         try
         {
             // Act
-            var snapshot = await provider.GetSnapshotAsync();
+            var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(snapshot);
@@ -139,7 +139,7 @@ public sealed class CursorUsageProviderTests
         try
         {
             // Act
-            var snapshot = await provider.GetSnapshotAsync();
+            var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(snapshot);
@@ -177,7 +177,7 @@ public sealed class CursorUsageProviderTests
         try
         {
             // Act
-            var snapshot = await provider.GetSnapshotAsync();
+            var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(snapshot);

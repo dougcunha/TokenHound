@@ -33,7 +33,7 @@ public sealed class CursorSessionDiscoveryTests
             var discovery = new CursorSessionDiscovery(dbPath);
 
             // Act
-            var auth = await discovery.DiscoverAuthAsync();
+            var auth = await discovery.DiscoverAuthAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(auth);
@@ -56,7 +56,7 @@ public sealed class CursorSessionDiscoveryTests
         var discovery = new CursorSessionDiscovery("C:\\nonexistent_cursor_db_123.vscdb");
 
         // Act
-        var auth = await discovery.DiscoverAuthAsync();
+        var auth = await discovery.DiscoverAuthAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(auth);
@@ -82,7 +82,7 @@ public sealed class CursorSessionDiscoveryTests
             var discovery = new CursorSessionDiscovery(dbPath);
 
             // Act
-            var auth = await discovery.DiscoverAuthAsync();
+            var auth = await discovery.DiscoverAuthAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Null(auth);

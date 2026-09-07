@@ -22,7 +22,7 @@ public sealed class CursorActivityMonitorTests
             processLocator: static () => null);
 
         // Act
-        var session = await monitor.CheckLivenessAsync();
+        var session = await monitor.CheckLivenessAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(session);
@@ -38,7 +38,7 @@ public sealed class CursorActivityMonitorTests
             processLocator: () => (1234, startTime));
 
         // Act
-        var session = await monitor.CheckLivenessAsync();
+        var session = await monitor.CheckLivenessAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(session);
@@ -76,7 +76,7 @@ public sealed class CursorActivityMonitorTests
                 processLocator: () => (4321, processStart));
 
             // Act
-            var session = await monitor.CheckLivenessAsync();
+            var session = await monitor.CheckLivenessAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(session);
@@ -121,7 +121,7 @@ public sealed class CursorActivityMonitorTests
                 staleThreshold: TimeSpan.FromMinutes(15));
 
             // Act
-            var session = await monitor.CheckLivenessAsync();
+            var session = await monitor.CheckLivenessAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(session);
@@ -161,7 +161,7 @@ public sealed class CursorActivityMonitorTests
                 processLocator: () => (7777, processStart));
 
             // Act
-            var session = await monitor.CheckLivenessAsync();
+            var session = await monitor.CheckLivenessAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(session);

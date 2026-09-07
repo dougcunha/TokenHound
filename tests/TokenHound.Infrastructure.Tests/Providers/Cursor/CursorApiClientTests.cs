@@ -66,7 +66,7 @@ public sealed class CursorApiClientTests
         using var client = new CursorApiClient(httpClient);
 
         // Act
-        var result = await client.GetUsageSummaryAsync("user_123", "jwt_abc_token");
+        var result = await client.GetUsageSummaryAsync("user_123", "jwt_abc_token", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -86,7 +86,7 @@ public sealed class CursorApiClientTests
         using var client = new CursorApiClient(httpClient);
 
         // Act
-        var result = await client.GetUsageSummaryAsync("user_123", "bad_token");
+        var result = await client.GetUsageSummaryAsync("user_123", "bad_token", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -101,12 +101,12 @@ public sealed class CursorApiClientTests
         // Act & Assert
         await Assert.ThrowsAnyAsync<ArgumentException>(async () =>
         {
-            await client.GetUsageSummaryAsync("", "token");
+            await client.GetUsageSummaryAsync("", "token", TestContext.Current.CancellationToken);
         });
 
         await Assert.ThrowsAnyAsync<ArgumentException>(async () =>
         {
-            await client.GetUsageSummaryAsync("user", "");
+            await client.GetUsageSummaryAsync("user", "", TestContext.Current.CancellationToken);
         });
     }
 }

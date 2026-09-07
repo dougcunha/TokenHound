@@ -85,7 +85,7 @@ public sealed class AntigravityLanguageServerClientTests
         using var client = new AntigravityLanguageServerClient(httpClient);
 
         // Act
-        var result = await client.QueryPortAsync(54321, "test-csrf-123");
+        var result = await client.QueryPortAsync(54321, "test-csrf-123", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -106,7 +106,7 @@ public sealed class AntigravityLanguageServerClientTests
         using var client = new AntigravityLanguageServerClient(httpClient);
 
         // Act
-        var result = await client.QueryPortAsync(54321, "wrong-csrf");
+        var result = await client.QueryPortAsync(54321, "wrong-csrf", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -141,7 +141,7 @@ public sealed class AntigravityLanguageServerClientTests
         using var client = new AntigravityLanguageServerClient(httpClient);
 
         // Act
-        var result = await client.RetrieveUserQuotaSummaryAsync(endpoint);
+        var result = await client.RetrieveUserQuotaSummaryAsync(endpoint, TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);

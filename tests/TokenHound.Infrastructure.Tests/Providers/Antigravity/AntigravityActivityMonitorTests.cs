@@ -38,7 +38,7 @@ public sealed class AntigravityActivityMonitorTests
         var monitor = new AntigravityActivityMonitor(discovery, reader);
 
         // Act
-        var session = await monitor.CheckLivenessAsync();
+        var session = await monitor.CheckLivenessAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(session);
@@ -52,7 +52,7 @@ public sealed class AntigravityActivityMonitorTests
         Directory.CreateDirectory(tempDir);
 
         var filePath = Path.Combine(tempDir, "transcript.jsonl");
-        await File.WriteAllTextAsync(filePath, "{}\n");
+        await File.WriteAllTextAsync(filePath, "{}\n", TestContext.Current.CancellationToken);
 
         var fileWriteTime = File.GetLastWriteTimeUtc(filePath);
         var now = fileWriteTime.AddSeconds(20); // 20s elapsed <= 45s threshold
@@ -68,7 +68,7 @@ public sealed class AntigravityActivityMonitorTests
             var monitor = new AntigravityActivityMonitor(discovery, reader, timeProvider);
 
             // Act
-            var session = await monitor.CheckLivenessAsync();
+            var session = await monitor.CheckLivenessAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(session);
@@ -88,7 +88,7 @@ public sealed class AntigravityActivityMonitorTests
         Directory.CreateDirectory(tempDir);
 
         var filePath = Path.Combine(tempDir, "transcript.jsonl");
-        await File.WriteAllTextAsync(filePath, "{}\n");
+        await File.WriteAllTextAsync(filePath, "{}\n", TestContext.Current.CancellationToken);
 
         var fileWriteTime = File.GetLastWriteTimeUtc(filePath);
         var now = fileWriteTime.AddSeconds(50); // 50s elapsed > 45s threshold
@@ -104,7 +104,7 @@ public sealed class AntigravityActivityMonitorTests
             var monitor = new AntigravityActivityMonitor(discovery, reader, timeProvider);
 
             // Act
-            var session = await monitor.CheckLivenessAsync();
+            var session = await monitor.CheckLivenessAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(session);

@@ -41,14 +41,14 @@ public sealed class AntigravityTranscriptReaderTests
             ""
         };
 
-        await File.WriteAllLinesAsync(transcriptPath, lines);
+        await File.WriteAllLinesAsync(transcriptPath, lines, TestContext.Current.CancellationToken);
 
         try
         {
             var reader = new AntigravityTranscriptReader([tempDir], timeProvider);
 
             // Act
-            var count = await reader.CountTodayModelRequestsAsync();
+            var count = await reader.CountTodayModelRequestsAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(2, count);
@@ -71,7 +71,7 @@ public sealed class AntigravityTranscriptReaderTests
             var reader = new AntigravityTranscriptReader([tempDir]);
 
             // Act
-            var count = await reader.CountTodayModelRequestsAsync();
+            var count = await reader.CountTodayModelRequestsAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal(0, count);

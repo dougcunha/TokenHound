@@ -29,7 +29,7 @@ public sealed class CursorComposerReaderTests
             var reader = new CursorComposerReader(dbPath);
 
             // Act
-            var headers = await reader.ReadActiveHeadersAsync();
+            var headers = await reader.ReadActiveHeadersAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(headers);
@@ -61,7 +61,7 @@ public sealed class CursorComposerReaderTests
         var reader = new CursorComposerReader("C:\\nonexistent_cursor_comp_db.vscdb");
 
         // Act
-        var headers = await reader.ReadActiveHeadersAsync();
+        var headers = await reader.ReadActiveHeadersAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(headers);
@@ -90,7 +90,7 @@ public sealed class CursorComposerReaderTests
             var reader = new CursorComposerReader(dbPath);
 
             // Act
-            var headers = await reader.ReadActiveHeadersAsync();
+            var headers = await reader.ReadActiveHeadersAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(headers);
@@ -128,7 +128,7 @@ public sealed class CursorComposerReaderTests
             var reader = new CursorComposerReader(dbPath);
 
             // Act
-            var headers = await reader.ReadActiveHeadersAsync();
+            var headers = await reader.ReadActiveHeadersAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(headers);

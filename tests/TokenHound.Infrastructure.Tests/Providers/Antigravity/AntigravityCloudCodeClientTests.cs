@@ -46,7 +46,7 @@ public sealed class AntigravityCloudCodeClientTests
         using var client = new AntigravityCloudCodeClient(credentialStore: credStore);
 
         // Act
-        var token = await client.GetAccessTokenAsync();
+        var token = await client.GetAccessTokenAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("secret-access-token-123", token);
@@ -63,7 +63,7 @@ public sealed class AntigravityCloudCodeClientTests
         using var client = new AntigravityCloudCodeClient(credentialStore: credStore);
 
         // Act
-        var token = await client.GetAccessTokenAsync();
+        var token = await client.GetAccessTokenAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal("plain-bearer-token-456", token);
@@ -74,7 +74,7 @@ public sealed class AntigravityCloudCodeClientTests
     {
         // Arrange
         var tempFile = Path.Combine(Path.GetTempPath(), $"oauth_creds_{Guid.NewGuid():N}.json");
-        await File.WriteAllTextAsync(tempFile, """{"access_token": "file-token-789"}""");
+        await File.WriteAllTextAsync(tempFile, """{"access_token": "file-token-789"}""", TestContext.Current.CancellationToken);
 
         var credStore = Substitute.For<ICredentialStore>();
         credStore.ReadCredentialAsync("gemini:antigravity", Arg.Any<CancellationToken>())
@@ -87,7 +87,7 @@ public sealed class AntigravityCloudCodeClientTests
                 credentialsFilePath: tempFile);
 
             // Act
-            var token = await client.GetAccessTokenAsync();
+            var token = await client.GetAccessTokenAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.Equal("file-token-789", token);
@@ -142,7 +142,7 @@ public sealed class AntigravityCloudCodeClientTests
             credentialsFilePath: "nonexistent.json");
 
         // Act
-        var result = await client.RetrieveUserQuotaSummaryAsync();
+        var result = await client.RetrieveUserQuotaSummaryAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(result);
@@ -171,7 +171,7 @@ public sealed class AntigravityCloudCodeClientTests
             credentialsFilePath: "nonexistent.json");
 
         // Act
-        var result = await client.RetrieveUserQuotaSummaryAsync();
+        var result = await client.RetrieveUserQuotaSummaryAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);
@@ -190,7 +190,7 @@ public sealed class AntigravityCloudCodeClientTests
             credentialsFilePath: "C:\\nonexistent_file_xyz.json");
 
         // Act
-        var result = await client.RetrieveUserQuotaSummaryAsync();
+        var result = await client.RetrieveUserQuotaSummaryAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Null(result);

@@ -1,7 +1,6 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -45,7 +44,7 @@ public sealed class AntigravityUsageProviderTests
     public async Task GetSnapshotAsync_LiveIntegration_WhenAgyRunning_ReturnsOfficialMetrics()
     {
         using var provider = new AntigravityUsageProvider();
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         Assert.NotNull(snapshot);
         Assert.Equal("gemini", snapshot.ProviderId);
@@ -66,8 +65,7 @@ public sealed class AntigravityUsageProviderTests
             processEnumerator: () => [(1234, "--csrf_token token-abc")],
             portResolver: _ => [5555]);
 
-        const string JSON_PAYLOAD =
-            """{"response":{"groups":[{"displayName":"Gemini 2.5 Pro","buckets":[{"bucketId":"gemini-pro-weekly","displayName":"Weekly Limit","remainingFraction":0.80,"resetTime":"2026-09-10T00:00:00Z"}]}]}}""";
+        const string JSON_PAYLOAD = """{"response":{"groups":[{"displayName":"Gemini 2.5 Pro","buckets":[{"bucketId":"gemini-pro-weekly","displayName":"Weekly Limit","remainingFraction":0.80,"resetTime":"2026-09-10T00:00:00Z"}]}]}}""";
 
         var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -79,7 +77,7 @@ public sealed class AntigravityUsageProviderTests
         using var provider = new AntigravityUsageProvider(discovery, client);
 
         // Act
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(snapshot);
@@ -107,12 +105,13 @@ public sealed class AntigravityUsageProviderTests
 
         var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 9, 6, 12, 0, 0, TimeSpan.Zero));
         var transcriptPath = Path.Combine(logDir, "transcript.jsonl");
-
-        await File.WriteAllLinesAsync(transcriptPath,
+        string[] transcriptLines =
         [
             """{"step_index": 1, "source": "MODEL", "created_at": "2026-09-06T11:00:00.000Z"}""",
             """{"step_index": 2, "source": "MODEL", "created_at": "2026-09-06T11:30:00.000Z"}"""
-        ]);
+        ];
+
+        await File.WriteAllLinesAsync(transcriptPath, transcriptLines, TestContext.Current.CancellationToken);
 
         try
         {
@@ -120,7 +119,7 @@ public sealed class AntigravityUsageProviderTests
             using var provider = new AntigravityUsageProvider(discovery, null, reader);
 
             // Act
-            var snapshot = await provider.GetSnapshotAsync();
+            var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(snapshot);
@@ -149,8 +148,7 @@ public sealed class AntigravityUsageProviderTests
             processEnumerator: () => [],
             portResolver: _ => []);
 
-        const string JSON_PAYLOAD =
-            """{"response":{"groups":[{"displayName":"Gemini 2.5 Pro","buckets":[{"bucketId":"gemini-pro-cloud","displayName":"Weekly Quota","remainingFraction":0.75,"resetTime":"2026-09-12T00:00:00Z"}]}]}}""";
+        const string JSON_PAYLOAD = """{"response":{"groups":[{"displayName":"Gemini 2.5 Pro","buckets":[{"bucketId":"gemini-pro-cloud","displayName":"Weekly Quota","remainingFraction":0.75,"resetTime":"2026-09-12T00:00:00Z"}]}]}}""";
 
         var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -166,7 +164,7 @@ public sealed class AntigravityUsageProviderTests
         using var provider = new AntigravityUsageProvider(discovery, null, null, cloudClient);
 
         // Act
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(snapshot);
@@ -203,8 +201,9 @@ public sealed class AntigravityUsageProviderTests
 
         var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 9, 6, 12, 0, 0, TimeSpan.Zero));
         var transcriptPath = Path.Combine(logDir, "transcript.jsonl");
+        string[] logs403 = ["""{"step_index": 1, "source": "MODEL", "created_at": "2026-09-06T11:00:00.000Z"}"""];
 
-        await File.WriteAllLinesAsync(transcriptPath, ["""{"step_index": 1, "source": "MODEL", "created_at": "2026-09-06T11:00:00.000Z"}"""]);
+        await File.WriteAllLinesAsync(transcriptPath, logs403, TestContext.Current.CancellationToken);
 
         try
         {
@@ -212,7 +211,7 @@ public sealed class AntigravityUsageProviderTests
             using var provider = new AntigravityUsageProvider(discovery, null, reader, cloudClient);
 
             // Act
-            var snapshot = await provider.GetSnapshotAsync();
+            var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(snapshot);
@@ -244,7 +243,9 @@ public sealed class AntigravityUsageProviderTests
         var transcriptPath = Path.Combine(logDir, "transcript.jsonl");
 
         // Old request from yesterday
-        await File.WriteAllLinesAsync(transcriptPath, ["""{"step_index": 1, "source": "MODEL", "created_at": "2026-09-05T11:00:00.000Z"}"""]);
+        string[] logsZero = ["""{"step_index": 1, "source": "MODEL", "created_at": "2026-09-05T11:00:00.000Z"}"""];
+
+        await File.WriteAllLinesAsync(transcriptPath, logsZero, TestContext.Current.CancellationToken);
 
         var credStore = Substitute.For<TokenHound.Core.Contracts.ICredentialStore>();
         credStore.ReadCredentialAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -258,7 +259,7 @@ public sealed class AntigravityUsageProviderTests
             using var provider = new AntigravityUsageProvider(discovery, null, reader, cloudClient);
 
             // Act
-            var snapshot = await provider.GetSnapshotAsync();
+            var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
             // Assert
             Assert.NotNull(snapshot);
@@ -291,7 +292,7 @@ public sealed class AntigravityUsageProviderTests
         using var provider = new AntigravityUsageProvider(discovery, null, reader, cloudClient);
 
         // Act
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         // Assert
         Assert.NotNull(snapshot);
