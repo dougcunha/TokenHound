@@ -36,10 +36,14 @@ TokenHound is a lightweight, peripheral desktop notch / HUD crafted specifically
 | **Cursor** | Local SQLite (`state.vscdb`, WAL mode) | Session requests, plan thresholds, active agent status |
 | **OpenAI Codex** | stdio JSON-RPC bridge & rollout logs | Execution tokens, rate-limit resets, active command states |
 | **Google Antigravity / Gemini** | Language server IPC & Windows Credential Manager (`gemini:antigravity`) | Quota tier, prompt tokens, session transcripts |
-| **Z.ai GLM** | Local config discovery & direct metering API | Coding plan usage, daily quota allocation |
-| **Perplexity** | Isolated WebView2 session borrowing | Real-time search queries and rate limit quotas |
+| **Z.ai GLM** (soon) | Local config discovery & direct metering API | Coding plan usage, daily quota allocation |
+| **Perplexity** (soon) | Isolated WebView2 session borrowing | Real-time search queries and rate limit quotas |
 
 ---
+
+## Images
+
+![HUD](screenshot.png)
 
 ## Architecture & Solution Structure
 
