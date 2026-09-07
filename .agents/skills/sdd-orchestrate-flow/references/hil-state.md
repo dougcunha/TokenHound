@@ -14,6 +14,7 @@ When creating the first checkpoint, read [../assets/checkpoint.template.json](..
 | `status`, `safe_to_stop` | `active`, `awaiting-hil`, `paused`, `blocked`, or `completed`; safe to switch only without pending writers/processes and after persistence is verified |
 | `objective`, `constraints` | Requested result and short indispensable invariants, including .NET desktop policy when applicable; details by reference |
 | `sources` | Paths relative to the feature folder, or `null`; no artifact path outside it |
+| `review_status` | Literal status of the latest `codereview.md` (`APPROVED`, `APPROVED WITH RESERVATIONS`, `REJECTED`), or `null` before the first review; `APPROVED` with no later code change requires no new review |
 | `approved_sources` | Items `{path, sha256, decision_id}` linking approved content to the human decision in `workflow.md` |
 | `decisions_to_read` | Decision IDs relevant to the next action; each record contains decision, scope, relevant human text, and available provenance |
 | `git_base`, `worktree_evidence` | Resolved commit or `null`; reference to pre-existing/uncommitted changes in workflow or handoff, since HEAD alone does not identify state |
@@ -41,7 +42,8 @@ Keep the index preferably below 8 KiB: move details to referenced sources withou
 | HIL 1 | PRD with scope, acceptance, and assumptions | Approve the product or correct requirements |
 | HIL 2 | TechSpec, DAG, tasks, risks, and validations | Approve the solution and execution, including corrections within the contract |
 | Exception | Evidence, impact, and concrete proposal | Resolve scope/architecture deviation, indispensable environment, irreversible risk, or stagnation |
-| HIL 3 | Final review, tests, open items, and manual acceptance | Accept the current delivery and decide optional caveats |
+| Reservations | Summary of items reserved in the review, with impact and effort | Correct the chosen items or finalize the feature |
+| HIL 3 | Final review, tests, open items, and manual acceptance | Accept the current delivery |
 
 Use the available question tool or a textual question. Stop only work dependent on the answer; silence, elapsed time, or a subagent's approval do not equal consent. Explain which gate is missing and point to the artifacts. Reuse authorization already given for the same scope; do not ask twice to save a draft and then execute it.
 
