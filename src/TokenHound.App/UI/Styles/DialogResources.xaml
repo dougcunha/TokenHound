@@ -152,7 +152,7 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ButtonBackgroundColor}" />
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ButtonHoverBackgroundBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
