@@ -1,0 +1,91 @@
+<Window x:Class="TokenHound.App.UI.Windows.AboutWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:presentation="clr-namespace:TokenHound.App.Presentation"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=presentation:ApplicationInfo}"
+        Title="About TokenHound"
+        Width="440"
+        Height="280"
+        MinWidth="380"
+        MinHeight="220"
+        WindowStartupLocation="Manual"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowStyle="SingleBorderWindow"
+        Background="{StaticResource SurfaceBackgroundBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="Segoe UI"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True"
+        FocusManager.FocusedElement="{Binding ElementName=CloseButton}">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title Header -->
+        <TextBlock Grid.Row="0"
+                   Text="{Binding Name}"
+                   FontSize="16"
+                   FontWeight="SemiBold"
+                   Foreground="{StaticResource TextPrimaryBrush}"
+                   Margin="0,0,0,12" />
+
+        <!-- Description and Version Card -->
+        <StackPanel Grid.Row="1"
+                    VerticalAlignment="Top">
+            <TextBlock Text="{Binding Description}"
+                       FontSize="12"
+                       LineHeight="18"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,16" />
+
+            <Border Background="{StaticResource SurfaceCardBackgroundBrush}"
+                    BorderBrush="{StaticResource SurfaceBorderSubtleBrush}"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Padding="12,10">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0"
+                               Text="Version"
+                               FontSize="12"
+                               FontWeight="Medium"
+                               Foreground="{StaticResource TextMutedBrush}"
+                               Margin="0,0,12,0"
+                               VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               Text="{Binding DisplayVersion}"
+                               FontSize="12"
+                               Foreground="{StaticResource TextPrimaryBrush}"
+                               TextWrapping="Wrap"
+                               VerticalAlignment="Center" />
+                </Grid>
+            </Border>
+        </StackPanel>
+
+        <!-- Dismissal Controls -->
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,16,0,0">
+            <Button x:Name="CloseButton"
+                    Content="Close"
+                    Style="{StaticResource DialogButtonStyle}"
+                    IsCancel="True"
+                    Click="OnCloseButtonClick"
+                    AutomationProperties.Name="Close" />
+        </StackPanel>
+    </Grid>
+
+</Window>

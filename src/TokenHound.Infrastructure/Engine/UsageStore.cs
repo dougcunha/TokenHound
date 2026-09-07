@@ -17,10 +17,9 @@ public sealed class UsageStore : IDisposable
     private readonly List<IActivityMonitor> _monitors = [];
     private readonly object _monitorsLock = new();
     private readonly SemaphoreSlim _refreshLock = new(1, 1);
+    private readonly UsageStoreLifetime _lifetime = new();
     private readonly TimeSpan _idleInterval;
 
-    private CancellationTokenSource? _timerCts;
-    private Task? _timerTask;
     private DateTimeOffset? _lastAttemptUtc;
     private bool _disposed;
 
@@ -49,14 +48,14 @@ public sealed class UsageStore : IDisposable
 
     /// <summary>Gets a value indicating whether the polling timer is currently running.</summary>
     public bool IsRunning
-        => _timerTask is not null && !(_timerCts?.IsCancellationRequested ?? true);
+        => _lifetime.IsTimerRunning;
 
     /// <summary>Registers a provider adapter to be polled for usage snapshots.</summary>
     /// <param name="provider">The provider adapter to register.</param>
     public void RegisterProvider(IUsageProvider provider)
     {
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ThrowIfDisposedOrStopping();
         ArgumentNullException.ThrowIfNull(provider);
 
         _providers[provider.ProviderId] = provider;
@@ -67,7 +66,7 @@ public sealed class UsageStore : IDisposable
     public void RegisterActivityMonitor(IActivityMonitor monitor)
     {
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ThrowIfDisposedOrStopping();
         ArgumentNullException.ThrowIfNull(monitor);
 
         lock (_monitorsLock)
@@ -84,8 +83,72 @@ public sealed class UsageStore : IDisposable
     public async Task RefreshNowAsync(CancellationToken cancellationToken = default)
     {
 
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        ThrowIfDisposedOrStopping();
         cancellationToken.ThrowIfCancellationRequested();
+
+        using var lease = _lifetime.Enter(cancellationToken);
+
+        await RefreshNowCoreAsync(lease.Token).ConfigureAwait(false);
+    }
+
+    /// <summary>Evaluates the schedule policy and refreshes providers if eligible.</summary>
+    /// <param name="cancellationToken">A token to observe while waiting for the operation to complete.</param>
+    /// <returns>A task representing the asynchronous operation.</returns>
+    public async Task TickAsync(CancellationToken cancellationToken = default)
+    {
+
+        ThrowIfDisposedOrStopping();
+        cancellationToken.ThrowIfCancellationRequested();
+
+        using var lease = _lifetime.Enter(cancellationToken);
+
+        var isAnyBusy = await CheckAnyBusyAsync(lease.Token).ConfigureAwait(false);
+        var now = DateTimeOffset.UtcNow;
+        var elapsed = _lastAttemptUtc.HasValue ? now - _lastAttemptUtc.Value : TimeSpan.MaxValue;
+
+        if (!RefreshSchedulePolicy.ShouldRefresh(isAnyBusy, elapsed, _idleInterval))
+            return;
+
+        await RefreshNowCoreAsync(lease.Token).ConfigureAwait(false);
+    }
+
+    /// <summary>Starts the background periodic polling timer.</summary>
+    /// <param name="pollInterval">The polling interval, or null for default 60 seconds.</param>
+    public void Start(TimeSpan? pollInterval = null)
+    {
+
+        ThrowIfDisposedOrStopping();
+
+        var interval = pollInterval ?? RefreshSchedulePolicy.DEFAULT_ACTIVE_INTERVAL;
+        _lifetime.StartTimer(interval, TickAsync);
+    }
+
+    /// <summary>Stops the background periodic polling timer.</summary>
+    public void Stop()
+        => _lifetime.StopTimer();
+
+    /// <summary>Terminates the store asynchronously, closing admission, draining operations, and releasing resources.</summary>
+    /// <param name="cancellationToken">A token to observe while awaiting the terminal drain.</param>
+    /// <returns>A task representing the asynchronous terminal stop operation.</returns>
+    public Task StopAsync(CancellationToken cancellationToken = default)
+        => _lifetime.StopAsync(ReleaseResources, cancellationToken);
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+
+        if (_disposed)
+            return;
+
+        _disposed = true;
+        _ = StopAsync(CancellationToken.None);
+    }
+
+    private void ReleaseResources()
+        => _refreshLock.Dispose();
+
+    private async Task RefreshNowCoreAsync(CancellationToken cancellationToken)
+    {
 
         await _refreshLock.WaitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -98,88 +161,6 @@ public sealed class UsageStore : IDisposable
         {
 
             _refreshLock.Release();
-        }
-    }
-
-    /// <summary>Evaluates the schedule policy and refreshes providers if eligible.</summary>
-    /// <param name="cancellationToken">A token to observe while waiting for the operation to complete.</param>
-    /// <returns>A task representing the asynchronous operation.</returns>
-    public async Task TickAsync(CancellationToken cancellationToken = default)
-    {
-
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        cancellationToken.ThrowIfCancellationRequested();
-
-        var isAnyBusy = await CheckAnyBusyAsync(cancellationToken).ConfigureAwait(false);
-        var now = DateTimeOffset.UtcNow;
-        var elapsed = _lastAttemptUtc.HasValue ? now - _lastAttemptUtc.Value : TimeSpan.MaxValue;
-
-        if (!RefreshSchedulePolicy.ShouldRefresh(isAnyBusy, elapsed, _idleInterval))
-            return;
-
-        await RefreshNowAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>Starts the background periodic polling timer.</summary>
-    /// <param name="pollInterval">The polling interval, or null for default 60 seconds.</param>
-    public void Start(TimeSpan? pollInterval = null)
-    {
-
-        ObjectDisposedException.ThrowIf(_disposed, this);
-
-        Stop();
-
-        var interval = pollInterval ?? RefreshSchedulePolicy.DEFAULT_ACTIVE_INTERVAL;
-        var cts = new CancellationTokenSource();
-        _timerCts = cts;
-        _timerTask = RunTimerLoopAsync(interval, cts.Token);
-    }
-
-    /// <summary>Stops the background periodic polling timer.</summary>
-    public void Stop()
-    {
-
-        var cts = _timerCts;
-        _timerCts = null;
-
-        if (cts is not null)
-        {
-
-            cts.Cancel();
-            cts.Dispose();
-        }
-    }
-
-    /// <inheritdoc />
-    public void Dispose()
-    {
-
-        if (_disposed)
-            return;
-
-        _disposed = true;
-        Stop();
-        _refreshLock.Dispose();
-    }
-
-    private async Task RunTimerLoopAsync(TimeSpan interval, CancellationToken cancellationToken)
-    {
-
-        using var timer = new PeriodicTimer(interval);
-
-        try
-        {
-
-            while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
-            {
-
-                await TickAsync(cancellationToken).ConfigureAwait(false);
-            }
-        }
-        catch (OperationCanceledException)
-        {
-
-            // Normal cancellation on stop or disposal
         }
     }
 
@@ -210,6 +191,11 @@ public sealed class UsageStore : IDisposable
 
             StoreSnapshot(snapshot);
         }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+
+            StoreSnapshot(CreateErrorSnapshot(provider.ProviderId, ex));
+        }
         catch (OperationCanceledException)
         {
 
@@ -223,13 +209,8 @@ public sealed class UsageStore : IDisposable
     }
 
     private bool IsRateLimited(string providerId)
-    {
-
-        if (!_snapshots.TryGetValue(providerId, out var currentSnapshot))
-            return false;
-
-        return !RateLimitPolicy.CanDispatch(DateTimeOffset.UtcNow, currentSnapshot.ActiveBlock?.ResetTimeUtc);
-    }
+        => _snapshots.TryGetValue(providerId, out var currentSnapshot)
+            && !RateLimitPolicy.CanDispatch(DateTimeOffset.UtcNow, currentSnapshot.ActiveBlock?.ResetTimeUtc);
 
     private void StoreSnapshot(Snapshot snapshot)
     {
@@ -244,10 +225,7 @@ public sealed class UsageStore : IDisposable
         IActivityMonitor[] monitors;
 
         lock (_monitorsLock)
-        {
-
             monitors = [.. _monitors];
-        }
 
         foreach (var monitor in monitors)
         {
@@ -284,14 +262,32 @@ public sealed class UsageStore : IDisposable
     }
 
     private Snapshot CreateErrorSnapshot(string providerId, Exception ex)
-        => new()
-        {
-            ProviderId = providerId,
-            Status = ProviderStatus.Stale,
-            Fidelity = Fidelity.Official,
-            FetchedAtUtc = DateTimeOffset.UtcNow,
-            LimitWindows = _snapshots.TryGetValue(providerId, out var prev) ? prev.LimitWindows : [],
-            ActiveBlock = null,
-            ErrorDescription = ex.Message
-        };
+        => _snapshots.TryGetValue(providerId, out var prev)
+            ? new Snapshot
+            {
+                ProviderId = providerId,
+                Status = ProviderStatus.Stale,
+                Fidelity = prev.Fidelity,
+                FetchedAtUtc = prev.FetchedAtUtc,
+                LimitWindows = prev.LimitWindows,
+                ActiveBlock = prev.ActiveBlock,
+                ErrorDescription = ex.Message
+            }
+            : new Snapshot
+            {
+                ProviderId = providerId,
+                Status = ProviderStatus.Stale,
+                Fidelity = Fidelity.Official,
+                FetchedAtUtc = DateTimeOffset.UtcNow,
+                LimitWindows = [],
+                ActiveBlock = null,
+                ErrorDescription = ex.Message
+            };
+
+    private void ThrowIfDisposedOrStopping()
+    {
+
+        if (_disposed || _lifetime.IsStoppingOrDisposed)
+            throw new ObjectDisposedException(nameof(UsageStore), "The usage store is stopping or has been disposed.");
+    }
 }

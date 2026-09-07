@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Windows;
 using TokenHound.App.UI.Windows;
 using TokenHound.App.ViewModels;
@@ -7,7 +9,6 @@ using TokenHound.Infrastructure.Providers.Antigravity;
 using TokenHound.Infrastructure.Providers.Claude;
 using TokenHound.Infrastructure.Providers.Codex;
 using TokenHound.Infrastructure.Providers.Cursor;
-using TokenHound.Infrastructure.Providers.Mock;
 
 namespace TokenHound.App;
 
@@ -17,17 +18,23 @@ namespace TokenHound.App;
 public partial class App : Application
 {
     private UsageStore? _usageStore;
+    private DialogService? _dialogService;
     private NotchViewModel? _notchViewModel;
+    private HudActionsViewModel? _actionsViewModel;
+    private ApplicationLifetime? _lifetime;
     private NotchWindow? _notchWindow;
 
     /// <inheritdoc />
     protected override void OnStartup(StartupEventArgs e)
     {
+
         base.OnStartup(e);
 
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
         _usageStore = new UsageStore(autoStart: true);
+
+        var disposableResources = new List<IDisposable>();
 
         var claudeProvider = new ClaudeOAuthProvider();
         _usageStore.RegisterProvider(claudeProvider);
@@ -37,6 +44,7 @@ public partial class App : Application
 
         var antigravityProvider = new AntigravityUsageProvider();
         _usageStore.RegisterProvider(antigravityProvider);
+        disposableResources.Add(antigravityProvider);
 
         var antigravityMonitor = new AntigravityActivityMonitor();
         _usageStore.RegisterActivityMonitor(antigravityMonitor);
@@ -49,11 +57,12 @@ public partial class App : Application
 
         var cursorProvider = new CursorUsageProvider();
         _usageStore.RegisterProvider(cursorProvider);
+        disposableResources.Add(cursorProvider);
 
         var cursorMonitor = new CursorActivityMonitor();
         _usageStore.RegisterActivityMonitor(cursorMonitor);
 
-        var mockProvider = new MockUsageProvider();
+        _dialogService = new DialogService(() => _notchWindow);
 
         _notchViewModel = new NotchViewModel(
             _usageStore,
@@ -63,26 +72,42 @@ public partial class App : Application
                     action();
                 else
                     Dispatcher.Invoke(action);
-            },
-            mockProvider
+            }
+        );
+
+        _lifetime = new ApplicationLifetime(
+            _usageStore,
+            _dialogService,
+            _notchViewModel,
+            disposableResources
+        );
+
+        _actionsViewModel = new HudActionsViewModel(
+            _usageStore.RefreshNowAsync,
+            _lifetime.ShutdownAsync,
+            () => _dialogService.ShowSettings(_notchWindow),
+            () => _dialogService.ShowAbout(_notchWindow),
+            () => _usageStore.CurrentSnapshots.Values
         );
 
         _notchWindow = new NotchWindow
         {
-            DataContext = _notchViewModel
+            DataContext = _notchViewModel,
+            ActionsViewModel = _actionsViewModel
         };
 
         MainWindow = _notchWindow;
         _notchWindow.Show();
 
-        _ = _usageStore.RefreshNowAsync();
+        var startupTask = _usageStore.RefreshNowAsync(_lifetime.LifetimeToken);
+        _lifetime.TrackStartupTask(startupTask);
     }
 
     /// <inheritdoc />
     protected override void OnExit(ExitEventArgs e)
     {
-        _notchViewModel?.Dispose();
-        _usageStore?.Dispose();
+
+        _lifetime?.Dispose();
         base.OnExit(e);
     }
 }
