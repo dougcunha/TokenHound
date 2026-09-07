@@ -96,6 +96,21 @@ private static bool IsActiveProfileDirectory(string dir)
   ```
 - **Recommended Timeout**: 15 seconds.
 
+### Rate Limit Behavior (HTTP 429)
+
+This endpoint is undocumented and throttles far more aggressively than the public Messages API. Observed behavior, reproduced across several third-party monitors ([claude-code#30930](https://github.com/anthropics/claude-code/issues/30930), [#31021](https://github.com/anthropics/claude-code/issues/31021), [#31637](https://github.com/anthropics/claude-code/issues/31637)):
+
+- Polling at 30-60 second intervals trips the limit within a few requests.
+- The 429 either omits `Retry-After` entirely or returns `Retry-After: 0`, neither of which describes when the limit actually clears.
+- Once tripped, the endpoint keeps returning 429 for tens of minutes regardless of the client's retry cadence.
+
+Consequences for this adapter:
+
+1. Never trust the server hint to shorten a wait. Apply the escalation from spec 01 §4, treating `Retry-After` strictly as a floor-raiser.
+2. Keep a per-provider consecutive-429 counter, reset only by a successful reading, so the exponential tiers actually advance.
+3. The data behind this endpoint moves on 5-hour and 7-day boundaries, so sub-minute freshness has no value. The default `ActiveInterval` of 180 seconds is a deliberate ceiling on request volume, not a latency compromise.
+4. A `RateLimited` snapshot must carry the last successful `LimitWindows` forward. Because the 429 state is long-lived, blanking the windows removes the HUD reading for most of the outage.
+
 ### JSON Response Structure
 
 ```json

@@ -26,7 +26,7 @@ public sealed class UsageStore : IDisposable
     /// <summary>Initializes a new instance of the <see cref="UsageStore"/> class.</summary>
     /// <param name="autoStart">Whether to start the periodic polling timer immediately.</param>
     /// <param name="idleInterval">The idle polling interval threshold, or null for default 300s.</param>
-    /// <param name="pollInterval">The timer tick interval, or null for default 60s.</param>
+    /// <param name="pollInterval">The timer tick interval, or null for the default active interval.</param>
     public UsageStore(
         bool autoStart = false,
         TimeSpan? idleInterval = null,
@@ -113,7 +113,7 @@ public sealed class UsageStore : IDisposable
     }
 
     /// <summary>Starts the background periodic polling timer.</summary>
-    /// <param name="pollInterval">The polling interval, or null for default 60 seconds.</param>
+    /// <param name="pollInterval">The polling interval, or null for the default active interval.</param>
     public void Start(TimeSpan? pollInterval = null)
     {
 
@@ -194,6 +194,7 @@ public sealed class UsageStore : IDisposable
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
 
+            ProviderFaultLog.Aborted(provider.ProviderId, ex);
             StoreSnapshot(CreateErrorSnapshot(provider.ProviderId, ex));
         }
         catch (OperationCanceledException)
@@ -204,16 +205,20 @@ public sealed class UsageStore : IDisposable
         catch (Exception ex)
         {
 
+            ProviderFaultLog.Failed(provider.ProviderId, ex);
             StoreSnapshot(CreateErrorSnapshot(provider.ProviderId, ex));
         }
     }
 
     private bool IsRateLimited(string providerId)
         => _snapshots.TryGetValue(providerId, out var currentSnapshot)
-            && !RateLimitPolicy.CanDispatch(DateTimeOffset.UtcNow, currentSnapshot.ActiveBlock?.ResetTimeUtc);
+            && RateLimitGate.IsBlocked(providerId, currentSnapshot.ActiveBlock?.ResetTimeUtc);
 
     private void StoreSnapshot(Snapshot snapshot)
     {
+
+        _snapshots.TryGetValue(snapshot.ProviderId, out var previousSnapshot);
+        RateLimitGate.LogTransition(previousSnapshot, snapshot);
 
         _snapshots[snapshot.ProviderId] = snapshot;
         SnapshotUpdated?.Invoke(this, snapshot);

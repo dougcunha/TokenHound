@@ -35,22 +35,32 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
     /// </summary>
     public const string SEVEN_DAY_WINDOW_NAME = "seven_day";
 
+    /// <summary>
+    /// The ceiling applied to the consecutive rate-limit counter feeding the exponential backoff.
+    /// </summary>
+    private const int MAX_CONSECUTIVE_RATE_LIMITS = 10;
+
     private readonly ClaudeProfileDiscovery _discovery;
     private readonly ClaudeOAuthClient _client;
+    private readonly Random? _backoffJitter;
     private Snapshot? _lastSuccessfulSnapshot;
+    private int _consecutiveRateLimits;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ClaudeOAuthProvider"/> class.
     /// </summary>
     /// <param name="discovery">The profile discovery service, or <see langword="null"/> to use default discovery.</param>
     /// <param name="client">The OAuth usage API client, or <see langword="null"/> to use default client.</param>
+    /// <param name="backoffJitter">The generator producing backoff jitter, or <see langword="null"/> to use <see cref="Random.Shared"/>.</param>
     public ClaudeOAuthProvider(
         ClaudeProfileDiscovery? discovery = null,
-        ClaudeOAuthClient? client = null)
+        ClaudeOAuthClient? client = null,
+        Random? backoffJitter = null)
     {
 
         _discovery = discovery ?? new ClaudeProfileDiscovery();
         _client = client ?? new ClaudeOAuthClient();
+        _backoffJitter = backoffJitter;
     }
 
     /// <inheritdoc />
@@ -83,6 +93,7 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
             var snapshot = CreateOkSnapshot(usage);
 
             _lastSuccessfulSnapshot = snapshot;
+            _consecutiveRateLimits = 0;
 
             return snapshot;
         }
@@ -209,15 +220,24 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
         };
     }
 
-    private static Snapshot CreateRateLimitedSnapshot(ClaudeOAuthClient.RateLimitException ex)
+    private Snapshot CreateRateLimitedSnapshot(ClaudeOAuthClient.RateLimitException ex)
+        => CreateRateLimitedSnapshot(ex.Message, ex.RetryAfterSeconds);
+
+    private Snapshot CreateRateLimitedSnapshot(HttpRequestException ex)
+        => CreateRateLimitedSnapshot(ex.Message, null);
+
+    private Snapshot CreateRateLimitedSnapshot(string reason, int? retryAfterSeconds)
     {
 
         var nowUtc = DateTimeOffset.UtcNow;
+
+        _consecutiveRateLimits = Math.Min(_consecutiveRateLimits + 1, MAX_CONSECUTIVE_RATE_LIMITS);
+
         var deadline = RateLimitPolicy.CalculateDeadline(
             nowUtc,
-            ex.RetryAfterSeconds,
-            1,
-            null
+            retryAfterSeconds,
+            _consecutiveRateLimits,
+            _backoffJitter
         );
 
         return new Snapshot
@@ -226,42 +246,13 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
             Status = ProviderStatus.RateLimited,
             Fidelity = Fidelity.Official,
             FetchedAtUtc = nowUtc,
-            LimitWindows = [],
+            LimitWindows = _lastSuccessfulSnapshot?.LimitWindows ?? [],
             ActiveBlock = new UsageBlock
             {
-                Reason = ex.Message,
+                Reason = reason,
                 IsBlocked = true,
                 ResetTimeUtc = deadline,
-                RetryAfterSeconds = ex.RetryAfterSeconds
-            },
-            ErrorDescription = null
-        };
-    }
-
-    private static Snapshot CreateRateLimitedSnapshot(HttpRequestException ex)
-    {
-
-        var nowUtc = DateTimeOffset.UtcNow;
-        var deadline = RateLimitPolicy.CalculateDeadline(
-            nowUtc,
-            null,
-            1,
-            null
-        );
-
-        return new Snapshot
-        {
-            ProviderId = PROVIDER_ID,
-            Status = ProviderStatus.RateLimited,
-            Fidelity = Fidelity.Official,
-            FetchedAtUtc = nowUtc,
-            LimitWindows = [],
-            ActiveBlock = new UsageBlock
-            {
-                Reason = ex.Message,
-                IsBlocked = true,
-                ResetTimeUtc = deadline,
-                RetryAfterSeconds = null
+                RetryAfterSeconds = retryAfterSeconds
             },
             ErrorDescription = null
         };

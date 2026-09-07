@@ -28,13 +28,15 @@ public static class RateLimitPolicy
     }
 
     /// <summary>
-    /// Calculates the rate-limit deadline. If <paramref name="retryAfterSeconds"/> is provided, enforces a 60-second floor.
-    /// If <paramref name="retryAfterSeconds"/> is null, calculates backoff using <see cref="BackoffCalculator"/> with the specified jitter factor.
+    /// Calculates the rate-limit deadline as the longest of the server-reported <paramref name="retryAfterSeconds"/>
+    /// and the jittered exponential backoff for <paramref name="consecutiveFailures"/>. The jittered value is floored at the
+    /// previous exponential tier (never below <see cref="MINIMUM_RETRY_FLOOR"/>), so jitter varies the wait without undoing the
+    /// escalation, and a provider that keeps replying <c>Retry-After: 0</c> still backs off instead of being retried every minute.
     /// </summary>
     /// <param name="nowUtc">The current UTC timestamp.</param>
     /// <param name="retryAfterSeconds">The server-reported Retry-After seconds, if any.</param>
     /// <param name="consecutiveFailures">The count of consecutive failures encountered.</param>
-    /// <param name="jitterFactor">A factor between 0.0 and 1.0 for deterministic jitter testing when retryAfterSeconds is null.</param>
+    /// <param name="jitterFactor">A factor between 0.0 and 1.0 for deterministic jitter testing.</param>
     /// <returns>The calculated deadline <see cref="DateTimeOffset"/>.</returns>
     public static DateTimeOffset CalculateDeadline(
         DateTimeOffset nowUtc,
@@ -43,26 +45,19 @@ public static class RateLimitPolicy
         double jitterFactor)
     {
 
-        if (retryAfterSeconds.HasValue)
-        {
-            var seconds = Math.Max((int)MINIMUM_RETRY_FLOOR.TotalSeconds, retryAfterSeconds.Value);
-
-            return nowUtc.AddSeconds(seconds);
-        }
-
         var backoff = BackoffCalculator.CalculateBackoff(consecutiveFailures, jitterFactor);
 
-        return nowUtc + backoff;
+        return nowUtc + ResolvePenalty(retryAfterSeconds, backoff, consecutiveFailures);
     }
 
     /// <summary>
-    /// Calculates the rate-limit deadline. If <paramref name="retryAfterSeconds"/> is provided, enforces a 60-second floor.
-    /// If <paramref name="retryAfterSeconds"/> is null, calculates backoff using <see cref="BackoffCalculator"/>.
+    /// Calculates the rate-limit deadline as the longest of the server-reported <paramref name="retryAfterSeconds"/>
+    /// and the jittered exponential backoff for <paramref name="consecutiveFailures"/>, floored at the previous exponential tier.
     /// </summary>
     /// <param name="nowUtc">The current UTC timestamp.</param>
     /// <param name="retryAfterSeconds">The server-reported Retry-After seconds, if any.</param>
     /// <param name="consecutiveFailures">The count of consecutive failures encountered.</param>
-    /// <param name="random">An optional <see cref="Random"/> instance for jitter generation when retryAfterSeconds is null.</param>
+    /// <param name="random">An optional <see cref="Random"/> instance for jitter generation.</param>
     /// <returns>The calculated deadline <see cref="DateTimeOffset"/>.</returns>
     public static DateTimeOffset CalculateDeadline(
         DateTimeOffset nowUtc,
@@ -71,15 +66,36 @@ public static class RateLimitPolicy
         Random? random = null)
     {
 
-        if (retryAfterSeconds.HasValue)
-        {
-            var seconds = Math.Max((int)MINIMUM_RETRY_FLOOR.TotalSeconds, retryAfterSeconds.Value);
-
-            return nowUtc.AddSeconds(seconds);
-        }
-
         var backoff = BackoffCalculator.CalculateBackoff(consecutiveFailures, random);
 
-        return nowUtc + backoff;
+        return nowUtc + ResolvePenalty(retryAfterSeconds, backoff, consecutiveFailures);
+    }
+
+    private static TimeSpan ResolvePenalty(
+        int? retryAfterSeconds,
+        TimeSpan backoff,
+        int consecutiveFailures)
+    {
+
+        var flooredBackoff = ApplyMinimumFloor(backoff, consecutiveFailures);
+
+        if (!retryAfterSeconds.HasValue)
+            return flooredBackoff;
+
+        var serverPenalty = TimeSpan.FromSeconds(Math.Max(MINIMUM_RETRY_FLOOR.TotalSeconds, retryAfterSeconds.Value));
+
+        return serverPenalty > flooredBackoff ? serverPenalty : flooredBackoff;
+    }
+
+    private static TimeSpan ApplyMinimumFloor(TimeSpan backoff, int consecutiveFailures)
+    {
+
+        if (consecutiveFailures <= 0)
+            return TimeSpan.Zero;
+
+        var previousTier = BackoffCalculator.CalculateExponentialInterval(consecutiveFailures - 1);
+        var floor = previousTier > MINIMUM_RETRY_FLOOR ? previousTier : MINIMUM_RETRY_FLOOR;
+
+        return backoff < floor ? floor : backoff;
     }
 }

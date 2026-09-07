@@ -12,14 +12,14 @@ The system must not issue constant network requests at short fixed intervals. If
 
 | Parameter | Default Value | Technical Rationale |
 | :--- | :--- | :--- |
-| `ActiveInterval` | **60 seconds** | Refresh interval when at least one local assistant is busy. |
-| `IdleInterval` | **300 seconds (5 minutes)** | Refresh interval when no assistant is executing tasks. |
+| `ActiveInterval` | **180 seconds** | Refresh interval when at least one local assistant is busy. Provider quota endpoints report coarse windows (5h / 7d) and throttle aggressively at minute-level polling, so a faster cadence buys no accuracy and costs rate-limit budget. Overridable via the `Refresh` section of `appsettings.json` (minimum 30 seconds). |
+| `IdleInterval` | **300 seconds (5 minutes)** | Refresh interval when no assistant is executing tasks. Overridable via the `Refresh` section of `appsettings.json` (minimum 30 seconds). |
 | `StaleThreshold` | **900 seconds (15 minutes)** | Grace margin before a prior reading is considered stale. |
 | `LivenessPollInterval` | **2 to 5 seconds** | Lightweight local check (zero network) for process states and session files. |
 
 ### Tick Decision Logic (`ShouldRefresh`)
 
-On each timer cycle (configured to tick every `ActiveInterval` = 60s), the decision to dispatch network requests to providers follows this pure rule:
+On each timer cycle (configured to tick every `ActiveInterval` = 180s), the decision to dispatch network requests to providers follows this pure rule:
 
 $$\text{ExecuteRefresh} = \text{IsAnyAgentBusy}() \lor (\text{TimeSinceLastAttempt} \ge \text{IdleInterval})$$
 
@@ -32,7 +32,7 @@ public static bool ShouldRefresh(bool isBusy, TimeSpan timeSinceLastAttempt, Tim
 
 ### Global Activity Detection (`IsAnyAgentBusy`)
 
-A centralized delegate evaluates the aggregated state of all registered activity monitors (`ClaudeSessionMonitor`, `CursorActivityMonitor`, `CodexActivityMonitor`, `AntigravityActivityMonitor`). If any session reports `Busy` or `Waiting`, the system operates on the active 60s cadence.
+A centralized delegate evaluates the aggregated state of all registered activity monitors (`ClaudeSessionMonitor`, `CursorActivityMonitor`, `CodexActivityMonitor`, `AntigravityActivityMonitor`). If any session reports `Busy` or `Waiting`, the system operates on the active 180s cadence.
 
 ---
 
@@ -131,18 +131,25 @@ The HTTP `Retry-After` header can appear in two formats:
 ### B. Backoff Calculation Formula
 
 $$\text{BaseFloor} = 60\text{ seconds}$$
-$$\text{MaxCeiling} = 900\text{ seconds (15 minutes)}$$
-$$\text{DoubledTime} = \text{BaseFloor} \times 2^{\min(\text{ConsecutiveAttempts}, 4)}$$
-$$\text{WaitTime} = \min\Big(\text{MaxCeiling}, \max(\text{DoubledTime}, \text{ServerRetryAfter})\Big)$$
+$$\text{MaxCeiling} = 3600\text{ seconds (1 hour)}$$
+$$\text{Tier}(n) = \min\Big(\text{MaxCeiling},\ \text{BaseFloor} \times 2^{\min(n - 1,\ 10)}\Big)$$
 
-Progressive intervals per consecutive 429 attempts:
+Progressive tiers per consecutive 429 attempts:
 - Attempt 1: 60 seconds (1 minute)
 - Attempt 2: 120 seconds (2 minutes)
 - Attempt 3: 240 seconds (4 minutes)
 - Attempt 4: 480 seconds (8 minutes)
-- Attempts $\ge 5$: 900 seconds (15 minutes)
+- Attempt 5: 960 seconds (16 minutes)
+- Attempts $\ge 7$: 3600 seconds (1 hour)
 
-To prevent thundering herd synchronization when multiple clients operate concurrently, apply pseudo-random jitter of $+1$ to $+5$ seconds to the final value.
+To prevent thundering herd synchronization when multiple clients operate concurrently, the tier is drawn with full jitter and then raised back to the previous tier, so randomness varies the wait without undoing the escalation:
+
+$$\text{Jittered} = \text{Tier}(n) \times U(0, 1)$$
+$$\text{WaitTime} = \max\Big(\text{Jittered},\ \text{Tier}(n - 1),\ \text{BaseFloor},\ \text{ServerRetryAfter}\Big)$$
+
+Attempt $n$ therefore always waits at least as long as the tier reached by attempt $n - 1$, and never less than `BaseFloor`.
+
+> **Counter lifecycle**: `ConsecutiveAttempts` is owned by the provider adapter, incremented on every 429 and reset to zero on the next successful reading. Passing a constant here silently disables the escalation, leaving the client retrying at the floor forever.
 
 ### C. Mandatory Deadline Persistence to Disk
 

@@ -9,7 +9,7 @@ The central objective is to monitor resource usage metrics, rate limits, and pla
 ## Technical Documentation Index
 
 1. **[Reading Strategy, Lifecycle, and Resilience](01-READING-STRATEGY-RESILIENCE.md)**
-   - Request scheduling: active mode (60s) vs. idle mode (5min) vs. stale threshold (15min).
+   - Request scheduling: active mode (180s) vs. idle mode (5min) vs. stale threshold (15min).
    - System event reactivity: power suspend/resume, filesystem modification triggers.
    - Persistent exponential backoff algorithm for handling HTTP 429 rate limits.
    - Provider state machine and graceful error degradation policies.

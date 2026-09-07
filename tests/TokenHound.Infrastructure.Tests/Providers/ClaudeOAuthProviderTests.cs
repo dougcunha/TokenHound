@@ -155,6 +155,120 @@ public sealed class ClaudeOAuthProviderTests
         snapshot.ActiveBlock!.IsBlocked.Should().BeTrue();
         snapshot.ActiveBlock.RetryAfterSeconds.Should().BeNull();
         snapshot.ActiveBlock.ResetTimeUtc.Should().NotBeNull();
+
+        var penalty = snapshot.ActiveBlock.ResetTimeUtc!.Value - snapshot.FetchedAtUtc;
+
+        penalty.Should().BeGreaterThanOrEqualTo(TimeSpan.FromSeconds(60));
+    }
+
+    /// <summary>
+    /// Verifies that consecutive 429 responses escalate the retry deadline instead of pinning it to the 60-second floor.
+    /// </summary>
+    [Fact]
+    public async Task GetSnapshotAsync_WhenRateLimitedRepeatedly_EscalatesRetryDeadline()
+    {
+
+        using var scope = new TempProfileScope(VALID_JSON);
+        var discovery = new ClaudeProfileDiscovery(scope.DirectoryPath);
+        var handler = new MockHttpMessageHandler(static _ =>
+        {
+
+            var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+            response.Headers.TryAddWithoutValidation("Retry-After", "0");
+
+            return response;
+        });
+
+        using var httpClient = new HttpClient(handler);
+        var client = new ClaudeOAuthClient(httpClient);
+        var provider = new ClaudeOAuthProvider(discovery, client, new MaxJitterRandom());
+
+        var first = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+        var second = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+        var third = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+
+        PenaltyOf(first).Should().Be(TimeSpan.FromSeconds(60));
+        PenaltyOf(second).Should().Be(TimeSpan.FromSeconds(120));
+        PenaltyOf(third).Should().Be(TimeSpan.FromSeconds(240));
+    }
+
+    /// <summary>
+    /// Verifies that a successful reading resets the escalation so the next 429 restarts at the minimum floor.
+    /// </summary>
+    [Fact]
+    public async Task GetSnapshotAsync_WhenSuccessFollowsRateLimit_ResetsEscalation()
+    {
+
+        using var scope = new TempProfileScope(VALID_JSON);
+        var discovery = new ClaudeProfileDiscovery(scope.DirectoryPath);
+        var responses = 0;
+        var handler = new MockHttpMessageHandler(_ =>
+        {
+
+            responses++;
+
+            if (responses == 3)
+            {
+
+                return new HttpResponseMessage(HttpStatusCode.OK)
+                {
+                    Content = new StringContent(USAGE_JSON, Encoding.UTF8, "application/json")
+                };
+            }
+
+            return new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+        });
+
+        using var httpClient = new HttpClient(handler);
+        var client = new ClaudeOAuthClient(httpClient);
+        var provider = new ClaudeOAuthProvider(discovery, client, new MaxJitterRandom());
+
+        await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+        await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+        await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+
+        var afterRecovery = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+
+        afterRecovery.Status.Should().Be(ProviderStatus.RateLimited);
+        PenaltyOf(afterRecovery).Should().Be(TimeSpan.FromSeconds(60));
+    }
+
+    /// <summary>
+    /// Verifies that a rate-limited snapshot keeps the last known limit windows so the HUD does not blank out.
+    /// </summary>
+    [Fact]
+    public async Task GetSnapshotAsync_WhenRateLimitedAfterSuccess_PreservesLastKnownLimitWindows()
+    {
+
+        using var scope = new TempProfileScope(VALID_JSON);
+        var discovery = new ClaudeProfileDiscovery(scope.DirectoryPath);
+        var served = false;
+        var handler = new MockHttpMessageHandler(_ =>
+        {
+
+            if (served)
+                return new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+
+            served = true;
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(USAGE_JSON, Encoding.UTF8, "application/json")
+            };
+        });
+
+        using var httpClient = new HttpClient(handler);
+        var client = new ClaudeOAuthClient(httpClient);
+        var provider = new ClaudeOAuthProvider(discovery, client);
+
+        await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+
+        snapshot.Status.Should().Be(ProviderStatus.RateLimited);
+        snapshot.LimitWindows.Should().HaveCount(2);
+        snapshot.LimitWindows[0].Name.Should().Be("five_hour");
+        snapshot.LimitWindows[0].UsedFraction.Should().Be(0.35);
     }
 
     /// <summary>
@@ -239,6 +353,15 @@ public sealed class ClaudeOAuthProviderTests
 
         snapshot.LimitWindows[0].UsedFraction.Should().Be(0.35);
         snapshot.LimitWindows[1].UsedFraction.Should().Be(0.80);
+    }
+
+    private static TimeSpan PenaltyOf(Snapshot snapshot)
+        => snapshot.ActiveBlock!.ResetTimeUtc!.Value - snapshot.FetchedAtUtc;
+
+    private sealed class MaxJitterRandom : Random
+    {
+        public override double NextDouble()
+            => 1.0;
     }
 
     private sealed class TempProfileScope : IDisposable

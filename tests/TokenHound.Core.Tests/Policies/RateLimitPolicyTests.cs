@@ -151,6 +151,94 @@ public sealed class RateLimitPolicyTests
     }
 
     /// <summary>
+    /// Verifies that a jittered backoff shorter than the minimum floor is elevated, so a 429 never schedules a sub-minute retry.
+    /// </summary>
+    [Fact]
+    public void CalculateDeadline_WhenJitteredBackoffIsBelowFloor_EnforcesSixtySecondFloor()
+    {
+        var nearZeroJitter = RateLimitPolicy.CalculateDeadline(
+            BASE_TIME,
+            null,
+            1,
+            0.01
+        );
+
+        var halfJitter = RateLimitPolicy.CalculateDeadline(
+            BASE_TIME,
+            null,
+            1,
+            0.5
+        );
+
+        nearZeroJitter.Should().Be(BASE_TIME.AddSeconds(60));
+        halfJitter.Should().Be(BASE_TIME.AddSeconds(60));
+    }
+
+    /// <summary>
+    /// Verifies that jitter cannot drop the penalty below the previous exponential tier, keeping escalation monotonic.
+    /// </summary>
+    [Fact]
+    public void CalculateDeadline_WhenJitterCollapsesBackoff_FloorsAtPreviousTier()
+    {
+        var thirdFailure = RateLimitPolicy.CalculateDeadline(
+            BASE_TIME,
+            null,
+            3,
+            0.0
+        );
+
+        var fifthFailure = RateLimitPolicy.CalculateDeadline(
+            BASE_TIME,
+            null,
+            5,
+            0.0
+        );
+
+        thirdFailure.Should().Be(BASE_TIME.AddSeconds(120));
+        fifthFailure.Should().Be(BASE_TIME.AddSeconds(480));
+    }
+
+    /// <summary>
+    /// Verifies that consecutive failures escalate the deadline beyond a server Retry-After that never grows.
+    /// </summary>
+    [Fact]
+    public void CalculateDeadline_WhenRetryAfterStaysLowAcrossFailures_EscalatesWithBackoff()
+    {
+        var firstFailure = RateLimitPolicy.CalculateDeadline(
+            BASE_TIME,
+            0,
+            1,
+            1.0
+        );
+
+        var fourthFailure = RateLimitPolicy.CalculateDeadline(
+            BASE_TIME,
+            0,
+            4,
+            1.0
+        );
+
+        firstFailure.Should().Be(BASE_TIME.AddSeconds(60));
+        fourthFailure.Should().Be(BASE_TIME.AddSeconds(480));
+    }
+
+    /// <summary>
+    /// Verifies that a server Retry-After longer than the computed backoff wins.
+    /// </summary>
+    [Fact]
+    public void CalculateDeadline_WhenRetryAfterExceedsBackoff_PrefersServerHint()
+    {
+        var deadline = RateLimitPolicy.CalculateDeadline(
+            BASE_TIME,
+            600,
+            2,
+            1.0
+        );
+
+        deadline.Should().Be(BASE_TIME.AddSeconds(600));
+    }
+
+    /// <summary>
     /// Verifies minimum retry floor constant.
     /// </summary>
     [Fact]

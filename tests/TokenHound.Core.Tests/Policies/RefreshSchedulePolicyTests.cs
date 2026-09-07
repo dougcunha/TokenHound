@@ -93,11 +93,11 @@ public sealed class RefreshSchedulePolicyTests
     [Fact]
     public void RefreshSchedulePolicy_DefaultConstants_MatchSpecifications()
     {
-        RefreshSchedulePolicy.DefaultActiveInterval.Should().Be(TimeSpan.FromSeconds(60));
+        RefreshSchedulePolicy.DefaultActiveInterval.Should().Be(TimeSpan.FromSeconds(180));
         RefreshSchedulePolicy.DefaultIdleInterval.Should().Be(TimeSpan.FromSeconds(300));
         RefreshSchedulePolicy.DefaultStaleThreshold.Should().Be(TimeSpan.FromSeconds(900));
 
-        RefreshSchedulePolicy.DEFAULT_ACTIVE_INTERVAL.Should().Be(TimeSpan.FromSeconds(60));
+        RefreshSchedulePolicy.DEFAULT_ACTIVE_INTERVAL.Should().Be(TimeSpan.FromSeconds(180));
         RefreshSchedulePolicy.DEFAULT_IDLE_INTERVAL.Should().Be(TimeSpan.FromSeconds(300));
         RefreshSchedulePolicy.DEFAULT_STALE_THRESHOLD.Should().Be(TimeSpan.FromSeconds(900));
     }

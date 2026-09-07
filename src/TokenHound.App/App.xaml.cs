@@ -7,6 +7,7 @@ using Serilog;
 using TokenHound.App.Presentation;
 using TokenHound.App.UI.Windows;
 using TokenHound.App.ViewModels;
+using TokenHound.Infrastructure.Configuration;
 using TokenHound.Infrastructure.Engine;
 using TokenHound.Infrastructure.Logging;
 using TokenHound.Infrastructure.Providers.Antigravity;
@@ -40,7 +41,7 @@ public partial class App : Application
         ConfigureExceptionHandling();
 
         var disposableResources = new List<IDisposable>();
-        _usageStore = new UsageStore(autoStart: true);
+        _usageStore = CreateUsageStore();
 
         RegisterProviders(_usageStore, disposableResources);
         InitializeUi(_usageStore, disposableResources);
@@ -99,6 +100,24 @@ public partial class App : Application
 
         Log.Error(e.Exception, "Unobserved task exception encountered");
         e.SetObserved();
+    }
+
+    private static UsageStore CreateUsageStore()
+    {
+
+        var settings = new RefreshSettingsStore().Load();
+
+        Log.Information(
+            "Polling cadence resolved: active {ActiveInterval}, idle {IdleInterval}",
+            settings.ActiveInterval,
+            settings.IdleInterval
+        );
+
+        return new UsageStore(
+            autoStart: true,
+            idleInterval: settings.IdleInterval,
+            pollInterval: settings.ActiveInterval
+        );
     }
 
     private static void RegisterProviders(UsageStore usageStore, List<IDisposable> disposableResources)

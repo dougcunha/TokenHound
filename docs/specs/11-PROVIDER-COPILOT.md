@@ -190,4 +190,4 @@ Copilot exposes no PID-scoped `busy` flag for standalone polling. Activity is in
 | Success | `Ok` (persist to `UsageArchive`) | Update |
 
 - **Route**: `SignInRoute.Guidance("Run 'gh auth login' or 'copilot login' in your terminal, then retry. Do not paste a PAT.")`.
-- **Polling**: Standard cadence from spec 01 applies (`ActiveInterval` 60s when any monitor reports `Busy`, else `IdleInterval` 300s). A monthly quota needs no faster cadence; forced refreshes still respect active 429 deadlines.
+- **Polling**: Standard cadence from spec 01 applies (`ActiveInterval` 180s when any monitor reports `Busy`, else `IdleInterval` 300s). A monthly quota needs no faster cadence; forced refreshes still respect active 429 deadlines.

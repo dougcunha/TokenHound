@@ -8,9 +8,11 @@ namespace TokenHound.Core.Policies;
 public static class RefreshSchedulePolicy
 {
     /// <summary>
-    /// Default active polling interval (60 seconds) when at least one agent is busy.
+    /// Default active polling interval (180 seconds) when at least one agent is busy.
+    /// Kept well above one minute because provider quota endpoints report coarse windows
+    /// and throttle aggressively at minute-level polling.
     /// </summary>
-    public static readonly TimeSpan DEFAULT_ACTIVE_INTERVAL = TimeSpan.FromSeconds(60);
+    public static readonly TimeSpan DEFAULT_ACTIVE_INTERVAL = TimeSpan.FromSeconds(180);
 
     /// <summary>
     /// Default idle polling interval (300 seconds / 5 minutes) when all agents are idle.
@@ -23,7 +25,7 @@ public static class RefreshSchedulePolicy
     public static readonly TimeSpan DEFAULT_STALE_THRESHOLD = TimeSpan.FromSeconds(900);
 
     /// <summary>
-    /// Gets the default active polling interval (60 seconds).
+    /// Gets the default active polling interval (180 seconds).
     /// </summary>
     public static TimeSpan DefaultActiveInterval
         => DEFAULT_ACTIVE_INTERVAL;
