@@ -74,7 +74,12 @@ public sealed class UsageArchiveTests
                 TestContext.Current.CancellationToken
             );
 
-            using var document = JsonDocument.Parse(await File.ReadAllTextAsync(archive.StatePath));
+            using var document = JsonDocument.Parse(
+                await File.ReadAllTextAsync(
+                    archive.StatePath,
+                    TestContext.Current.CancellationToken
+                )
+            );
             document.RootElement.GetProperty("unrelated").GetProperty("value").GetInt32().Should().Be(42);
             document.RootElement.GetProperty("backoffUntil").GetProperty("claude").GetString().Should().NotBeNull();
             document.RootElement.GetProperty("backoffUntil").GetProperty("copilot").GetString().Should().NotBeNull();

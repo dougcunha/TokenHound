@@ -39,7 +39,7 @@ public sealed class CopilotUsageProviderTests
     {
         using var provider = CreateProvider("gho-fixture-token", HttpStatusCode.OK, VALID_JSON);
 
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("copilot", snapshot.ProviderId);
         Assert.Equal(ProviderStatus.Ok, snapshot.Status);
@@ -61,7 +61,7 @@ public sealed class CopilotUsageProviderTests
         """;
         using var provider = CreateProvider("gho-fixture-token", HttpStatusCode.OK, json);
 
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(ProviderStatus.Unsupported, snapshot.Status);
         Assert.Empty(snapshot.LimitWindows);
@@ -72,7 +72,7 @@ public sealed class CopilotUsageProviderTests
     {
         using var provider = CreateProvider(null, HttpStatusCode.OK, VALID_JSON);
 
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(ProviderStatus.NeedsAuth, snapshot.Status);
         Assert.Contains("gh auth login", snapshot.ErrorDescription);
@@ -85,7 +85,7 @@ public sealed class CopilotUsageProviderTests
     {
         using var provider = CreateProvider("gho-fixture-token", HttpStatusCode.Unauthorized);
 
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(ProviderStatus.NeedsAuth, snapshot.Status);
         Assert.DoesNotContain("gho-fixture-token", snapshot.ErrorDescription);
@@ -96,7 +96,7 @@ public sealed class CopilotUsageProviderTests
     {
         using var provider = CreateProvider("ghp_fixture_pat", HttpStatusCode.Forbidden);
 
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(ProviderStatus.NeedsAuth, snapshot.Status);
         Assert.Contains("Do not paste a PAT", snapshot.ErrorDescription);
@@ -108,7 +108,7 @@ public sealed class CopilotUsageProviderTests
     {
         using var provider = CreateProvider("gho_fixture_oauth", HttpStatusCode.Forbidden);
 
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(ProviderStatus.Unsupported, snapshot.Status);
         Assert.Contains("GH_TOKEN", snapshot.ErrorDescription);
@@ -122,7 +122,7 @@ public sealed class CopilotUsageProviderTests
         provider.ResponseHeaders["Retry-After"] = "0";
         var before = DateTimeOffset.UtcNow;
 
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(ProviderStatus.Stale, snapshot.Status);
         Assert.True(snapshot.ActiveBlock!.IsBlocked);
@@ -138,7 +138,7 @@ public sealed class CopilotUsageProviderTests
             HttpStatusCode.OK,
             "{\"quota_reset_date_utc\":\"2026-10-01T00:00:00Z\",\"quota_snapshots\":{\"premium_interactions\":{\"has_quota\":true}}}");
 
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(ProviderStatus.Stale, snapshot.Status);
         Assert.Empty(snapshot.LimitWindows);
@@ -161,7 +161,7 @@ public sealed class CopilotUsageProviderTests
         """;
         using var provider = CreateProvider("gho-fixture-token", HttpStatusCode.OK, json);
 
-        var snapshot = await provider.GetSnapshotAsync();
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(ProviderStatus.Ok, snapshot.Status);
         Assert.False(snapshot.ActiveBlock!.IsBlocked);

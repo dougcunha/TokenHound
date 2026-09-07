@@ -102,7 +102,10 @@ public sealed class CopilotActivityMonitorTests
             await File.AppendAllTextAsync(file, "-1", TestContext.Current.CancellationToken);
             await File.AppendAllTextAsync(file, "-2", TestContext.Current.CancellationToken);
             await File.AppendAllTextAsync(file, "-3", TestContext.Current.CancellationToken);
-            await changed.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await changed.Task.WaitAsync(
+                TimeSpan.FromSeconds(2),
+                TestContext.Current.CancellationToken
+            );
             await Task.Delay(180, TestContext.Current.CancellationToken);
 
             monitor.DebouncedNotificationCount.Should().Be(1);

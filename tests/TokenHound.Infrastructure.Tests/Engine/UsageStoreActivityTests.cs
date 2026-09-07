@@ -39,7 +39,10 @@ public sealed class UsageStoreActivityTests
             TimeSpan.FromHours(1),
             TimeSpan.FromMilliseconds(10)
         );
-        var busy = await changes.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        var busy = await changes.Task.WaitAsync(
+            TimeSpan.FromSeconds(2),
+            TestContext.Current.CancellationToken
+        );
 
         busy.ProviderId.Should().Be("copilot");
         busy.AgentSession!.State.Should().Be(AgentSessionState.Busy);
@@ -57,7 +60,10 @@ public sealed class UsageStoreActivityTests
             ValueTask.FromResult<AgentSession?>(null)
         );
 
-        var idleChange = await idle.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        var idleChange = await idle.Task.WaitAsync(
+            TimeSpan.FromSeconds(2),
+            TestContext.Current.CancellationToken
+        );
 
         idleChange.ProviderId.Should().Be("copilot");
         idleChange.AgentSession.Should().BeNull();
@@ -85,7 +91,10 @@ public sealed class UsageStoreActivityTests
             TimeSpan.FromHours(1),
             TimeSpan.FromMilliseconds(10)
         );
-        var result = await change.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        var result = await change.Task.WaitAsync(
+            TimeSpan.FromSeconds(2),
+            TestContext.Current.CancellationToken
+        );
 
         result.AgentSession.Should().BeNull();
         await store.StopAsync(TestContext.Current.CancellationToken);

@@ -61,7 +61,7 @@ public sealed class CopilotConfigReaderTests
         using var scope = new TempConfigScope("{\"oauthToken\":\"fixture-token\"}");
         var reader = new CopilotConfigReader(scope.DirectoryPath);
 
-        var result = await reader.ReadTokenAsync();
+        var result = await reader.ReadTokenAsync(TestContext.Current.CancellationToken);
 
         Assert.False(reader.IsPlaintextTokenFallbackEnabled);
         Assert.Null(result);
@@ -74,10 +74,16 @@ public sealed class CopilotConfigReaderTests
         using var scope = new TempConfigScope(json);
         var reader = new CopilotConfigReader(scope.DirectoryPath, "oauthToken");
 
-        var result = await reader.ReadTokenAsync();
+        var result = await reader.ReadTokenAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("fixture-token", result);
-        Assert.Equal(json, await File.ReadAllTextAsync(scope.ConfigPath));
+        Assert.Equal(
+            json,
+            await File.ReadAllTextAsync(
+                scope.ConfigPath,
+                TestContext.Current.CancellationToken
+            )
+        );
     }
 
     private sealed class TempConfigScope : IDisposable

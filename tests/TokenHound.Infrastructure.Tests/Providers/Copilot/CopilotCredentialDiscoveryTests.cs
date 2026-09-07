@@ -30,7 +30,7 @@ public sealed class CopilotCredentialDiscoveryTests
                 return ValueTask.FromResult<string?>("gh-command-token");
             });
 
-        var result = await discovery.DiscoverAsync();
+        var result = await discovery.DiscoverAsync(TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.Equal("copilot-token", result!.AccessToken);
@@ -50,7 +50,7 @@ public sealed class CopilotCredentialDiscoveryTests
                 return ValueTask.FromResult<string?>("gh-token");
             });
 
-        var result = await discovery.DiscoverAsync();
+        var result = await discovery.DiscoverAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("gh-token", result!.AccessToken);
         Assert.Equal("gh auth token", result.Source);
@@ -76,7 +76,7 @@ public sealed class CopilotCredentialDiscoveryTests
             new CopilotConfigReader(config.DirectoryPath),
             ghTokenReader: static _ => ValueTask.FromResult<string?>(null));
 
-        var result = await discovery.DiscoverAsync();
+        var result = await discovery.DiscoverAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("keychain-token", result!.AccessToken);
         Assert.Contains("copilot-cli", calls);
@@ -92,7 +92,7 @@ public sealed class CopilotCredentialDiscoveryTests
             new CopilotConfigReader(config.DirectoryPath, "oauthToken"),
             ghTokenReader: static _ => ValueTask.FromResult<string?>(null));
 
-        var result = await discovery.DiscoverAsync();
+        var result = await discovery.DiscoverAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal("config-token", result!.AccessToken);
         Assert.Equal("Copilot CLI config", result.Source);
@@ -105,7 +105,7 @@ public sealed class CopilotCredentialDiscoveryTests
             new RecordingCredentialStore([]),
             ghTokenReader: static _ => ValueTask.FromResult<string?>(null));
 
-        var result = await discovery.DiscoverAsync();
+        var result = await discovery.DiscoverAsync(TestContext.Current.CancellationToken);
 
         Assert.Null(result);
     }

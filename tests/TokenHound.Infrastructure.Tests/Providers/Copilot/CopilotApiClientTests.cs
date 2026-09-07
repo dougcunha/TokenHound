@@ -33,7 +33,10 @@ public sealed class CopilotApiClientTests
             new Uri(CopilotApiClient.DEFAULT_ENDPOINT),
             CopilotApiClient.DEFAULT_TIMEOUT);
 
-        var result = await client.GetQuotaAsync("gho-fixture-token");
+        var result = await client.GetQuotaAsync(
+            "gho-fixture-token",
+            TestContext.Current.CancellationToken
+        );
 
         Assert.NotNull(result.QuotaSnapshots);
         Assert.NotNull(capturedRequest);
@@ -59,7 +62,10 @@ public sealed class CopilotApiClientTests
         using var client = new CopilotApiClient(httpClient);
 
         var exception = await Assert.ThrowsAsync<CopilotApiException>(
-            () => client.GetQuotaAsync("gho-fixture-token"));
+            () => client.GetQuotaAsync(
+                "gho-fixture-token",
+                TestContext.Current.CancellationToken
+            ));
 
         Assert.Equal(HttpStatusCode.TooManyRequests, exception.StatusCode);
         Assert.Equal(0, exception.RetryAfterSeconds);
@@ -81,7 +87,10 @@ public sealed class CopilotApiClientTests
             TimeSpan.FromMilliseconds(20));
 
         await Assert.ThrowsAsync<CopilotTimeoutException>(
-            () => client.GetQuotaAsync("gho-fixture-token"));
+            () => client.GetQuotaAsync(
+                "gho-fixture-token",
+                TestContext.Current.CancellationToken
+            ));
     }
 
     [Fact]

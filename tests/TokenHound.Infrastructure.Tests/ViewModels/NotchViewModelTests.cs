@@ -209,7 +209,10 @@ public sealed class NotchViewModelTests
         store.RegisterActivityMonitor(monitor);
         store.Start(TimeSpan.FromHours(1), TimeSpan.FromMilliseconds(10));
 
-        await busyChanged.Task.WaitAsync(TimeSpan.FromSeconds(2));
+        await busyChanged.Task.WaitAsync(
+            TimeSpan.FromSeconds(2),
+            TestContext.Current.CancellationToken
+        );
 
         Assert.True(ring.IsBusy);
         await store.StopAsync(TestContext.Current.CancellationToken);
