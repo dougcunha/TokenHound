@@ -2,9 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Threading;
+using Serilog;
+using TokenHound.App.Presentation;
 using TokenHound.App.UI.Windows;
 using TokenHound.App.ViewModels;
 using TokenHound.Infrastructure.Engine;
+using TokenHound.Infrastructure.Logging;
 using TokenHound.Infrastructure.Providers.Antigravity;
 using TokenHound.Infrastructure.Providers.Claude;
 using TokenHound.Infrastructure.Providers.Codex;
@@ -32,62 +36,110 @@ public partial class App : Application
 
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-        _usageStore = new UsageStore(autoStart: true);
+        InitializeLogging();
+        ConfigureExceptionHandling();
 
         var disposableResources = new List<IDisposable>();
+        _usageStore = new UsageStore(autoStart: true);
+
+        RegisterProviders(_usageStore, disposableResources);
+        InitializeUi(_usageStore, disposableResources);
+        ScheduleInitialRefresh();
+    }
+
+    /// <inheritdoc />
+    protected override void OnExit(ExitEventArgs e)
+    {
+
+        Log.Information("TokenHound exiting with code {ExitCode}", e.ApplicationExitCode);
+
+        _lifetime?.Dispose();
+        Log.CloseAndFlush();
+
+        base.OnExit(e);
+    }
+
+    private static void InitializeLogging()
+    {
+
+        var settings = LogConfigurationLoader.Load();
+        var appInfo = ApplicationInfo.Current;
+
+        LoggingBootstrapper.Initialize(settings, appInfo.Name);
+        LoggingBootstrapper.LogHeader(Log.Logger, appInfo.Name, appInfo.DisplayVersion);
+
+        Log.Information("Starting TokenHound application initialization...");
+    }
+
+    private void ConfigureExceptionHandling()
+    {
+
+        DispatcherUnhandledException += OnDispatcherUnhandledException;
+        AppDomain.CurrentDomain.UnhandledException += OnCurrentDomainUnhandledException;
+        TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+    }
+
+    private static void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+
+        Log.Fatal(e.Exception, "Unhandled dispatcher exception encountered");
+    }
+
+    private static void OnCurrentDomainUnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+
+        if (e.ExceptionObject is Exception ex)
+            Log.Fatal(ex, "Unhandled AppDomain exception encountered");
+        else
+            Log.Fatal("Unhandled AppDomain error: {ExceptionObject}", e.ExceptionObject);
+    }
+
+    private static void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {
+
+        Log.Error(e.Exception, "Unobserved task exception encountered");
+        e.SetObserved();
+    }
+
+    private static void RegisterProviders(UsageStore usageStore, List<IDisposable> disposableResources)
+    {
+
+        Log.Information("Registering provider adapters and activity monitors...");
 
         var claudeProvider = new ClaudeOAuthProvider();
-        _usageStore.RegisterProvider(claudeProvider);
-
-        var claudeMonitor = new ClaudeSessionMonitor();
-        _usageStore.RegisterActivityMonitor(claudeMonitor);
+        usageStore.RegisterProvider(claudeProvider);
+        usageStore.RegisterActivityMonitor(new ClaudeSessionMonitor());
 
         var antigravityProvider = new AntigravityUsageProvider();
-        _usageStore.RegisterProvider(antigravityProvider);
+        usageStore.RegisterProvider(antigravityProvider);
+        usageStore.RegisterActivityMonitor(new AntigravityActivityMonitor());
         disposableResources.Add(antigravityProvider);
 
-        var antigravityMonitor = new AntigravityActivityMonitor();
-        _usageStore.RegisterActivityMonitor(antigravityMonitor);
-
         var codexProvider = new CodexUsageProvider();
-        _usageStore.RegisterProvider(codexProvider);
-
-        var codexMonitor = new CodexActivityMonitor();
-        _usageStore.RegisterActivityMonitor(codexMonitor);
+        usageStore.RegisterProvider(codexProvider);
+        usageStore.RegisterActivityMonitor(new CodexActivityMonitor());
 
         var cursorProvider = new CursorUsageProvider();
-        _usageStore.RegisterProvider(cursorProvider);
+        usageStore.RegisterProvider(cursorProvider);
+        usageStore.RegisterActivityMonitor(new CursorActivityMonitor());
         disposableResources.Add(cursorProvider);
+    }
 
-        var cursorMonitor = new CursorActivityMonitor();
-        _usageStore.RegisterActivityMonitor(cursorMonitor);
+    private void InitializeUi(UsageStore usageStore, List<IDisposable> disposableResources)
+    {
+
+        Log.Information("Initializing HUD window and presentation models...");
 
         _dialogService = new DialogService(() => _notchWindow);
-
-        _notchViewModel = new NotchViewModel(
-            _usageStore,
-            action =>
-            {
-                if (Dispatcher.CheckAccess())
-                    action();
-                else
-                    Dispatcher.Invoke(action);
-            }
-        );
-
-        _lifetime = new ApplicationLifetime(
-            _usageStore,
-            _dialogService,
-            _notchViewModel,
-            disposableResources
-        );
+        _notchViewModel = new NotchViewModel(usageStore, DispatchUiAction);
+        _lifetime = new ApplicationLifetime(usageStore, _dialogService, _notchViewModel, disposableResources);
 
         _actionsViewModel = new HudActionsViewModel(
-            _usageStore.RefreshNowAsync,
+            usageStore.RefreshNowAsync,
             _lifetime.ShutdownAsync,
             () => _dialogService.ShowSettings(_notchWindow),
             () => _dialogService.ShowAbout(_notchWindow),
-            () => _usageStore.CurrentSnapshots.Values
+            () => usageStore.CurrentSnapshots.Values
         );
 
         _notchWindow = new NotchWindow
@@ -99,15 +151,27 @@ public partial class App : Application
         MainWindow = _notchWindow;
         _notchWindow.Show();
 
-        var startupTask = _usageStore.RefreshNowAsync(_lifetime.LifetimeToken);
-        _lifetime.TrackStartupTask(startupTask);
+        Log.Information("HUD window displayed successfully.");
     }
 
-    /// <inheritdoc />
-    protected override void OnExit(ExitEventArgs e)
+    private void DispatchUiAction(Action action)
     {
 
-        _lifetime?.Dispose();
-        base.OnExit(e);
+        if (Dispatcher.CheckAccess())
+            action();
+        else
+            Dispatcher.Invoke(action);
+    }
+
+    private void ScheduleInitialRefresh()
+    {
+
+        if (_usageStore is null || _lifetime is null)
+            return;
+
+        Log.Information("Dispatching initial usage refresh in background...");
+
+        var startupTask = _usageStore.RefreshNowAsync(_lifetime.LifetimeToken);
+        _lifetime.TrackStartupTask(startupTask);
     }
 }

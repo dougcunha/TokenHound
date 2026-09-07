@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using Serilog;
 using TokenHound.App.UI.Windows;
 using TokenHound.App.ViewModels;
 using TokenHound.Infrastructure.Engine;
@@ -106,37 +107,62 @@ public sealed class ApplicationLifetime : IDisposable
     private async Task ShutdownCoreAsync()
     {
 
-        _cts.Cancel();
+        Log.Information("Initiating application shutdown and resource cleanup...");
 
+        _cts.Cancel();
         _dialogService.CloseAll();
         _notchViewModel.Dispose();
 
-        if (_startupTask is not null)
+        await DrainStartupTaskAsync().ConfigureAwait(false);
+        await DrainUsageStoreAsync().ConfigureAwait(false);
+        DisposeResources();
+
+        _cts.Dispose();
+
+        Log.Information("Application shutdown completed successfully.");
+        _shutdownAction();
+    }
+
+    private async Task DrainStartupTaskAsync()
+    {
+
+        if (_startupTask is null)
+            return;
+
+        try
         {
 
-            try
-            {
-
-                await _startupTask.ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-            }
-            catch (Exception)
-            {
-            }
+            await _startupTask.ConfigureAwait(false);
         }
+        catch (OperationCanceledException)
+        {
+        }
+        catch (Exception ex)
+        {
+
+            Log.Warning(ex, "Exception caught while draining startup refresh task");
+        }
+    }
+
+    private async Task DrainUsageStoreAsync()
+    {
 
         try
         {
 
             await _usageStore.StopAsync(CancellationToken.None).ConfigureAwait(false);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+
+            Log.Warning(ex, "Exception caught while stopping UsageStore");
         }
 
         _usageStore.Dispose();
+    }
+
+    private void DisposeResources()
+    {
 
         foreach (var resource in _disposableResources)
         {
@@ -146,13 +172,12 @@ public sealed class ApplicationLifetime : IDisposable
 
                 resource.Dispose();
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+
+                Log.Warning(ex, "Exception caught while disposing application resource");
             }
         }
-
-        _cts.Dispose();
-        _shutdownAction();
     }
 
     private static void DefaultShutdown()
