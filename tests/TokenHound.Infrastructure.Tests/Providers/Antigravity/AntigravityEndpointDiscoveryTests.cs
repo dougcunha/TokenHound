@@ -100,4 +100,26 @@ public sealed class AntigravityEndpointDiscoveryTests
         Assert.Contains(50001, endpoint.CandidatePorts);
         Assert.Contains(50002, endpoint.CandidatePorts);
     }
+
+    [Fact]
+    public void DiscoverEndpoint_WhenAgyProcessRunning_ReturnsEndpointWithoutCsrfToken()
+    {
+        // Arrange
+        const string CMD_LINE = "\"C:\\Users\\Admin\\AppData\\Local\\agy\\bin\\agy.exe\" --dangerously-skip-permissions";
+
+        var discovery = new AntigravityEndpointDiscovery(
+            processEnumerator: () => [(777, CMD_LINE)],
+            portResolver: _ => [57956, 57957]);
+
+        // Act
+        var endpoint = discovery.DiscoverEndpoint();
+
+        // Assert
+        Assert.NotNull(endpoint);
+        Assert.Equal(777, endpoint.ProcessId);
+        Assert.Equal(string.Empty, endpoint.CsrfToken);
+        Assert.Equal(2, endpoint.CandidatePorts.Count);
+        Assert.Contains(57956, endpoint.CandidatePorts);
+        Assert.Contains(57957, endpoint.CandidatePorts);
+    }
 }

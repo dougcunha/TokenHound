@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -38,6 +39,23 @@ public sealed class AntigravityUsageProviderTests
         using var provider = new AntigravityUsageProvider();
 
         Assert.Equal("gemini", provider.ProviderId);
+    }
+
+    [Fact]
+    public async Task GetSnapshotAsync_LiveIntegration_WhenAgyRunning_ReturnsOfficialMetrics()
+    {
+        using var provider = new AntigravityUsageProvider();
+        var snapshot = await provider.GetSnapshotAsync();
+
+        Assert.NotNull(snapshot);
+        Assert.Equal("gemini", snapshot.ProviderId);
+
+        if (OperatingSystem.IsWindows() && Process.GetProcessesByName("agy").Length > 0)
+        {
+            Assert.Equal(ProviderStatus.Ok, snapshot.Status);
+            Assert.Equal(Fidelity.Official, snapshot.Fidelity);
+            Assert.NotEmpty(snapshot.LimitWindows);
+        }
     }
 
     [Fact]
@@ -186,10 +204,7 @@ public sealed class AntigravityUsageProviderTests
         var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 9, 6, 12, 0, 0, TimeSpan.Zero));
         var transcriptPath = Path.Combine(logDir, "transcript.jsonl");
 
-        await File.WriteAllLinesAsync(transcriptPath,
-        [
-            """{"step_index": 1, "source": "MODEL", "created_at": "2026-09-06T11:00:00.000Z"}"""
-        ]);
+        await File.WriteAllLinesAsync(transcriptPath, ["""{"step_index": 1, "source": "MODEL", "created_at": "2026-09-06T11:00:00.000Z"}"""]);
 
         try
         {
@@ -229,10 +244,7 @@ public sealed class AntigravityUsageProviderTests
         var transcriptPath = Path.Combine(logDir, "transcript.jsonl");
 
         // Old request from yesterday
-        await File.WriteAllLinesAsync(transcriptPath,
-        [
-            """{"step_index": 1, "source": "MODEL", "created_at": "2026-09-05T11:00:00.000Z"}"""
-        ]);
+        await File.WriteAllLinesAsync(transcriptPath, ["""{"step_index": 1, "source": "MODEL", "created_at": "2026-09-05T11:00:00.000Z"}"""]);
 
         var credStore = Substitute.For<TokenHound.Core.Contracts.ICredentialStore>();
         credStore.ReadCredentialAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())

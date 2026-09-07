@@ -32,6 +32,12 @@ public sealed record AntigravityBucketDto
     /// </summary>
     [JsonPropertyName("resetTime")]
     public DateTimeOffset? ResetTime { get; init; }
+
+    /// <summary>
+    /// Gets the quota window periodicity type, such as "5h" or "weekly".
+    /// </summary>
+    [JsonPropertyName("window")]
+    public string? Window { get; init; }
 }
 
 /// <summary>

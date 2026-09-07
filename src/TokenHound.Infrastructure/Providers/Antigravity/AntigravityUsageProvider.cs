@@ -162,9 +162,7 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
         {
 
             if (group.Buckets is null)
-            {
                 continue;
-            }
 
             foreach (var bucket in group.Buckets)
             {
@@ -173,9 +171,13 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
                     ? (long)Math.Round(bucket.RemainingFraction.Value * 100.0)
                     : null;
 
+                var period = ResolveBucketPeriod(bucket);
+                var name = bucket.DisplayName ?? group.DisplayName ?? bucket.BucketId ?? "Quota Window";
+
                 windows.Add(new LimitWindow
                 {
-                    Name = bucket.DisplayName ?? group.DisplayName ?? bucket.BucketId ?? "Quota Window",
+                    Name = name,
+                    Period = period,
                     TotalUnits = usedFraction.HasValue ? 100 : null,
                     UsedFraction = usedFraction,
                     RemainingUnits = remainingUnits,
@@ -186,6 +188,18 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
 
         return windows;
     }
+
+    private static TimeSpan? ResolveBucketPeriod(AntigravityBucketDto bucket)
+        => bucket.Window switch
+        {
+            "5h" => TimeSpan.FromHours(5),
+            "weekly" => TimeSpan.FromDays(7),
+            _ => bucket.DisplayName?.Contains("five", StringComparison.OrdinalIgnoreCase) == true
+                ? TimeSpan.FromHours(5)
+                : bucket.DisplayName?.Contains("week", StringComparison.OrdinalIgnoreCase) == true
+                    ? TimeSpan.FromDays(7)
+                    : null
+        };
 
     private async ValueTask<Snapshot?> TryGetTranscriptSnapshotAsync(CancellationToken cancellationToken)
     {

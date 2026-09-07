@@ -112,7 +112,10 @@ public sealed class AntigravityLanguageServerClient : IDisposable
         var url = $"https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary";
 
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
-        request.Headers.Add(CSRF_HEADER_NAME, csrfToken);
+        if (!string.IsNullOrWhiteSpace(csrfToken))
+        {
+            request.Headers.Add(CSRF_HEADER_NAME, csrfToken);
+        }
         request.Content = new StringContent(REQUEST_PAYLOAD, Encoding.UTF8, "application/json");
 
         try

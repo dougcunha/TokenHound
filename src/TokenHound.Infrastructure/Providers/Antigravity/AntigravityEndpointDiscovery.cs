@@ -51,24 +51,24 @@ public sealed class AntigravityEndpointDiscovery
         {
 
             if (string.IsNullOrEmpty(commandLine))
-            {
                 continue;
-            }
 
             var match = CsrfTokenRegex.Match(commandLine);
+            var isAgy = commandLine.Contains("agy", StringComparison.OrdinalIgnoreCase) ||
+                        commandLine.Contains("antigravity", StringComparison.OrdinalIgnoreCase);
 
-            if (!match.Success)
-            {
+            if (!match.Success && !isAgy)
                 continue;
-            }
 
-            var csrfToken = match.Groups[1].Value;
             var candidatePorts = _portResolver(pid);
+
+            if (isAgy && !match.Success && candidatePorts.Count == 0)
+                continue;
 
             return new AntigravityEndpoint
             {
                 ProcessId = pid,
-                CsrfToken = csrfToken,
+                CsrfToken = match.Success ? match.Groups[1].Value : string.Empty,
                 CandidatePorts = candidatePorts
             };
         }
@@ -90,6 +90,8 @@ public sealed class AntigravityEndpointDiscovery
         {
             processes.AddRange(Process.GetProcessesByName("language_server"));
             processes.AddRange(Process.GetProcessesByName("language_server_windows_x64"));
+            processes.AddRange(Process.GetProcessesByName("agy"));
+            processes.AddRange(Process.GetProcessesByName("antigravity"));
         }
         catch
         {
