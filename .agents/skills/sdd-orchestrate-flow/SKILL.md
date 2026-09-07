@@ -11,9 +11,9 @@ Coordinate contracts, execution, and acceptance. The coordinator maintains state
    Locate the skills in the table below in the installed catalog or `SKILLS/`; leave each stage's body to its responsible agent. Before delegating, read [references/delegation.md](references/delegation.md) in full. On resume, load only the index, relevant decisions, and sources needed for the next stage.
    Check worktree, local instructions, subagent tools, and existing sources. Record the Git base as a resolved commit and pre-existing changes; without Git, record scope limits. Require dependencies for the next phase; a missing skill blocks only that phase, without inventing equivalent execution. Preserve existing invocation policies: pass the exact name and path explicitly to the subagent.
    **Output:** reconciled state, known authorization, and identified next stage. Without subagents, prepare sources/state and report the limitation; request a choice before replacing the requested flow with local execution.
-2. **Product.** Delegate PRD creation/update; reuse a valid existing artifact. For an explicitly requested refactoring, delegate `sdd-plan-refactoring` and use its PRD in the same gate, keeping the TechSpec as a draft until technical HIL.
-   Check request coverage and present the written PRD at **HIL 1**, with product decisions and pending items. Reuse existing approval only if it matches current content/scope.
-   **Output:** approved PRD and recorded decisions; a blocking pending item prevents dependent stages.
+2. **Product.** Delegate PRD creation/update; reuse a valid existing artifact. For an explicitly requested refactoring, delegate `sdd-plan-refactoring` and use its PRD in the same gate, keeping the TechSpec as a draft until technical HIL. With more than one primary outcome in the request, delegate `sdd-orchestrate-prds` first: it approves the slicing with the user and writes one PRD per slice under a shared prefix; record the approved slicing as a decision in `workflow.md`.
+   Check request coverage and present the written PRD at **HIL 1**, with product decisions and pending items. When sliced, present the whole set at a single HIL 1 and drive each slice as its own feature from step 3 onward, in dependency order. Reuse existing approval only if it matches current content/scope.
+   **Output:** approved PRD and recorded decisions; when sliced, every slice has an approved PRD or an explicit deferral. A blocking pending item prevents dependent stages.
 3. **Design and plan.** Delegate TechSpec, check PRD coverage, and then delegate task planning. Identify the stack per target; in desktop C#/.NET, omit E2E and keep relevant unit, integration, and manual acceptance. Require commands that also exclude E2E from aggregate suites. Preserve product behavior when choosing checks.
    Present TechSpec + DAG + concrete tasks at **HIL 2**: architecture, boundaries, required environments, manual acceptance, and authorization for implementation/corrections within those contracts. Correct documents before requesting a decision; intermediate questions are only for indispensable information.
    **Output:** approved traceable executable plan; no code writer started before required authorization.
@@ -33,6 +33,7 @@ Save a checkpoint before each HIL question, after recording its answer, between 
 | Available input | Responsible skill | Artifact/result |
 | --- | --- | --- |
 | Request | `sdd-create-prd` | `prd.md` |
+| Request with more than one primary outcome | `sdd-orchestrate-prds` | one `prd.md` per slice under a shared prefix |
 | Requested refactoring | `sdd-plan-refactoring` | `prd.md`, `techspec.md` |
 | Approved PRD | `sdd-create-techspec` | `techspec.md` |
 | PRD + TechSpec | `sdd-plan-tasks` | `tasks.md`, `task_*.md` |
