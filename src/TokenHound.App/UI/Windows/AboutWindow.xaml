@@ -7,6 +7,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=presentation:ApplicationInfo}"
         Title="About TokenHound"
+        Icon="../../Assets/logo.ico"
         Width="440"
         Height="280"
         MinWidth="380"
@@ -30,12 +31,23 @@
         </Grid.RowDefinitions>
 
         <!-- Title Header -->
-        <TextBlock Grid.Row="0"
-                   Text="{Binding Name}"
-                   FontSize="16"
-                   FontWeight="SemiBold"
-                   Foreground="{StaticResource TextPrimaryBrush}"
-                   Margin="0,0,0,12" />
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    Margin="0,0,0,12">
+            <Image Source="../../Assets/logo.png"
+                   Width="40"
+                   Height="40"
+                   Margin="0,0,12,0"
+                   VerticalAlignment="Center"
+                   RenderOptions.BitmapScalingMode="HighQuality"
+                   AutomationProperties.Name="TokenHound logo" />
+            <TextBlock Text="{Binding Name}"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource TextPrimaryBrush}"
+                       VerticalAlignment="Center" />
+        </StackPanel>
 
         <!-- Description and Version Card -->
         <StackPanel Grid.Row="1"

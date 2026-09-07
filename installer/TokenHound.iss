@@ -52,6 +52,7 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 LicenseFile=..\LICENSE
+SetupIconFile=..\logo.ico
 PrivilegesRequired=lowest
 OutputDir={#OutputDir}
 OutputBaseFilename=TokenHound-Setup-{#MyAppVersion}-{#MyAppRid}

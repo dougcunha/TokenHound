@@ -6,6 +6,7 @@
         xmlns:controls="clr-namespace:TokenHound.App.UI.Controls"
         mc:Ignorable="d"
         Title="TokenHound"
+        Icon="../../Assets/logo.ico"
         WindowStyle="None"
         AllowsTransparency="True"
         Background="Transparent"

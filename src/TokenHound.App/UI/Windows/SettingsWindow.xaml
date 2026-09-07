@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Settings"
+        Icon="../../Assets/logo.ico"
         Width="440"
         Height="280"
         MinWidth="380"

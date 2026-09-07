@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" alt="TokenHound logo" width="128" />
+</p>
+
 # TokenHound 🐶
 
 > **A non-intrusive Windows 11 desktop HUD monitoring LLM usage, rate limits, and agent activity across AI coding tools.**
