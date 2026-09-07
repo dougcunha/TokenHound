@@ -180,6 +180,13 @@ public sealed partial class TooltipCard : UserControl
         UpdateStatusBadge();
         UpdateQuotaBar(SessionUsedFraction, SessionBarTrack, SessionBarFill, SessionPercentText);
         UpdateQuotaBar(WeeklyUsedFraction, WeeklyBarTrack, WeeklyBarFill, WeeklyPercentText);
+
+        if (!SessionUsedFraction.HasValue && !string.IsNullOrWhiteSpace(SessionResetText) && SessionResetText.Contains("requests", StringComparison.OrdinalIgnoreCase))
+        {
+            SessionPercentText.Text = SessionResetText;
+            SessionPercentText.Foreground = TEXT_PRIMARY;
+        }
+
         UpdateActiveSession();
         UpdateStatusMessage();
     }

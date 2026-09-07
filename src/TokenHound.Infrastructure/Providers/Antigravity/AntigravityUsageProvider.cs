@@ -16,8 +16,10 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
 
     private readonly AntigravityEndpointDiscovery _discovery;
     private readonly AntigravityLanguageServerClient _client;
+    private readonly AntigravityCloudCodeClient _cloudCodeClient;
     private readonly AntigravityTranscriptReader _transcriptReader;
     private readonly bool _disposeClient;
+    private readonly bool _disposeCloudCodeClient;
 
     /// <inheritdoc />
     public string ProviderId => PROVIDER_ID;
@@ -28,10 +30,12 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
     /// <param name="discovery">Optional endpoint discovery instance.</param>
     /// <param name="client">Optional language server client.</param>
     /// <param name="transcriptReader">Optional transcript reader instance.</param>
+    /// <param name="cloudCodeClient">Optional Cloud Code client instance.</param>
     public AntigravityUsageProvider(
         AntigravityEndpointDiscovery? discovery = null,
         AntigravityLanguageServerClient? client = null,
-        AntigravityTranscriptReader? transcriptReader = null)
+        AntigravityTranscriptReader? transcriptReader = null,
+        AntigravityCloudCodeClient? cloudCodeClient = null)
     {
         _discovery = discovery ?? new AntigravityEndpointDiscovery();
 
@@ -46,6 +50,17 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
             _disposeClient = true;
         }
 
+        if (cloudCodeClient is not null)
+        {
+            _cloudCodeClient = cloudCodeClient;
+            _disposeCloudCodeClient = false;
+        }
+        else
+        {
+            _cloudCodeClient = new AntigravityCloudCodeClient();
+            _disposeCloudCodeClient = true;
+        }
+
         _transcriptReader = transcriptReader ?? new AntigravityTranscriptReader();
     }
 
@@ -57,6 +72,13 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
         if (officialSnapshot is not null)
         {
             return officialSnapshot;
+        }
+
+        var cloudCodeSnapshot = await TryGetCloudCodeSnapshotAsync(cancellationToken).ConfigureAwait(false);
+
+        if (cloudCodeSnapshot is not null)
+        {
+            return cloudCodeSnapshot;
         }
 
         var derivedSnapshot = await TryGetTranscriptSnapshotAsync(cancellationToken).ConfigureAwait(false);
@@ -85,9 +107,58 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
             return null;
         }
 
+        var windows = MapQuotaGroups(quota.Groups);
+
+        if (windows.Count == 0)
+        {
+            return null;
+        }
+
+        return new Snapshot
+        {
+            ProviderId = PROVIDER_ID,
+            Status = ProviderStatus.Ok,
+            Fidelity = Fidelity.Official,
+            FetchedAtUtc = DateTimeOffset.UtcNow,
+            LimitWindows = windows,
+            ActiveBlock = null,
+            ErrorDescription = null
+        };
+    }
+
+    private async ValueTask<Snapshot?> TryGetCloudCodeSnapshotAsync(CancellationToken cancellationToken)
+    {
+        var quota = await _cloudCodeClient.RetrieveUserQuotaSummaryAsync(cancellationToken).ConfigureAwait(false);
+
+        if (quota?.Groups is null || quota.Groups.Count == 0)
+        {
+            return null;
+        }
+
+        var windows = MapQuotaGroups(quota.Groups);
+
+        if (windows.Count == 0)
+        {
+            return null;
+        }
+
+        return new Snapshot
+        {
+            ProviderId = PROVIDER_ID,
+            Status = ProviderStatus.Ok,
+            Fidelity = Fidelity.Official,
+            FetchedAtUtc = DateTimeOffset.UtcNow,
+            LimitWindows = windows,
+            ActiveBlock = null,
+            ErrorDescription = null
+        };
+    }
+
+    private static IReadOnlyList<LimitWindow> MapQuotaGroups(IReadOnlyList<AntigravityGroupDto> groups)
+    {
         var windows = new List<LimitWindow>();
 
-        foreach (var group in quota.Groups)
+        foreach (var group in groups)
         {
 
             if (group.Buckets is null)
@@ -113,31 +184,20 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
             }
         }
 
-        if (windows.Count == 0)
-        {
-            return null;
-        }
-
-        return new Snapshot
-        {
-            ProviderId = PROVIDER_ID,
-            Status = ProviderStatus.Ok,
-            Fidelity = Fidelity.Official,
-            FetchedAtUtc = DateTimeOffset.UtcNow,
-            LimitWindows = windows,
-            ActiveBlock = null,
-            ErrorDescription = null
-        };
+        return windows;
     }
 
     private async ValueTask<Snapshot?> TryGetTranscriptSnapshotAsync(CancellationToken cancellationToken)
     {
-        var requestsToday = await _transcriptReader.CountTodayModelRequestsAsync(cancellationToken).ConfigureAwait(false);
+        var hasTranscripts = _transcriptReader.HasAnyTranscripts();
+        var hasCredentials = await _cloudCodeClient.HasCredentialAsync(cancellationToken).ConfigureAwait(false);
 
-        if (requestsToday <= 0)
+        if (!hasTranscripts && !hasCredentials)
         {
             return null;
         }
+
+        var requestsToday = await _transcriptReader.CountTodayModelRequestsAsync(cancellationToken).ConfigureAwait(false);
 
         var limitWindow = new LimitWindow
         {
@@ -179,6 +239,11 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
         if (_disposeClient)
         {
             _client.Dispose();
+        }
+
+        if (_disposeCloudCodeClient)
+        {
+            _cloudCodeClient.Dispose();
         }
     }
 }

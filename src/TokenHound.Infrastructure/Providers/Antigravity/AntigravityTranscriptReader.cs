@@ -94,8 +94,37 @@ public sealed class AntigravityTranscriptReader
         return latest;
     }
 
+    /// <summary>
+    /// Determines whether any transcript files or brain directories exist on the system.
+    /// </summary>
+    /// <returns>True if at least one transcript file or brain directory exists; otherwise, false.</returns>
+    public bool HasAnyTranscripts()
+    {
+        foreach (var file in EnumerateTranscriptFiles())
+        {
+            return true;
+        }
+
+        foreach (var baseDir in _searchDirectories)
+        {
+
+            if (Directory.Exists(baseDir))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private IEnumerable<string> EnumerateTranscriptFiles()
     {
+        var options = new EnumerationOptions
+        {
+            RecurseSubdirectories = true,
+            IgnoreInaccessible = true
+        };
+
         foreach (var baseDir in _searchDirectories)
         {
 
@@ -111,15 +140,34 @@ public sealed class AntigravityTranscriptReader
                 files = Directory.EnumerateFiles(
                     baseDir,
                     "transcript.jsonl",
-                    SearchOption.AllDirectories);
+                    options);
             }
             catch
             {
                 continue;
             }
 
-            foreach (var file in files)
+            using var enumerator = files.GetEnumerator();
+
+            while (true)
             {
+                string file;
+
+                try
+                {
+
+                    if (!enumerator.MoveNext())
+                    {
+                        break;
+                    }
+
+                    file = enumerator.Current;
+                }
+                catch
+                {
+                    break;
+                }
+
                 yield return file;
             }
         }

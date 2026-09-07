@@ -1,5 +1,6 @@
 using AwesomeAssertions;
 using TokenHound.App.ViewModels;
+using TokenHound.Core.Models;
 using Xunit;
 
 namespace TokenHound.Infrastructure.Tests.ViewModels;
@@ -66,5 +67,37 @@ public sealed class ProviderRingViewModelTests
 
         var unknownRing = new ProviderRingViewModel("custom");
         unknownRing.ProviderBadge.Should().Be("C");
+    }
+
+    /// <summary>Verifies that derived snapshots with request counts update the status message and reset text.</summary>
+    [Fact]
+    public void UpdateFromSnapshot_WhenDerivedRequestsWindow_SetsSessionResetTextAndStatusMessage()
+    {
+
+        var ring = new ProviderRingViewModel("antigravity");
+        var snapshot = new Snapshot
+        {
+            ProviderId = "antigravity",
+            Status = ProviderStatus.Ok,
+            Fidelity = Fidelity.Derived,
+            FetchedAtUtc = DateTimeOffset.UtcNow,
+            LimitWindows =
+            [
+                new LimitWindow
+                {
+                    Name = "Requests Today",
+                    Period = TimeSpan.FromDays(1),
+                    RemainingUnits = 42,
+                    TotalUnits = null,
+                },
+            ],
+        };
+
+        ring.UpdateFromSnapshot(snapshot);
+
+        ring.Status.Should().Be(ProviderStatus.Ok);
+        ring.UsedFraction.Should().BeNull();
+        ring.SessionResetText.Should().Be("~42 requests");
+        ring.StatusMessage.Should().Be("~42 requests today · no limit published");
     }
 }

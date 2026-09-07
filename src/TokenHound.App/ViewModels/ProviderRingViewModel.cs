@@ -176,6 +176,11 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
         var sessionReset = sessionWindow?.ResetTimeUtc ?? snapshot.ActiveBlock?.ResetTimeUtc;
         SessionResetText = FormatResetCountdown(sessionReset, nowUtc);
         WeeklyResetText = FormatResetCountdown(weeklyWindow?.ResetTimeUtc, nowUtc);
+
+        if (snapshot.Fidelity == Fidelity.Derived && sessionWindow?.UsedFraction is null && sessionWindow?.RemainingUnits is { } count)
+        {
+            SessionResetText = $"~{count} requests";
+        }
     }
 
     /// <summary>Updates the session activity state and active session description text.</summary>
@@ -250,7 +255,20 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
     }
 
     private static string? ResolveStatusMessage(Snapshot snapshot)
-        => snapshot.Status switch
+    {
+
+        if (snapshot.Status == ProviderStatus.Ok && snapshot.Fidelity == Fidelity.Derived)
+        {
+            var requestWindow = snapshot.LimitWindows.FirstOrDefault(static w =>
+                w.RemainingUnits.HasValue && w.TotalUnits == null);
+
+            if (requestWindow?.RemainingUnits is { } count)
+            {
+                return $"~{count} requests today · no limit published";
+            }
+        }
+
+        return snapshot.Status switch
         {
             ProviderStatus.NeedsAuth => !string.IsNullOrWhiteSpace(snapshot.ErrorDescription) ? snapshot.ErrorDescription : "Execute 'claude login' in terminal",
             ProviderStatus.RateLimited => snapshot.ActiveBlock?.Reason ?? snapshot.ErrorDescription ?? "Rate limit reached",
@@ -258,6 +276,7 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
             ProviderStatus.Stale => snapshot.ErrorDescription ?? "Telemetry is stale",
             _ => null
         };
+    }
 
     private bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
     {

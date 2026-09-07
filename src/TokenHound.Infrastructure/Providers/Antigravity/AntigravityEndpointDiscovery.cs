@@ -84,11 +84,12 @@ public sealed class AntigravityEndpointDiscovery
             yield break;
         }
 
-        Process[] processes;
+        List<Process> processes = [];
 
         try
         {
-            processes = Process.GetProcessesByName("language_server");
+            processes.AddRange(Process.GetProcessesByName("language_server"));
+            processes.AddRange(Process.GetProcessesByName("language_server_windows_x64"));
         }
         catch
         {

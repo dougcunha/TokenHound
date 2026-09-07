@@ -1,10 +1,12 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using NSubstitute;
 using TokenHound.Core.Models;
 using TokenHound.Infrastructure.Providers.Antigravity;
 using Xunit;
@@ -46,25 +48,8 @@ public sealed class AntigravityUsageProviderTests
             processEnumerator: () => [(1234, "--csrf_token token-abc")],
             portResolver: _ => [5555]);
 
-        const string JSON_PAYLOAD = """
-        {
-          "response": {
-            "groups": [
-              {
-                "displayName": "Gemini 2.5 Pro",
-                "buckets": [
-                  {
-                    "bucketId": "gemini-pro-weekly",
-                    "displayName": "Weekly Limit",
-                    "remainingFraction": 0.80,
-                    "resetTime": "2026-09-10T00:00:00Z"
-                  }
-                ]
-              }
-            ]
-          }
-        }
-        """;
+        const string JSON_PAYLOAD =
+            """{"response":{"groups":[{"displayName":"Gemini 2.5 Pro","buckets":[{"bucketId":"gemini-pro-weekly","displayName":"Weekly Limit","remainingFraction":0.80,"resetTime":"2026-09-10T00:00:00Z"}]}]}}""";
 
         var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
         {
@@ -139,6 +124,145 @@ public sealed class AntigravityUsageProviderTests
     }
 
     [Fact]
+    public async Task GetSnapshotAsync_WhenCloudCodeAvailable_ReturnsOfficialSnapshot()
+    {
+        // Arrange
+        var discovery = new AntigravityEndpointDiscovery(
+            processEnumerator: () => [],
+            portResolver: _ => []);
+
+        const string JSON_PAYLOAD =
+            """{"response":{"groups":[{"displayName":"Gemini 2.5 Pro","buckets":[{"bucketId":"gemini-pro-cloud","displayName":"Weekly Quota","remainingFraction":0.75,"resetTime":"2026-09-12T00:00:00Z"}]}]}}""";
+
+        var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(JSON_PAYLOAD, Encoding.UTF8, "application/json")
+        });
+
+        var credStore = Substitute.For<TokenHound.Core.Contracts.ICredentialStore>();
+        credStore.ReadCredentialAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(ValueTask.FromResult<string?>("test-oauth-token"));
+
+        using var httpClient = new HttpClient(handler);
+        using var cloudClient = new AntigravityCloudCodeClient(httpClient, credStore, "nonexistent_file.json");
+        using var provider = new AntigravityUsageProvider(discovery, null, null, cloudClient);
+
+        // Act
+        var snapshot = await provider.GetSnapshotAsync();
+
+        // Assert
+        Assert.NotNull(snapshot);
+        Assert.Equal("gemini", snapshot.ProviderId);
+        Assert.Equal(ProviderStatus.Ok, snapshot.Status);
+        Assert.Equal(Fidelity.Official, snapshot.Fidelity);
+        Assert.Single(snapshot.LimitWindows);
+        Assert.Equal(0.25, snapshot.LimitWindows[0].UsedFraction!.Value, 2);
+    }
+
+    [Fact]
+    public async Task GetSnapshotAsync_WhenCloudCode403_FallsBackToTranscripts()
+    {
+        // Arrange
+        var discovery = new AntigravityEndpointDiscovery(
+            processEnumerator: () => [],
+            portResolver: _ => []);
+
+        var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Forbidden)
+        {
+            Content = new StringContent("""{"error": {"code": 403, "message": "unlicensed #3501"}}""", Encoding.UTF8, "application/json")
+        });
+
+        var credStore = Substitute.For<TokenHound.Core.Contracts.ICredentialStore>();
+        credStore.ReadCredentialAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(ValueTask.FromResult<string?>("test-oauth-token"));
+
+        using var httpClient = new HttpClient(handler);
+        using var cloudClient = new AntigravityCloudCodeClient(httpClient, credStore, "nonexistent_file.json");
+
+        var tempDir = Path.Combine(Path.GetTempPath(), $"gemini_prov_403_{Guid.NewGuid():N}");
+        var logDir = Path.Combine(tempDir, "conv", ".system_generated", "logs");
+        Directory.CreateDirectory(logDir);
+
+        var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 9, 6, 12, 0, 0, TimeSpan.Zero));
+        var transcriptPath = Path.Combine(logDir, "transcript.jsonl");
+
+        await File.WriteAllLinesAsync(transcriptPath,
+        [
+            """{"step_index": 1, "source": "MODEL", "created_at": "2026-09-06T11:00:00.000Z"}"""
+        ]);
+
+        try
+        {
+            var reader = new AntigravityTranscriptReader([tempDir], timeProvider);
+            using var provider = new AntigravityUsageProvider(discovery, null, reader, cloudClient);
+
+            // Act
+            var snapshot = await provider.GetSnapshotAsync();
+
+            // Assert
+            Assert.NotNull(snapshot);
+            Assert.Equal("gemini", snapshot.ProviderId);
+            Assert.Equal(ProviderStatus.Ok, snapshot.Status);
+            Assert.Equal(Fidelity.Derived, snapshot.Fidelity);
+            Assert.Single(snapshot.LimitWindows);
+            Assert.Equal(1, snapshot.LimitWindows[0].RemainingUnits);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task GetSnapshotAsync_WhenZeroRequestsToday_ButTranscriptsExist_ReturnsOkWithZeroUnits()
+    {
+        // Arrange
+        var discovery = new AntigravityEndpointDiscovery(
+            processEnumerator: () => [],
+            portResolver: _ => []);
+
+        var tempDir = Path.Combine(Path.GetTempPath(), $"gemini_prov_zero_{Guid.NewGuid():N}");
+        var logDir = Path.Combine(tempDir, "conv", ".system_generated", "logs");
+        Directory.CreateDirectory(logDir);
+
+        var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 9, 6, 12, 0, 0, TimeSpan.Zero));
+        var transcriptPath = Path.Combine(logDir, "transcript.jsonl");
+
+        // Old request from yesterday
+        await File.WriteAllLinesAsync(transcriptPath,
+        [
+            """{"step_index": 1, "source": "MODEL", "created_at": "2026-09-05T11:00:00.000Z"}"""
+        ]);
+
+        var credStore = Substitute.For<TokenHound.Core.Contracts.ICredentialStore>();
+        credStore.ReadCredentialAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(ValueTask.FromResult<string?>(null));
+
+        using var cloudClient = new AntigravityCloudCodeClient(null, credStore, "nonexistent.json");
+
+        try
+        {
+            var reader = new AntigravityTranscriptReader([tempDir], timeProvider);
+            using var provider = new AntigravityUsageProvider(discovery, null, reader, cloudClient);
+
+            // Act
+            var snapshot = await provider.GetSnapshotAsync();
+
+            // Assert
+            Assert.NotNull(snapshot);
+            Assert.Equal("gemini", snapshot.ProviderId);
+            Assert.Equal(ProviderStatus.Ok, snapshot.Status);
+            Assert.Equal(Fidelity.Derived, snapshot.Fidelity);
+            Assert.Single(snapshot.LimitWindows);
+            Assert.Equal(0, snapshot.LimitWindows[0].RemainingUnits);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact]
     public async Task GetSnapshotAsync_WhenAllSourcesUnavailable_ReturnsNeedsAuth()
     {
         // Arrange
@@ -146,8 +270,13 @@ public sealed class AntigravityUsageProviderTests
             processEnumerator: () => [],
             portResolver: _ => []);
 
+        var credStore = Substitute.For<TokenHound.Core.Contracts.ICredentialStore>();
+        credStore.ReadCredentialAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(ValueTask.FromResult<string?>(null));
+
+        using var cloudClient = new AntigravityCloudCodeClient(null, credStore, "C:\\nonexistent_oauth.json");
         var reader = new AntigravityTranscriptReader(["C:\\nonexistent_dir_xyz_123"]);
-        using var provider = new AntigravityUsageProvider(discovery, null, reader);
+        using var provider = new AntigravityUsageProvider(discovery, null, reader, cloudClient);
 
         // Act
         var snapshot = await provider.GetSnapshotAsync();
