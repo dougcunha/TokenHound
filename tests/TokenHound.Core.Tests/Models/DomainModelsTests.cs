@@ -61,6 +61,24 @@ public sealed class DomainModelsTests
     }
 
     /// <summary>
+    /// Verifies that a fractional remainder is preserved independently of integral units.
+    /// </summary>
+    [Fact]
+    public void LimitWindow_PreservesFractionalRemainingValue()
+    {
+        var window = new LimitWindow
+        {
+            Name = "Monthly Premium Interactions",
+            RemainingUnits = 10,
+            RemainingValue = 10.5,
+            TotalUnits = 100,
+            UsedFraction = 0.895
+        };
+
+        window.RemainingValue.Should().Be(10.5);
+    }
+
+    /// <summary>
     /// Verifies non-destructive mutation on LimitWindow using with expressions.
     /// </summary>
     [Fact]
@@ -193,9 +211,42 @@ public sealed class DomainModelsTests
         deserialized.Status.Should().Be(ProviderStatus.RateLimited);
         deserialized.LimitWindows.Should().HaveCount(2);
         deserialized.LimitWindows[0].UsedFraction.Should().Be(1.0);
+        deserialized.LimitWindows[0].RemainingValue.Should().BeNull();
         deserialized.LimitWindows[1].UsedFraction.Should().BeNull();
         deserialized.ActiveBlock.Should().NotBeNull();
         deserialized.ActiveBlock!.IsBlocked.Should().BeTrue();
+    }
+
+    /// <summary>
+    /// Verifies that Unsupported is distinct and nullable model fields round-trip through JSON.
+    /// </summary>
+    [Fact]
+    public void Serialization_RoundTrip_PreservesUnsupportedAndRemainingValue()
+    {
+        var snapshot = new Snapshot
+        {
+            ProviderId = "copilot",
+            Status = ProviderStatus.Unsupported,
+            Fidelity = Fidelity.Official,
+            FetchedAtUtc = DateTimeOffset.UtcNow,
+            LimitWindows =
+            [
+                new LimitWindow
+                {
+                    Name = "Monthly Premium Interactions",
+                    RemainingUnits = 10,
+                    RemainingValue = 10.5,
+                    TotalUnits = 100,
+                    UsedFraction = 0.895
+                }
+            ]
+        };
+
+        var json = JsonSerializer.Serialize(snapshot);
+        var deserialized = JsonSerializer.Deserialize<Snapshot>(json);
+
+        deserialized!.Status.Should().Be(ProviderStatus.Unsupported);
+        deserialized.LimitWindows[0].RemainingValue.Should().Be(10.5);
     }
 
     /// <summary>

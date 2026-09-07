@@ -1,0 +1,111 @@
+{
+  "schema_version": 1,
+  "generation": 22,
+  "feature": "provider-copilot",
+  "workspace": "C:\\Users\\Admin\\.herdr\\worktrees\\TokenHound\\copilot-provider",
+  "phase": "implementation",
+  "status": "active",
+  "safe_to_stop": false,
+  "owner_session": null,
+  "objective": "Define and execute the Copilot provider adapter from the authoritative provider specification, producing an approved PRD, TechSpec, executable task DAG, implementation evidence, review, and acceptance.",
+  "constraints": [
+    "TokenHound.Core remains pure with no UI or OS dependencies.",
+    "Borrow credentials read-only and never refresh or overwrite credentials owned by other tools.",
+    "Preserve and persist HTTP 429 deadlines, including Retry-After: 0 floor behavior.",
+    "Use the desktop .NET validation policy with unit and integration checks, no E2E aggregate tests.",
+    "All provider implementation remains under TokenHound.Infrastructure and follows the repository C# limits and documentation rules."
+  ],
+  "sources": {
+    "workflow": "workflow.md",
+    "prd": "prd.md",
+    "techspec": "techspec.md",
+    "tasks": "tasks.md",
+    "review": "codereview_001/codereview.md"
+  },
+  "review_status": "rejected",
+  "approved_sources": [
+    {
+      "path": "prd.md",
+      "sha256": "A95EB2C2AC1A648DB2AB09F12857A284F9F0260415FF72ACAF9E9DCA20483235",
+      "decision_id": "DEC-0002"
+    }
+  ],
+  "decisions_to_read": [
+    {
+      "decision_id": "DEC-0001",
+      "decision": "Use provider-copilot as one feature and docs/specs/11-PROVIDER-COPILOT.md as the authoritative product input.",
+      "scope": "product",
+      "human_text": "The user asked to initiate the SDD flow based on the Copilot provider specification.",
+      "provenance": "tasks/prd-provider-copilot/workflow.md"
+    },
+    {
+      "decision_id": "DEC-0002",
+      "decision": "The PRD is approved for technical planning, with HIL1-01 through HIL1-06 explicitly deferred without adding scope.",
+      "scope": "product",
+      "human_text": "Pode continuar.",
+      "provenance": "tasks/prd-provider-copilot/workflow.md"
+    },
+    {
+      "decision_id": "DEC-0003",
+      "decision": "Credential format evidence constrains implementation: use official precedence and copilot-cli service evidence, derive Windows targets from validated host/login state, and require a sanitized plaintext fixture before config token extraction.",
+      "scope": "technical planning",
+      "human_text": "The user explicitly requested internet research of the real Copilot credential format.",
+      "provenance": "tasks/prd-provider-copilot/workflow.md"
+    },
+    {
+      "decision_id": "DEC-0004",
+      "decision": "The revised TechSpec is approved for executable task planning and implementation within its contract, subject to IP-01 and prior product deferrals.",
+      "scope": "technical authorization",
+      "human_text": "Pode continuar.",
+      "provenance": "tasks/prd-provider-copilot/workflow.md"
+    }
+  ],
+  "git_base": "5b7622a2586794c193aa140c2064c47faa52fa55",
+  "worktree_evidence": "tasks/prd-provider-copilot/workflow.md#reconciliation",
+  "active_work": [],
+  "pending_hil": null,
+  "blockers": [
+    "T06.5-T06.7 essential Windows MCP App/Screenshot/manual focus evidence is unavailable in the current session.",
+    "IP-01 plaintext Copilot CLI config-token property remains unverified; the default fallback stays disabled."
+  ],
+  "correction_round": 0,
+  "rounds_without_progress": 0,
+  "next_action": {
+    "kind": "manual-validation",
+    "instruction": "Run T06 integrated review and, when Windows MCP App/Screenshot tools are available, execute the manual HUD/activity/focus script; otherwise record the missing manual evidence as an essential open item and do not approve completion.",
+    "read": [
+      {
+        "path": "tasks/prd-provider-copilot/prd.md",
+        "section": "all"
+      },
+      {
+        "path": "tasks/prd-provider-copilot/workflow.md",
+        "section": "HIL 1 decision; Technical planning handoff; External authentication research; DEC-0003; HIL 2 decision DEC-0004"
+      },
+      {
+        "path": "tasks/prd-provider-copilot/techspec.md",
+        "section": "Components and flow; Errors, security, and recovery; Sequencing; Test approach; Relevant files"
+      },
+      {
+        "path": "tasks/prd-provider-copilot/task_02.md",
+        "section": "all"
+      },
+      {
+        "path": "tasks/prd-provider-copilot/task_04.md",
+        "section": "all"
+      },
+      {
+        "path": "tasks/prd-provider-copilot/task_03.md",
+        "section": "all"
+      },
+      {
+        "path": "docs/specs/11-PROVIDER-COPILOT.md",
+        "section": "all"
+      },
+      {
+        "path": "AGENTS.md",
+        "section": "all"
+      }
+    ]
+  }
+}

@@ -28,5 +28,10 @@ public enum ProviderStatus
     /// <summary>
     /// The provider is actively rate-limited and awaiting deadline reset.
     /// </summary>
-    RateLimited
+    RateLimited,
+
+    /// <summary>
+    /// The provider is reachable but has no usable entitlement or finite quota.
+    /// </summary>
+    Unsupported
 }

@@ -174,6 +174,47 @@ public sealed class NotchViewModelTests
         viewModel.Rings.Should().BeEmpty();
     }
 
+    /// <summary>Verifies UsageStore activity changes reach the existing Copilot ring.</summary>
+    [Fact]
+    public async Task OnActivityUpdated_WhenCopilotRingExistsUpdatesBusyState()
+    {
+        using var store = new UsageStore(activityPollInterval: TimeSpan.FromMilliseconds(10));
+        using var viewModel = new NotchViewModel(store);
+        var snapshot = CreateSnapshot("copilot", ProviderStatus.Ok, 0.25);
+        var provider = Substitute.For<IUsageProvider>();
+        provider.ProviderId.Returns("copilot");
+        provider.GetSnapshotAsync(Arg.Any<CancellationToken>()).Returns(ValueTask.FromResult(snapshot));
+        store.RegisterProvider(provider);
+        await store.RefreshNowAsync(TestContext.Current.CancellationToken);
+
+        var ring = viewModel.Rings.Single(r => r.ProviderId == "copilot");
+        var busyChanged = new TaskCompletionSource<bool>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        ring.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(ProviderRingViewModel.IsBusy) && ring.IsBusy)
+                busyChanged.TrySetResult(true);
+        };
+
+        var monitor = Substitute.For<IActivityMonitor>();
+        monitor.ProviderId.Returns("copilot");
+        monitor.CheckLivenessAsync(Arg.Any<CancellationToken>()).Returns(
+            ValueTask.FromResult<AgentSession?>(new AgentSession
+            {
+                Pid = 42,
+                StartTimeUtc = DateTimeOffset.UtcNow,
+                State = AgentSessionState.Busy,
+                LastActivityUtc = DateTimeOffset.UtcNow
+            }));
+        store.RegisterActivityMonitor(monitor);
+        store.Start(TimeSpan.FromHours(1), TimeSpan.FromMilliseconds(10));
+
+        await busyChanged.Task.WaitAsync(TimeSpan.FromSeconds(2));
+
+        Assert.True(ring.IsBusy);
+        await store.StopAsync(TestContext.Current.CancellationToken);
+    }
+
     private static Snapshot CreateSnapshot(
         string providerId,
         ProviderStatus status,

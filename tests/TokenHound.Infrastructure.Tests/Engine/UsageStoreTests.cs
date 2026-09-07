@@ -1,6 +1,7 @@
 using AwesomeAssertions;
 using NSubstitute;
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Contracts;
@@ -297,6 +298,121 @@ public sealed class UsageStoreTests
         await store.RefreshNowAsync(TestContext.Current.CancellationToken);
 
         eventCount.Should().Be(2);
+    }
+
+    /// <summary>Verifies that an archived successful reading is restored as stale with its original timestamp.</summary>
+    [Fact]
+    public async Task Constructor_WithArchivedReading_RestoresStaleSnapshot()
+    {
+        var directory = CreateTemporaryDirectory();
+        var fetchedAt = DateTimeOffset.UtcNow.AddMinutes(-10);
+
+        try
+        {
+            using (var archive = new UsageArchive(directory))
+                await archive.SaveSnapshotAsync(
+                    CreateSnapshot("copilot") with { FetchedAtUtc = fetchedAt },
+                    TestContext.Current.CancellationToken
+                );
+
+            var restartedArchive = new UsageArchive(directory);
+            using var store = new UsageStore(archive: restartedArchive);
+
+            store.CurrentSnapshots["copilot"].Status.Should().Be(ProviderStatus.Stale);
+            store.CurrentSnapshots["copilot"].FetchedAtUtc.Should().Be(fetchedAt);
+            store.CurrentSnapshots["copilot"].LimitWindows.Should().BeEmpty();
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    /// <summary>Verifies that a persisted future deadline blocks a forced refresh after restart.</summary>
+    [Fact]
+    public async Task RefreshNowAsync_AfterRestartHonorsPersistedDeadline()
+    {
+        var directory = CreateTemporaryDirectory();
+        var future = DateTimeOffset.UtcNow.AddMinutes(5);
+
+        try
+        {
+            var archive = new UsageArchive(directory);
+            var limitedProvider = Substitute.For<IUsageProvider>();
+            limitedProvider.ProviderId.Returns("copilot");
+            limitedProvider.GetSnapshotAsync(Arg.Any<CancellationToken>()).Returns(
+                ValueTask.FromResult(CreateSnapshot("copilot", ProviderStatus.RateLimited, future))
+            );
+            var store = new UsageStore(archive: archive);
+            store.RegisterProvider(limitedProvider);
+
+            await store.RefreshNowAsync(TestContext.Current.CancellationToken);
+            await store.StopAsync(TestContext.Current.CancellationToken);
+
+            var restartedArchive = new UsageArchive(directory);
+            using var restartedStore = new UsageStore(archive: restartedArchive);
+            var freshProvider = Substitute.For<IUsageProvider>();
+            freshProvider.ProviderId.Returns("copilot");
+            freshProvider.GetSnapshotAsync(Arg.Any<CancellationToken>()).Returns(
+                ValueTask.FromResult(CreateSnapshot("copilot"))
+            );
+            restartedStore.RegisterProvider(freshProvider);
+
+            await restartedStore.RefreshNowAsync(TestContext.Current.CancellationToken);
+
+            await freshProvider.DidNotReceive().GetSnapshotAsync(Arg.Any<CancellationToken>());
+            restartedArchive.Load().BackoffDeadlines["copilot"].Should().Be(future);
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    /// <summary>Verifies that NeedsAuth clears the archived reading while keeping its visible status.</summary>
+    [Fact]
+    public async Task RefreshNowAsync_WhenAuthenticationIsRequired_ClearsArchive()
+    {
+        var directory = CreateTemporaryDirectory();
+
+        try
+        {
+            using (var archive = new UsageArchive(directory))
+                await archive.SaveSnapshotAsync(
+                    CreateSnapshot("copilot"),
+                    TestContext.Current.CancellationToken
+                );
+
+            var restartedArchive = new UsageArchive(directory);
+            using var store = new UsageStore(archive: restartedArchive);
+            var provider = Substitute.For<IUsageProvider>();
+            provider.ProviderId.Returns("copilot");
+            provider.GetSnapshotAsync(Arg.Any<CancellationToken>()).Returns(
+                ValueTask.FromResult(CreateSnapshot("copilot", ProviderStatus.NeedsAuth))
+            );
+            store.RegisterProvider(provider);
+
+            await store.RefreshNowAsync(TestContext.Current.CancellationToken);
+
+            store.CurrentSnapshots["copilot"].Status.Should().Be(ProviderStatus.NeedsAuth);
+            restartedArchive.Load().LastReadings.Should().BeEmpty();
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    private static string CreateTemporaryDirectory()
+    {
+
+        var directory = Path.Combine(
+            Path.GetTempPath(),
+            "TokenHound",
+            $"store-tests-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(directory);
+
+        return directory;
     }
 
     private static Snapshot CreateSnapshot(

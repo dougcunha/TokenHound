@@ -7,7 +7,7 @@ namespace TokenHound.Infrastructure.Engine;
 /// <summary>
 /// Coordinates admission, cancellation, background timer, draining, and resource disposal for <see cref="UsageStore"/>.
 /// </summary>
-internal sealed class UsageStoreLifetime : IDisposable
+internal sealed partial class UsageStoreLifetime : IDisposable
 {
     private readonly object _lock = new();
     private readonly CancellationTokenSource _stoppingCts = new();
@@ -15,6 +15,8 @@ internal sealed class UsageStoreLifetime : IDisposable
 
     private CancellationTokenSource? _timerCts;
     private Task? _timerTask;
+    private CancellationTokenSource? _activityTimerCts;
+    private Task? _activityTimerTask;
     private int _activeOperations;
     private bool _isStopping;
     private bool _isDisposed;
@@ -170,6 +172,7 @@ internal sealed class UsageStoreLifetime : IDisposable
         }
 
         StopTimer();
+        StopActivityTimer();
         _stoppingCts.Dispose();
     }
 
@@ -213,7 +216,11 @@ internal sealed class UsageStoreLifetime : IDisposable
         try
         {
 
-            await Task.WhenAll(_drainTcs.Task, DrainTimerAsync()).ConfigureAwait(false);
+            await Task.WhenAll(
+                _drainTcs.Task,
+                DrainTimerAsync(false),
+                DrainTimerAsync(true)
+            ).ConfigureAwait(false);
         }
         catch
         {
@@ -238,20 +245,12 @@ internal sealed class UsageStoreLifetime : IDisposable
         disposeResources?.Invoke();
     }
 
-    private async Task DrainTimerAsync()
+    private async Task DrainTimerAsync(bool activity)
     {
 
-        CancellationTokenSource? cts;
-        Task? timerTask;
-
-        lock (_lock)
-        {
-
-            cts = _timerCts;
-            _timerCts = null;
-            timerTask = _timerTask;
-            _timerTask = null;
-        }
+        var timer = TakeTimer(activity);
+        var cts = timer.CancellationSource;
+        var timerTask = timer.Task;
 
         cts?.Cancel();
 

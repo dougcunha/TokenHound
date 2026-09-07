@@ -13,6 +13,7 @@ using TokenHound.Infrastructure.Logging;
 using TokenHound.Infrastructure.Providers.Antigravity;
 using TokenHound.Infrastructure.Providers.Claude;
 using TokenHound.Infrastructure.Providers.Codex;
+using TokenHound.Infrastructure.Providers.Copilot;
 using TokenHound.Infrastructure.Providers.Cursor;
 
 namespace TokenHound.App;
@@ -116,7 +117,8 @@ public partial class App : Application
         return new UsageStore(
             autoStart: true,
             idleInterval: settings.IdleInterval,
-            pollInterval: settings.ActiveInterval
+            pollInterval: settings.ActiveInterval,
+            archive: new UsageArchive()
         );
     }
 
@@ -142,6 +144,13 @@ public partial class App : Application
         usageStore.RegisterProvider(cursorProvider);
         usageStore.RegisterActivityMonitor(new CursorActivityMonitor());
         disposableResources.Add(cursorProvider);
+
+        var copilotProvider = new CopilotUsageProvider();
+        usageStore.RegisterProvider(copilotProvider);
+        var copilotMonitor = new CopilotActivityMonitor();
+        usageStore.RegisterActivityMonitor(copilotMonitor);
+        disposableResources.Add(copilotProvider);
+        disposableResources.Add(copilotMonitor);
     }
 
     private void InitializeUi(UsageStore usageStore, List<IDisposable> disposableResources)

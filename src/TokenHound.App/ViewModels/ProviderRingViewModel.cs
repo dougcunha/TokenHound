@@ -8,7 +8,7 @@ using TokenHound.Core.Models;
 namespace TokenHound.App.ViewModels;
 
 /// <summary>Represents the observable view model for an individual provider indicator ring and hover card.</summary>
-public sealed class ProviderRingViewModel : INotifyPropertyChanged
+public sealed partial class ProviderRingViewModel : INotifyPropertyChanged
 {
     private readonly string _providerId;
     private readonly string? _glyphKey;
@@ -258,30 +258,6 @@ public sealed class ProviderRingViewModel : INotifyPropertyChanged
             return $"Resets in {(int)diff.TotalHours}h {diff.Minutes}m";
 
         return $"Resets in {Math.Max(1, (int)diff.TotalMinutes)}m";
-    }
-
-    private static string? ResolveStatusMessage(Snapshot snapshot)
-    {
-
-        if (snapshot.Status == ProviderStatus.Ok && snapshot.Fidelity == Fidelity.Derived)
-        {
-            var requestWindow = snapshot.LimitWindows.FirstOrDefault(static w =>
-                w.RemainingUnits.HasValue && w.TotalUnits == null);
-
-            if (requestWindow?.RemainingUnits is { } count)
-            {
-                return $"~{count} requests today · no limit published";
-            }
-        }
-
-        return snapshot.Status switch
-        {
-            ProviderStatus.NeedsAuth => !string.IsNullOrWhiteSpace(snapshot.ErrorDescription) ? snapshot.ErrorDescription : "Execute 'claude login' in terminal",
-            ProviderStatus.RateLimited => snapshot.ActiveBlock?.Reason ?? snapshot.ErrorDescription ?? "Rate limit reached",
-            ProviderStatus.AccessDenied => snapshot.ErrorDescription ?? "Access denied",
-            ProviderStatus.Stale => snapshot.ErrorDescription ?? "Telemetry is stale",
-            _ => null
-        };
     }
 
     private bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
