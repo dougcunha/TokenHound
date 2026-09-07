@@ -98,9 +98,11 @@ TokenHound/
 │       │   │   ├── ProviderRing.xaml       # Percentage and activity indicator ring
 │       │   │   ├── TooltipCard.xaml        # Quota details hover card
 │       │   │   └── SettingsOrb.xaml        # Settings access button
-│       │   ├── Geometry/                   # Screen geometry and placement
-│       │   │   ├── NotchGeometry.cs        # Bézier path calculation and hit-test areas
-│       │   │   ├── NotchPlacement.cs       # Edge positioning (Top, Bottom, Left, Right)
+│       │   ├── Geometry/                   # Screen geometry
+│       │   │   └── NotchGeometry.cs        # Bézier path calculation and hit-test areas
+│       │   ├── Placement/                  # Window positioning (namespace avoids shadowing WPF `Geometry`)
+│       │   │   ├── ScreenBounds.cs         # Work area and virtual screen rectangle
+│       │   │   ├── NotchPlacement.cs       # Top-edge centering and visibility clamping
 │       │   │   └── ScreenEdgeDetector.cs   # Taskbar detection and work area bounds
 │       │   └── Animations/                 # Smooth transitions and HUD animations
 │       ├── Interop/                        # Native Win32 window hooks

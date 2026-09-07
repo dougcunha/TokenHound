@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -41,6 +41,8 @@
   <ItemGroup>
     <Compile Include="..\..\src\TokenHound.App\Interop\WindowStyles.cs" Link="Interop\WindowStyles.cs" />
     <Compile Include="..\..\src\TokenHound.App\Presentation\ApplicationInfo.cs" Link="Presentation\ApplicationInfo.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\ScreenBounds.cs" Link="Placement\ScreenBounds.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\NotchPlacement.cs" Link="Placement\NotchPlacement.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderCatalog.cs" Link="ViewModels\ProviderCatalog.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderRingViewModel.cs" Link="ViewModels\ProviderRingViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\NotchViewModel.cs" Link="ViewModels\NotchViewModel.cs" />

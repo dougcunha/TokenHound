@@ -4,8 +4,11 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using Serilog;
 using TokenHound.App.Interop;
+using TokenHound.App.UI.Placement;
 using TokenHound.App.ViewModels;
+using TokenHound.Infrastructure.Configuration;
 
 namespace TokenHound.App.UI.Windows;
 
@@ -17,7 +20,10 @@ public sealed partial class NotchWindow : Window
     private const int WM_MOUSEACTIVATE = 0x0021;
     private const int MA_NOACTIVATE = 3;
 
+    private readonly HudPositionStore _positionStore = new();
+
     private HudActionsViewModel? _actionsViewModel;
+    private HudPositionSettings _position = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="NotchWindow"/> class.
@@ -89,20 +95,28 @@ public sealed partial class NotchWindow : Window
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
 
-        RepositionTopCenter();
+        _position = _positionStore.Load();
+
+        if (_position.TryGetPosition(out var left, out var top))
+            Log.Debug("Restoring persisted HUD position Left={Left} Top={Top}", left, top);
+
+        ApplyPlacement();
     }
 
     private void OnSizeChanged(object? sender, SizeChangedEventArgs e)
     {
 
-        RepositionTopCenter();
+        ApplyPlacement();
     }
 
     private void OnMouseLeftButtonDown(object? sender, MouseButtonEventArgs e)
     {
 
-        if (e.ButtonState == MouseButtonState.Pressed)
-            DragMove();
+        if (e.ButtonState != MouseButtonState.Pressed)
+            return;
+
+        DragMove();
+        PersistPosition();
     }
 
     private void OnCapsuleContextMenuOpening(object sender, ContextMenuEventArgs e)
@@ -174,11 +188,60 @@ public sealed partial class NotchWindow : Window
         StatusPopup.IsOpen = _actionsViewModel.IsStatusVisible;
     }
 
-    private void RepositionTopCenter()
+    private void ApplyPlacement()
+    {
+
+        if (!_position.TryGetPosition(out var left, out var top))
+            (left, top) = NotchPlacement.CenterOnTopEdge(CurrentWorkArea(), ActualWidth);
+
+        (Left, Top) = NotchPlacement.Clamp(
+            CurrentVirtualScreen(),
+            left,
+            top,
+            ActualWidth,
+            ActualHeight
+        );
+    }
+
+    private void PersistPosition()
+    {
+
+        var moved = new HudPositionSettings { Left = Left, Top = Top };
+
+        if (moved == _position)
+            return;
+
+        _position = moved;
+
+        if (_positionStore.Save(moved))
+            Log.Debug("Persisted HUD position Left={Left} Top={Top}", moved.Left, moved.Top);
+        else
+            Log.Warning("Unable to persist HUD position to {SettingsFile}", _positionStore.FilePath);
+    }
+
+    private static ScreenBounds CurrentWorkArea()
     {
 
         var workArea = SystemParameters.WorkArea;
-        Left = workArea.Left + ((workArea.Width - ActualWidth) / 2.0);
-        Top = workArea.Top;
+
+        return new ScreenBounds
+        {
+            Left = workArea.Left,
+            Top = workArea.Top,
+            Width = workArea.Width,
+            Height = workArea.Height
+        };
+    }
+
+    private static ScreenBounds CurrentVirtualScreen()
+    {
+
+        return new ScreenBounds
+        {
+            Left = SystemParameters.VirtualScreenLeft,
+            Top = SystemParameters.VirtualScreenTop,
+            Width = SystemParameters.VirtualScreenWidth,
+            Height = SystemParameters.VirtualScreenHeight
+        };
     }
 }
