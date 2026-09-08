@@ -72,23 +72,47 @@ public static class WindowPlacement
         var workArea = GetWorkArea(ownerHwnd, dpi);
 
         window.Measure(new Size(workArea.Width, workArea.Height));
-        var width = double.IsNaN(window.Width) ? window.DesiredSize.Width : window.Width;
-        var height = double.IsNaN(window.Height) ? window.DesiredSize.Height : window.Height;
 
-        if (width <= 0)
-            width = DEFAULT_DIALOG_WIDTH;
+        var width = ResolveDimension(
+            window.Width,
+            window.DesiredSize.Width,
+            DEFAULT_DIALOG_WIDTH,
+            workArea.Width
+        );
 
-        if (height <= 0)
-            height = DEFAULT_DIALOG_HEIGHT;
+        var height = ResolveDimension(
+            window.Height,
+            window.DesiredSize.Height,
+            DEFAULT_DIALOG_HEIGHT,
+            workArea.Height
+        );
+
+        if (window.Height > height)
+            window.Height = height;
+
+        if (window.Width > width)
+            window.Width = width;
 
         var left = workArea.Left + ((workArea.Width - width) / 2.0);
         var top = workArea.Top + ((workArea.Height - height) / 2.0);
 
-        left = Math.Max(workArea.Left, Math.Min(left, workArea.Right - width));
-        top = Math.Max(workArea.Top, Math.Min(top, workArea.Bottom - height));
+        window.Left = Math.Max(workArea.Left, Math.Min(left, workArea.Right - width));
+        window.Top = Math.Max(workArea.Top, Math.Min(top, workArea.Bottom - height));
+    }
 
-        window.Left = left;
-        window.Top = top;
+    private static double ResolveDimension(
+        double current,
+        double desired,
+        double fallback,
+        double max)
+    {
+
+        var value = double.IsNaN(current) ? desired : current;
+
+        if (value <= 0)
+            value = fallback;
+
+        return Math.Min(value, max);
     }
 
     /// <summary>

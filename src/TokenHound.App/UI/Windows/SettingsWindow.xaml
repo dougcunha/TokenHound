@@ -10,7 +10,7 @@
         Title="Settings"
         Icon="../../Assets/logo.ico"
         Width="480"
-        Height="580"
+        Height="860"
         MinWidth="460"
         MinHeight="440"
         WindowStartupLocation="Manual"
