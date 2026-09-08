@@ -40,10 +40,10 @@ The running usage store accepts valid active and idle intervals, uses them for i
 
 ## Work
 
-- [ ] T02.1 Define one synchronization boundary for cadence reads/updates so `TickAsync` observes a complete active/idle pair and public updates reject stopping/disposed stores.
-- [ ] T02.2 Change timer replacement semantics to stop future waits while allowing an admitted refresh to complete; do not introduce blind delays, detached work, or broad exception swallowing.
-- [ ] T02.3 Add `UpdateCadence` with 30-second active clamping and `idle >= active` clamping, preserving snapshots, failure state, and registered providers; emit the specified structured cadence log at the Infrastructure boundary.
-- [ ] T02.4 Add deterministic Infrastructure tests that coordinate a running tick and verify the replacement schedule, changed idle threshold, clamp behavior, and non-interruption of in-flight work.
+- [x] T02.1 Define one synchronization boundary for cadence reads/updates so `TickAsync` observes a complete active/idle pair and public updates reject stopping/disposed stores.
+- [x] T02.2 Change timer replacement semantics to stop future waits while allowing an admitted refresh to complete; do not introduce blind delays, detached work, or broad exception swallowing.
+- [x] T02.3 Add `UpdateCadence` with 30-second active clamping and `idle >= active` clamping, preserving snapshots, failure state, and registered providers; emit the specified structured cadence log at the Infrastructure boundary.
+- [x] T02.4 Add deterministic Infrastructure tests that coordinate a running tick and verify the replacement schedule, changed idle threshold, clamp behavior, and non-interruption of in-flight work.
 
 ## Acceptance criteria
 
@@ -76,12 +76,26 @@ The running usage store accepts valid active and idle intervals, uses them for i
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
-- Open items: Pending execution.
+- Produced result:
+  - Added `UsageStore.UpdateCadence(TimeSpan activeInterval, TimeSpan idleInterval)` with synchronized reads/writes via `_cadenceLock`, clamping active intervals `< 30s` to 30s and idle intervals `< safeActive` to `safeActive`, and rejecting disposed/stopping stores with `ObjectDisposedException`.
+  - Added public read-only properties `ActiveInterval` and `IdleInterval` to `UsageStore` with XML documentation.
+  - Repaired `UsageStoreLifetime.StartTimer` and timer replacement semantics: `StartTimer` now cancels future waits of the prior timer loop (`oldCts.Cancel()`) while admitting ticks using `_stoppingCts.Token` so in-flight refreshes are not canceled on replacement, chained running tasks via `Task.WhenAll` to eliminate detached unobserved work, and ensured safe CTS cleanup on loop completion.
+  - Emitted structured Serilog `Information` log `Polling cadence updated: active {ActiveInterval}, idle {IdleInterval}` on cadence updates.
+  - Created 11 deterministic unit/integration tests in `tests/TokenHound.Infrastructure.Tests/Engine/UsageStoreCadenceTests.cs` verifying clamping, rejection on stopping/disposed, dynamic idle threshold eligibility, running state preservation, and non-interruption of in-flight refreshes.
+- Changed files:
+  - `src/TokenHound.Infrastructure/Engine/UsageStore.cs` (modified, 289 lines)
+  - `src/TokenHound.Infrastructure/Engine/UsageStoreLifetime.cs` (modified, 297 lines)
+  - `tests/TokenHound.Infrastructure.Tests/Engine/UsageStoreCadenceTests.cs` (created, 267 lines)
+  - `tasks/prd-settings-02-cadence-and-retries/task_02.md` (updated checklist and handoff)
+- Checks:
+  - `rtk dotnet build tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj -c Release --nologo --verbosity:minimal` -> 0 errors, 0 warnings.
+  - `rtk dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1 --filter-class "*UsageStoreCadenceTests*"` -> 11 passed, 0 failed, 0 skipped in 750ms.
+  - `rtk dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1` -> 514 passed, 0 failed, 0 skipped in 2s 356ms.
+  - `rtk dotnet run --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-restore -c Release -- --minimum-expected-tests 1` -> 89 passed, 0 failed, 0 skipped in 624ms.
+- Validated state: Clean build on .NET SDK 10.0.400, Release configuration, all 514 infrastructure tests passing, zero warnings, all files <= 300 lines, methods <= 30 lines, nesting <= 3 levels.
+- Open items:
+  - Downstream task T04 will connect `CadenceSettingsViewModel` to `UsageStore.UpdateCadence`.
 
 ### ADR candidates
 
-Pending execution. `sdd-execute-task` replaces this text with structured candidates or `None - direct TechSpec implementation or local decision`.
+None - direct TechSpec DEC-04 implementation repairing the UsageStoreLifetime lifecycle contract for timer replacement.

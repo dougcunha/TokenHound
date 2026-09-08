@@ -1,12 +1,13 @@
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using Serilog;
 using TokenHound.App.Presentation;
 using TokenHound.App.UI.Windows;
 using TokenHound.App.ViewModels;
+using TokenHound.Core.Policies;
 using TokenHound.Infrastructure.Configuration;
 using TokenHound.Infrastructure.Engine;
 using TokenHound.Infrastructure.Logging;
@@ -46,6 +47,8 @@ public partial class App : Application
         var disposableResources = new List<IDisposable>();
         var archive = new UsageArchive();
         disposableResources.Add(archive);
+
+        InitializeRateLimits();
 
         _usageStore = CreateUsageStore(archive);
 
@@ -107,6 +110,18 @@ public partial class App : Application
 
         Log.Error(e.Exception, "Unobserved task exception encountered");
         e.SetObserved();
+    }
+
+    private static void InitializeRateLimits()
+    {
+
+        var rateLimitSettings = new RateLimitSettingsStore().Load();
+        RateLimitPolicy.SetEffectiveFloor(rateLimitSettings.MinimumRetryFloor);
+
+        Log.Information(
+            "Rate limit retry floor resolved: {MinimumRetryFloorSeconds}s",
+            rateLimitSettings.MinimumRetryFloor.TotalSeconds
+        );
     }
 
     private static UsageStore CreateUsageStore(UsageArchive archive)
@@ -210,7 +225,16 @@ public partial class App : Application
     }
 
     private SettingsViewModel CreateSettingsViewModel(UsageStore usageStore)
-        => new(usageStore, _providerSettingsStore.SaveAsync, DispatchUiAction);
+        => new(
+            usageStore,
+            _providerSettingsStore.SaveAsync,
+            DispatchUiAction,
+            new CadenceSettingsViewModel(
+                usageStore,
+                new RefreshSettingsStore(),
+                new RateLimitSettingsStore()
+            )
+        );
 
     private void InitializeUi(UsageStore usageStore, List<IDisposable> disposableResources)
     {

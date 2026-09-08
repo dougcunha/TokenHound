@@ -1,7 +1,8 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using System.Text.Json.Nodes;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace TokenHound.Infrastructure.Configuration;
 
@@ -12,41 +13,58 @@ public sealed class HudPositionStore
 {
     private const string DEFAULT_CONFIG_FILE = "appsettings.json";
     private const string HUD_SECTION_NAME = "Hud";
-    private const string LEFT_PROPERTY_NAME = "Left";
-    private const string TOP_PROPERTY_NAME = "Top";
-
-    private static readonly JsonSerializerOptions JSON_OPTIONS = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
-        WriteIndented = true
-    };
 
     private static readonly JsonDocumentOptions DOCUMENT_OPTIONS = new()
     {
-        CommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
+        AllowTrailingCommas = true,
+        CommentHandling = JsonCommentHandling.Skip
     };
 
-    private readonly string _filePath;
+    private static readonly JsonSerializerOptions JSON_OPTIONS = new()
+    {
+        AllowTrailingCommas = true,
+        PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        WriteIndented = true
+    };
+
+    private readonly UserSettingsFile _settingsFile;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="HudPositionStore"/> class.
+    /// Initializes a new instance of the <see cref="HudPositionStore"/> class using default user settings storage.
     /// </summary>
-    /// <param name="filePath">Optional settings file path; defaults to appsettings.json.</param>
-    /// <param name="baseDirectory">Optional base directory for relative path resolution.</param>
-    public HudPositionStore(string? filePath = null, string? baseDirectory = null)
+    public HudPositionStore()
+        : this(new UserSettingsFile())
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HudPositionStore"/> class backed by a custom <see cref="UserSettingsFile"/>.
+    /// </summary>
+    /// <param name="settingsFile">The underlying settings persistence manager.</param>
+    public HudPositionStore(UserSettingsFile settingsFile)
     {
 
-        _filePath = ResolveFilePath(filePath, baseDirectory);
+        ArgumentNullException.ThrowIfNull(settingsFile);
+
+        _settingsFile = settingsFile;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HudPositionStore"/> class with file path overrides.
+    /// </summary>
+    /// <param name="filePath">Optional settings file path override.</param>
+    /// <param name="baseDirectory">Optional base directory for relative path resolution.</param>
+    public HudPositionStore(string? filePath, string? baseDirectory = null)
+        : this(CreateSettingsFile(filePath, baseDirectory))
+    {
     }
 
     /// <summary>
     /// Gets the resolved settings file path backing this store.
     /// </summary>
     public string FilePath
-        => _filePath;
+        => _settingsFile.UserSettingsPath;
 
     /// <summary>
     /// Deserializes the HUD placement from a settings JSON string.
@@ -73,21 +91,19 @@ public sealed class HudPositionStore
     /// </summary>
     /// <returns>The stored placement, or an empty instance when unreadable.</returns>
     public HudPositionSettings Load()
+        => _settingsFile.Load().Hud ?? new HudPositionSettings();
+
+    /// <summary>
+    /// Asynchronously loads the persisted HUD placement from the settings file.
+    /// </summary>
+    /// <param name="cancellationToken">Token cancelling the load operation.</param>
+    /// <returns>The stored placement, or an empty instance when unreadable.</returns>
+    public async Task<HudPositionSettings> LoadAsync(CancellationToken cancellationToken = default)
     {
 
-        if (!File.Exists(_filePath))
-            return new HudPositionSettings();
+        var settings = await _settingsFile.LoadAsync(cancellationToken).ConfigureAwait(false);
 
-        try
-        {
-
-            return FromJson(File.ReadAllText(_filePath));
-        }
-        catch (Exception)
-        {
-
-            return new HudPositionSettings();
-        }
+        return settings.Hud ?? new HudPositionSettings();
     }
 
     /// <summary>
@@ -100,32 +116,38 @@ public sealed class HudPositionStore
 
         ArgumentNullException.ThrowIfNull(position);
 
-        try
-        {
-
-            using var gate = SettingsFileGate.Acquire(_filePath);
-
-            var root = ReadRoot();
-
-            root[HUD_SECTION_NAME] = new JsonObject
-            {
-                [LEFT_PROPERTY_NAME] = position.Left,
-                [TOP_PROPERTY_NAME] = position.Top
-            };
-
-            File.WriteAllText(_filePath, root.ToJsonString(JSON_OPTIONS));
-
-            return true;
-        }
-        catch (Exception)
-        {
-
-            return false;
-        }
+        return _settingsFile.Update(current => current with { Hud = position });
     }
 
-    private static string ResolveFilePath(string? filePath, string? baseDirectory)
+    /// <summary>
+    /// Asynchronously persists the HUD placement, preserving every other settings section.
+    /// </summary>
+    /// <param name="position">The placement to store.</param>
+    /// <param name="cancellationToken">Token cancelling the save operation.</param>
+    /// <returns><see langword="true"/> when the file was written; otherwise <see langword="false"/>.</returns>
+    public Task<bool> SaveAsync(HudPositionSettings position, CancellationToken cancellationToken = default)
     {
+
+        ArgumentNullException.ThrowIfNull(position);
+
+        return _settingsFile.UpdateAsync(
+            current => current with { Hud = position },
+            cancellationToken);
+    }
+
+    private static UserSettingsFile CreateSettingsFile(string? filePath, string? baseDirectory)
+    {
+
+        var resolvedPath = ResolveFilePath(filePath, baseDirectory);
+
+        return new UserSettingsFile(userSettingsPath: resolvedPath);
+    }
+
+    private static string? ResolveFilePath(string? filePath, string? baseDirectory)
+    {
+
+        if (string.IsNullOrWhiteSpace(filePath) && string.IsNullOrWhiteSpace(baseDirectory))
+            return null;
 
         if (!string.IsNullOrWhiteSpace(filePath) && Path.IsPathRooted(filePath))
             return filePath;
@@ -135,20 +157,5 @@ public sealed class HudPositionStore
             : AppContext.BaseDirectory;
 
         return Path.Combine(baseDir, filePath ?? DEFAULT_CONFIG_FILE);
-    }
-
-    private JsonObject ReadRoot()
-    {
-
-        if (!File.Exists(_filePath))
-            return new JsonObject();
-
-        var json = File.ReadAllText(_filePath);
-
-        if (string.IsNullOrWhiteSpace(json))
-            return new JsonObject();
-
-        return JsonNode.Parse(json, documentOptions: DOCUMENT_OPTIONS) as JsonObject
-               ?? new JsonObject();
     }
 }

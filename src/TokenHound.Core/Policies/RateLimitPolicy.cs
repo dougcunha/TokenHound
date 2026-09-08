@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 
 namespace TokenHound.Core.Policies;
 
@@ -11,6 +12,32 @@ public static class RateLimitPolicy
     /// Minimum rate limit penalty floor (60 seconds), protecting against infinite loops on <c>Retry-After: 0</c>.
     /// </summary>
     public static readonly TimeSpan MINIMUM_RETRY_FLOOR = TimeSpan.FromSeconds(60);
+
+    private static long _effectiveRetryFloorTicks = MINIMUM_RETRY_FLOOR.Ticks;
+
+    /// <summary>
+    /// Gets the currently configured effective retry floor, never less than <see cref="MINIMUM_RETRY_FLOOR"/>.
+    /// </summary>
+    public static TimeSpan EffectiveRetryFloor
+        => TimeSpan.FromTicks(Interlocked.Read(ref _effectiveRetryFloorTicks));
+
+    /// <summary>
+    /// Sets the effective retry floor, clamping values below <see cref="MINIMUM_RETRY_FLOOR"/> to <see cref="MINIMUM_RETRY_FLOOR"/>.
+    /// </summary>
+    /// <param name="floor">The requested retry floor duration.</param>
+    public static void SetEffectiveFloor(TimeSpan floor)
+    {
+
+        var safeFloor = floor < MINIMUM_RETRY_FLOOR ? MINIMUM_RETRY_FLOOR : floor;
+
+        Interlocked.Exchange(ref _effectiveRetryFloorTicks, safeFloor.Ticks);
+    }
+
+    /// <summary>
+    /// Resets the effective retry floor to the default <see cref="MINIMUM_RETRY_FLOOR"/>.
+    /// </summary>
+    public static void ResetEffectiveFloor()
+        => SetEffectiveFloor(MINIMUM_RETRY_FLOOR);
 
     /// <summary>
     /// Determines whether a network request may be dispatched based on the recorded rate-limit deadline.
@@ -30,7 +57,7 @@ public static class RateLimitPolicy
     /// <summary>
     /// Calculates the rate-limit deadline as the longest of the server-reported <paramref name="retryAfterSeconds"/>
     /// and the jittered exponential backoff for <paramref name="consecutiveFailures"/>. The jittered value is floored at the
-    /// previous exponential tier (never below <see cref="MINIMUM_RETRY_FLOOR"/>), so jitter varies the wait without undoing the
+    /// previous exponential tier (never below <see cref="EffectiveRetryFloor"/>), so jitter varies the wait without undoing the
     /// escalation, and a provider that keeps replying <c>Retry-After: 0</c> still backs off instead of being retried every minute.
     /// </summary>
     /// <param name="nowUtc">The current UTC timestamp.</param>
@@ -77,24 +104,28 @@ public static class RateLimitPolicy
         int consecutiveFailures)
     {
 
-        var flooredBackoff = ApplyMinimumFloor(backoff, consecutiveFailures);
+        var effectiveFloor = EffectiveRetryFloor;
+        var flooredBackoff = ApplyMinimumFloor(backoff, consecutiveFailures, effectiveFloor);
 
         if (!retryAfterSeconds.HasValue)
             return flooredBackoff;
 
-        var serverPenalty = TimeSpan.FromSeconds(Math.Max(MINIMUM_RETRY_FLOOR.TotalSeconds, retryAfterSeconds.Value));
+        var serverPenalty = TimeSpan.FromSeconds(Math.Max(effectiveFloor.TotalSeconds, retryAfterSeconds.Value));
 
         return serverPenalty > flooredBackoff ? serverPenalty : flooredBackoff;
     }
 
-    private static TimeSpan ApplyMinimumFloor(TimeSpan backoff, int consecutiveFailures)
+    private static TimeSpan ApplyMinimumFloor(
+        TimeSpan backoff,
+        int consecutiveFailures,
+        TimeSpan effectiveFloor)
     {
 
         if (consecutiveFailures <= 0)
             return TimeSpan.Zero;
 
         var previousTier = BackoffCalculator.CalculateExponentialInterval(consecutiveFailures - 1);
-        var floor = previousTier > MINIMUM_RETRY_FLOOR ? previousTier : MINIMUM_RETRY_FLOOR;
+        var floor = previousTier > effectiveFloor ? previousTier : effectiveFloor;
 
         return backoff < floor ? floor : backoff;
     }

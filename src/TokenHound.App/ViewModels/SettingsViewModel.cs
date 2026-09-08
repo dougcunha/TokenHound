@@ -34,10 +34,12 @@ public sealed class SettingsViewModel : IDisposable
     /// <param name="usageStore">The central usage store owning provider registrations and the enablement gate.</param>
     /// <param name="persistAsync">The asynchronous persistence operation for the full enablement map.</param>
     /// <param name="uiDispatcher">Optional UI thread dispatcher action, or <see langword="null"/> for synchronous execution.</param>
+    /// <param name="cadence">Optional cadence settings view model, or <see langword="null"/> to create a default instance.</param>
     public SettingsViewModel(
         UsageStore usageStore,
         Func<ProviderSettings, CancellationToken, Task<bool>> persistAsync,
-        Action<Action>? uiDispatcher = null)
+        Action<Action>? uiDispatcher = null,
+        CadenceSettingsViewModel? cadence = null)
     {
 
         ArgumentNullException.ThrowIfNull(usageStore);
@@ -46,11 +48,15 @@ public sealed class SettingsViewModel : IDisposable
         _usageStore = usageStore;
         _persistAsync = persistAsync;
         _uiDispatcher = uiDispatcher ?? (static action => action());
+        Cadence = cadence ?? new CadenceSettingsViewModel(usageStore);
 
         BuildRows();
 
         _usageStore.SnapshotUpdated += OnSnapshotUpdated;
     }
+
+    /// <summary>Gets the presentation model coordinating polling cadence and rate-limit retry settings.</summary>
+    public CadenceSettingsViewModel Cadence { get; }
 
     /// <summary>Gets the provider rows, ordered by display name so the dialog is stable across launches.</summary>
     public ObservableCollection<ProviderToggleViewModel> Providers { get; } = [];

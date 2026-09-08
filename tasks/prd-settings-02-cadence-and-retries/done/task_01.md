@@ -39,9 +39,9 @@ Subsequent HTTP 429 deadline calculations use a runtime-configurable retry floor
 
 ## Work
 
-- [ ] T01.1 Add a public effective-floor configuration API whose reads and updates are safe under concurrent evaluation; clamp every supplied value below `MINIMUM_RETRY_FLOOR`.
-- [ ] T01.2 Route both deadline-calculation overloads and all penalty-floor paths through the effective floor, retaining exponential escalation and the `Retry-After: 0` minimum wait.
-- [ ] T01.3 Add isolated Core tests for default behavior, raised-floor behavior, sub-floor clamp, and `Retry-After: 0`; reset shared policy state safely between tests.
+- [x] T01.1 Add a public effective-floor configuration API whose reads and updates are safe under concurrent evaluation; clamp every supplied value below `MINIMUM_RETRY_FLOOR`.
+- [x] T01.2 Route both deadline-calculation overloads and all penalty-floor paths through the effective floor, retaining exponential escalation and the `Retry-After: 0` minimum wait.
+- [x] T01.3 Add isolated Core tests for default behavior, raised-floor behavior, sub-floor clamp, and `Retry-After: 0`; reset shared policy state safely between tests.
 
 ## Acceptance criteria
 
@@ -73,12 +73,17 @@ Subsequent HTTP 429 deadline calculations use a runtime-configurable retry floor
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
-- Open items: Pending execution.
+- Produced result: Implemented thread-safe configurable effective retry floor in `RateLimitPolicy` with hard clamping to `MINIMUM_RETRY_FLOOR` (60s) for all penalty calculations and `Retry-After: 0`. Added comprehensive unit test suite `RateLimitPolicyConfigTests` verifying default floor, raised floor, clamp behavior, monotonic escalation, random overload, deadline preservation, and thread safety.
+- Changed files:
+  - `src/TokenHound.Core/Policies/RateLimitPolicy.cs`
+  - `tests/TokenHound.Core.Tests/Policies/RateLimitPolicyConfigTests.cs`
+- Checks:
+  - `rtk dotnet run --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1 --filter-class "*RateLimitPolicyConfigTests*"` (12 passed, 0 failed, duration: 372ms, exit code 0)
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj -c Release --no-build --no-restore -- --minimum-expected-tests 1` (89 passed, 0 warnings, duration: 516ms, exit code 0)
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1` (89 passed, 0 warnings, duration: 566ms, exit code 0)
+- Validated state: Clean build and all 89 Core tests passing on .NET SDK 10.0.400 on Windows.
+- Open items: None for T01; unblocks T04 (`CadenceSettingsViewModel`). Manual verification MAN-02 remains pending for slice-level integration.
 
 ### ADR candidates
 
-Pending execution. `sdd-execute-task` replaces this text with structured candidates or `None - direct TechSpec implementation or local decision`.
+None - direct TechSpec implementation of DEC-05 and CMP-04.

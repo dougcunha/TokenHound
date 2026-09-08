@@ -1,3 +1,4 @@
+using Serilog;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using TokenHound.Core.Contracts;
 using TokenHound.Core.Models;
 using TokenHound.Core.Policies;
+using TokenHound.Infrastructure.Configuration;
 
 namespace TokenHound.Infrastructure.Engine;
 
@@ -25,8 +27,10 @@ public sealed partial class UsageStore : IDisposable
     private readonly UsageArchive? _archive;
     private readonly bool _ownsArchive;
     private readonly TimeProvider _timeProvider;
-    private readonly TimeSpan _idleInterval;
+    private readonly object _cadenceLock = new();
     private readonly TimeSpan _activityPollInterval;
+    private TimeSpan _activeInterval;
+    private TimeSpan _idleInterval;
 
     private DateTimeOffset? _lastAttemptUtc;
     private bool _disposed;
@@ -52,6 +56,7 @@ public sealed partial class UsageStore : IDisposable
         TimeSpan? activityPollInterval = null)
     {
 
+        _activeInterval = pollInterval ?? RefreshSchedulePolicy.DEFAULT_ACTIVE_INTERVAL;
         _idleInterval = idleInterval ?? RefreshSchedulePolicy.DEFAULT_IDLE_INTERVAL;
         _archive = archive;
         _ownsArchive = archive is not null;
@@ -63,6 +68,32 @@ public sealed partial class UsageStore : IDisposable
 
         if (autoStart)
             Start(pollInterval, _activityPollInterval);
+    }
+
+    /// <summary>
+    /// Gets the current active polling interval.
+    /// </summary>
+    public TimeSpan ActiveInterval
+    {
+        get
+        {
+
+            lock (_cadenceLock)
+                return _activeInterval;
+        }
+    }
+
+    /// <summary>
+    /// Gets the current idle polling interval.
+    /// </summary>
+    public TimeSpan IdleInterval
+    {
+        get
+        {
+
+            lock (_cadenceLock)
+                return _idleInterval;
+        }
     }
 
     /// <summary>Occurs whenever a provider snapshot is fetched or updated.</summary>
@@ -148,10 +179,50 @@ public sealed partial class UsageStore : IDisposable
         var now = _timeProvider.GetUtcNow();
         var elapsed = _lastAttemptUtc.HasValue ? now - _lastAttemptUtc.Value : TimeSpan.MaxValue;
 
-        if (!RefreshSchedulePolicy.ShouldRefresh(isAnyBusy, elapsed, _idleInterval))
+        TimeSpan idleInterval;
+
+        lock (_cadenceLock)
+            idleInterval = _idleInterval;
+
+        if (!RefreshSchedulePolicy.ShouldRefresh(isAnyBusy, elapsed, idleInterval))
             return;
 
         await RefreshNowCoreAsync(lease.Token).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Updates the active and idle polling cadence, clamping values to safety floors,
+    /// and restarts the periodic timer if it is currently running.
+    /// </summary>
+    /// <param name="activeInterval">The desired active polling interval (clamped to at least 30 seconds).</param>
+    /// <param name="idleInterval">The desired idle polling interval (clamped to at least the safe active interval).</param>
+    /// <exception cref="ObjectDisposedException">Thrown when the store is stopping or has been disposed.</exception>
+    public void UpdateCadence(TimeSpan activeInterval, TimeSpan idleInterval)
+    {
+
+        ThrowIfDisposedOrStopping();
+
+        var minInterval = TimeSpan.FromSeconds(RefreshSettings.MINIMUM_INTERVAL_SECONDS);
+        var safeActive = activeInterval < minInterval ? minInterval : activeInterval;
+        var safeIdle = idleInterval < safeActive ? safeActive : idleInterval;
+
+        lock (_cadenceLock)
+        {
+
+            ThrowIfDisposedOrStopping();
+
+            _activeInterval = safeActive;
+            _idleInterval = safeIdle;
+        }
+
+        if (_lifetime.IsTimerRunning)
+            _lifetime.StartTimer(safeActive, TickAsync);
+
+        Log.Information(
+            "Polling cadence updated: active {ActiveInterval}, idle {IdleInterval}",
+            safeActive,
+            safeIdle
+        );
     }
 
     /// <summary>Starts the background periodic polling timer.</summary>
@@ -164,7 +235,17 @@ public sealed partial class UsageStore : IDisposable
 
         ThrowIfDisposedOrStopping();
 
-        var interval = pollInterval ?? RefreshSchedulePolicy.DEFAULT_ACTIVE_INTERVAL;
+        TimeSpan interval;
+
+        lock (_cadenceLock)
+        {
+
+            if (pollInterval.HasValue)
+                _activeInterval = pollInterval.Value;
+
+            interval = _activeInterval;
+        }
+
         _lifetime.StartTimer(interval, TickAsync);
         _lifetime.StartActivityTimer(
             activityPollInterval ?? _activityPollInterval,

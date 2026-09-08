@@ -9,13 +9,13 @@
         d:DataContext="{d:DesignInstance Type=viewModels:SettingsViewModel}"
         Title="Settings"
         Icon="../../Assets/logo.ico"
-        Width="460"
-        Height="440"
+        Width="480"
+        Height="580"
         MinWidth="460"
         MinHeight="440"
         WindowStartupLocation="Manual"
         ShowInTaskbar="False"
-        ResizeMode="NoResize"
+        ResizeMode="CanResizeWithGrip"
         WindowStyle="SingleBorderWindow"
         Background="{StaticResource SurfaceBackgroundBrush}"
         Foreground="{StaticResource TextPrimaryBrush}"
@@ -25,6 +25,47 @@
 
     <Window.Resources>
         <converters:ResourceKeyConverter x:Key="ResourceKeyConverter" />
+
+        <!-- Settings TextBox Style -->
+        <Style x:Key="SettingsTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="{StaticResource SurfaceBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource SurfaceBorderBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CaretBrush" Value="{StaticResource TextPrimaryBrush}" />
+            <Setter Property="Padding" Value="8,5" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontFamily" Value="Segoe UI" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="SnapsToDevicePixels" Value="True" />
+            <Setter Property="FocusVisualStyle" Value="{StaticResource DialogFocusVisualStyle}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="TextBox">
+                        <Border x:Name="border"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="4"
+                                SnapsToDevicePixels="True">
+                            <ScrollViewer x:Name="PART_ContentHost"
+                                          Focusable="False"
+                                          HorizontalScrollBarVisibility="Hidden"
+                                          VerticalScrollBarVisibility="Hidden"
+                                          Padding="{TemplateBinding Padding}" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="#52525B" />
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="border" Property="BorderBrush" Value="{StaticResource FocusIndicatorBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <DataTemplate x:Key="ProviderRowTemplate" DataType="{x:Type viewModels:ProviderToggleViewModel}">
             <Grid MinHeight="46" Margin="12,0">
@@ -101,7 +142,7 @@
         </DataTemplate>
     </Window.Resources>
 
-    <Grid Margin="20">
+    <Grid Margin="20,16,20,16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -118,40 +159,322 @@
                    Margin="0,0,0,4" />
 
         <TextBlock Grid.Row="1"
-                   Text="Manage monitored AI coding assistants and provider telemetry."
+                   Text="Manage monitored AI coding assistants, polling cadence, and rate-limit resilience."
                    FontSize="12"
                    LineHeight="18"
                    Foreground="{StaticResource TextSecondaryBrush}"
                    TextWrapping="Wrap"
-                   Margin="0,0,0,14" />
+                   Margin="0,0,0,12" />
 
-        <!-- Provider Card -->
-        <Border Grid.Row="2"
-                Background="{StaticResource SurfaceCardBackgroundBrush}"
-                BorderBrush="{StaticResource SurfaceBorderSubtleBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Padding="0,6"
-                VerticalAlignment="Top">
-            <ItemsControl x:Name="ProviderItems"
-                          ItemsSource="{Binding Providers}"
-                          ItemTemplate="{StaticResource ProviderRowTemplate}"
-                          KeyboardNavigation.TabNavigation="Continue"
-                          AutomationProperties.Name="Monitored providers" />
-        </Border>
+        <!-- Scrollable Content Area -->
+        <ScrollViewer Grid.Row="2"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled"
+                      Focusable="False"
+                      Margin="0,0,-4,0"
+                      Padding="0,0,4,0">
+            <StackPanel>
+                <!-- Monitored Providers Section -->
+                <TextBlock Text="Monitored Providers"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,6" />
 
-        <!-- Dismissal Controls -->
-        <StackPanel Grid.Row="3"
-                    Orientation="Horizontal"
-                    HorizontalAlignment="Right"
-                    Margin="0,16,0,0">
-            <Button x:Name="CloseButton"
-                    Content="Close"
+                <Border Background="{StaticResource SurfaceCardBackgroundBrush}"
+                        BorderBrush="{StaticResource SurfaceBorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="0,6"
+                        Margin="0,0,0,16">
+                    <ItemsControl x:Name="ProviderItems"
+                                  ItemsSource="{Binding Providers}"
+                                  ItemTemplate="{StaticResource ProviderRowTemplate}"
+                                  KeyboardNavigation.TabNavigation="Continue"
+                                  AutomationProperties.Name="Monitored providers" />
+                </Border>
+
+                <!-- Cadence & Rate Limits Section -->
+                <TextBlock Text="Cadence &amp; Rate Limits"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           Margin="0,0,0,6" />
+
+                <Border Background="{StaticResource SurfaceCardBackgroundBrush}"
+                        BorderBrush="{StaticResource SurfaceBorderSubtleBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        Padding="14,12"
+                        Margin="0,0,0,4">
+                    <StackPanel>
+                        <!-- Polling Cadence Header -->
+                        <TextBlock Text="Polling Cadence"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   Margin="0,0,0,2" />
+
+                        <TextBlock Text="Configure how frequently TokenHound checks for quota data."
+                                   FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Margin="0,0,0,12" />
+
+                        <!-- Active Refresh Interval -->
+                        <Grid Margin="0,0,0,10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Text="Active Refresh Interval"
+                                       FontSize="12"
+                                       FontWeight="Medium"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       Margin="0,0,0,2" />
+
+                            <TextBlock Grid.Row="1"
+                                       Text="Used when an AI coding agent is busy (seconds, minimum 30s)"
+                                       FontSize="11"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,0,0,4" />
+
+                            <TextBox x:Name="ActiveIntervalTextBox"
+                                     Grid.Row="2"
+                                     Style="{StaticResource SettingsTextBoxStyle}"
+                                     Text="{Binding Cadence.ActiveIntervalText, UpdateSourceTrigger=PropertyChanged}"
+                                     TabIndex="1"
+                                     AutomationProperties.Name="Active Refresh Interval"
+                                     AutomationProperties.HelpText="Interval in seconds when coding agent is active (minimum 30 seconds)" />
+
+                            <TextBlock Grid.Row="3"
+                                       Text="{Binding Cadence.ActiveIntervalError}"
+                                       Foreground="{StaticResource BadgeAccessDeniedForegroundBrush}"
+                                       FontSize="11"
+                                       Margin="0,4,0,0"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Active Refresh Interval error">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Cadence.ActiveIntervalError}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Cadence.ActiveIntervalError}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <!-- Idle Refresh Interval -->
+                        <Grid Margin="0,0,0,14">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Text="Idle Refresh Interval"
+                                       FontSize="12"
+                                       FontWeight="Medium"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       Margin="0,0,0,2" />
+
+                            <TextBlock Grid.Row="1"
+                                       Text="Used when all agent sessions are idle (seconds, minimum 30s, ≥ active)"
+                                       FontSize="11"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,0,0,4" />
+
+                            <TextBox x:Name="IdleIntervalTextBox"
+                                     Grid.Row="2"
+                                     Style="{StaticResource SettingsTextBoxStyle}"
+                                     Text="{Binding Cadence.IdleIntervalText, UpdateSourceTrigger=PropertyChanged}"
+                                     TabIndex="2"
+                                     AutomationProperties.Name="Idle Refresh Interval"
+                                     AutomationProperties.HelpText="Interval in seconds when agent sessions are idle (minimum 30 seconds, must not be shorter than active interval)" />
+
+                            <TextBlock Grid.Row="3"
+                                       Text="{Binding Cadence.IdleIntervalError}"
+                                       Foreground="{StaticResource BadgeAccessDeniedForegroundBrush}"
+                                       FontSize="11"
+                                       Margin="0,4,0,0"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Idle Refresh Interval error">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Cadence.IdleIntervalError}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Cadence.IdleIntervalError}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+
+                        <!-- Separator -->
+                        <Rectangle Height="1"
+                                   Fill="{StaticResource SurfaceBorderSubtleBrush}"
+                                   Margin="0,0,0,12" />
+
+                        <!-- Rate-Limit Resilience Header -->
+                        <TextBlock Text="Rate-Limit Resilience (HTTP 429)"
+                                   FontSize="13"
+                                   FontWeight="SemiBold"
+                                   Foreground="{StaticResource TextPrimaryBrush}"
+                                   Margin="0,0,0,2" />
+
+                        <TextBlock Text="Configure backoff penalties when provider APIs throttle."
+                                   FontSize="11"
+                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                   Margin="0,0,0,12" />
+
+                        <!-- Minimum Retry Floor -->
+                        <Grid Margin="0,0,0,4">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0"
+                                       Text="Minimum Retry Floor"
+                                       FontSize="12"
+                                       FontWeight="Medium"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       Margin="0,0,0,2" />
+
+                            <TextBlock Grid.Row="1"
+                                       Text="Minimum wait before retrying after HTTP 429 throttling (seconds, minimum 60s)"
+                                       FontSize="11"
+                                       Foreground="{StaticResource TextMutedBrush}"
+                                       Margin="0,0,0,4" />
+
+                            <TextBox x:Name="RetryFloorTextBox"
+                                     Grid.Row="2"
+                                     Style="{StaticResource SettingsTextBoxStyle}"
+                                     Text="{Binding Cadence.MinimumRetryFloorText, UpdateSourceTrigger=PropertyChanged}"
+                                     TabIndex="3"
+                                     AutomationProperties.Name="Minimum Retry Floor"
+                                     AutomationProperties.HelpText="Minimum wait in seconds before retrying after an HTTP 429 response (minimum 60 seconds)" />
+
+                            <TextBlock Grid.Row="3"
+                                       Text="{Binding Cadence.RetryFloorError}"
+                                       Foreground="{StaticResource BadgeAccessDeniedForegroundBrush}"
+                                       FontSize="11"
+                                       Margin="0,4,0,0"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Minimum Retry Floor error">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Cadence.RetryFloorError}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Cadence.RetryFloorError}" Value="">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </Grid>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- Dismissal / Action Controls -->
+        <Grid Grid.Row="3" Margin="0,16,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Reset to Defaults Button -->
+            <Button x:Name="ResetButton"
+                    Grid.Column="0"
+                    Content="Reset to Defaults"
                     Style="{StaticResource DialogButtonStyle}"
-                    IsCancel="True"
-                    Click="OnCloseButtonClick"
-                    AutomationProperties.Name="Close" />
-        </StackPanel>
+                    TabIndex="4"
+                    Click="OnResetButtonClick"
+                    AutomationProperties.Name="Reset to Defaults"
+                    AutomationProperties.HelpText="Reset cadence and rate-limit intervals to recommended factory defaults" />
+
+            <!-- Feedback Indicator (status / apply error) -->
+            <StackPanel Grid.Column="1"
+                        Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Center"
+                        Margin="0,0,12,0">
+                <TextBlock x:Name="StatusMessageTextBlock"
+                           Text="Settings applied"
+                           Foreground="{StaticResource BadgeOkForegroundBrush}"
+                           FontSize="12"
+                           FontWeight="Medium"
+                           Visibility="Collapsed"
+                           AutomationProperties.Name="Settings application status" />
+                <TextBlock Text="{Binding Cadence.ApplyError}"
+                           Foreground="{StaticResource BadgeAccessDeniedForegroundBrush}"
+                           FontSize="11"
+                           TextWrapping="Wrap"
+                           AutomationProperties.Name="Settings application error">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Visible" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Cadence.ApplyError}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Cadence.ApplyError}" Value="">
+                                    <Setter Property="Visibility" Value="Collapsed" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </StackPanel>
+
+            <!-- Cancel and Apply Buttons -->
+            <StackPanel Grid.Column="2"
+                        Orientation="Horizontal">
+                <Button x:Name="CancelButton"
+                        Content="Cancel"
+                        Style="{StaticResource DialogButtonStyle}"
+                        TabIndex="5"
+                        IsCancel="True"
+                        Click="OnCancelButtonClick"
+                        Margin="0,0,8,0"
+                        AutomationProperties.Name="Cancel"
+                        AutomationProperties.HelpText="Discard cadence changes and close dialog" />
+
+                <Button x:Name="ApplyButton"
+                        Content="Apply"
+                        Style="{StaticResource DialogButtonStyle}"
+                        TabIndex="6"
+                        Command="{Binding Cadence.ApplyCommand}"
+                        Click="OnApplyButtonClick"
+                        AutomationProperties.Name="Apply"
+                        AutomationProperties.HelpText="Apply cadence and rate limit changes to running application and save to settings" />
+            </StackPanel>
+        </Grid>
     </Grid>
 
 </Window>

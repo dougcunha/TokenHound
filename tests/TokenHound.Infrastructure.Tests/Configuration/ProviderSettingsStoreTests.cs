@@ -106,7 +106,34 @@ public sealed class ProviderSettingsStoreTests : IDisposable
         using var document = JsonDocument.Parse(File.ReadAllText(_filePath));
         var providers = document.RootElement.GetProperty("Providers");
 
-        providers.GetProperty("antigravity").GetProperty("Enabled").GetBoolean().Should().BeFalse();
+        providers.GetProperty("gemini").GetProperty("Enabled").GetBoolean().Should().BeFalse();
+    }
+
+    [Fact]
+    public void Save_Synchronous_PersistsProviders()
+    {
+
+        var store = new ProviderSettingsStore(_filePath);
+        var settings = BuildSettings(("claude", false), ("gemini", true));
+
+        store.Save(settings).Should().BeTrue();
+
+        var reloaded = store.Load();
+
+        reloaded.IsEnabled("claude").Should().BeFalse();
+        reloaded.IsEnabled("gemini").Should().BeTrue();
+    }
+
+    [Fact]
+    public void Constructor_WithUserSettingsFile_DelegatesPersistence()
+    {
+
+        var settingsFile = new UserSettingsFile(_filePath);
+        var store = new ProviderSettingsStore(settingsFile);
+
+        store.Save(BuildSettings(("copilot", false))).Should().BeTrue();
+
+        store.Load().IsEnabled("copilot").Should().BeFalse();
     }
 
     [Fact]
@@ -202,7 +229,7 @@ public sealed class ProviderSettingsStoreTests : IDisposable
     public void Load_MatchesProviderKeysCaseInsensitively()
     {
 
-        File.WriteAllText(_filePath, """{ "Providers": { "Claude": { "enabled": false } } }""");
+        File.WriteAllText(_filePath, """{ "Providers": { "Claude": { "Enabled": false } } }""");
         var store = new ProviderSettingsStore(_filePath);
 
         store.Load().IsEnabled("claude").Should().BeFalse();

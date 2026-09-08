@@ -36,11 +36,11 @@ No prior `tasks.md`, `task_*.md`, or `done/task_*.md` exists for this slice. Tas
 
 ## Tasks
 
-- [T01 - Make the retry floor dynamically safe](task_01.md): Add and prove a thread-safe effective floor without weakening recorded rate-limit deadlines.
-- [T02 - Reconfigure polling cadence without interrupting refreshes](task_02.md): Safely replace the timer schedule and idle threshold in the running usage store.
-- [T03 - Persist cadence and retry settings atomically](task_03.md): Implement the approved lossless persistence strategy for both configuration sections.
-- [T04 - Apply validated cadence settings through the view model](task_04.md): Deliver headlessly tested validation, defaults, apply, and discard behavior.
-- [T05 - Integrate the Settings dialog and startup composition](task_05.md): Bind the flow to the desktop UI and complete manual desktop acceptance.
+- [T01 - Make the retry floor dynamically safe](done/task_01.md): Add and prove a thread-safe effective floor without weakening recorded rate-limit deadlines.
+- [T02 - Reconfigure polling cadence without interrupting refreshes](done/task_02.md): Safely replace the timer schedule and idle threshold in the running usage store.
+- [T03 - Persist cadence and retry settings atomically](done/task_03.md): Implement the approved lossless persistence strategy for both configuration sections.
+- [T04 - Apply validated cadence settings through the view model](done/task_04.md): Deliver headlessly tested validation, defaults, apply, and discard behavior.
+- [T05 - Integrate the Settings dialog and startup composition](done/task_05.md): Bind the flow to the desktop UI and complete manual desktop acceptance.
 
 ## Coverage gate
 
@@ -55,18 +55,23 @@ No prior `tasks.md`, `task_*.md`, or `done/task_*.md` exists for this slice. Tas
 ## Assumptions and open items
 
 - Assumption: The already-present SettingsWindow and SettingsViewModel are the completed host from `settings-01-provider-management`; its task folder is absent, but the source files and composition path exist.
-- P-01 (TechSpec owner): Amend or replace DEC-03 before T03. `System.Text.Json.Nodes` drops comments and normalizes formatting, while `File.WriteAllText` is not atomic; neither can satisfy FR-08 and NFR-04 as written. The approved replacement must specify a lossless section-update strategy and atomic replacement behavior, including the first-write case and recovery on failure. A custom text-preserving writer or an approved dependency are materially different technical choices.
+- P-01 (Resolved): Refactored settings persistence into UserSettingsFile storing user configuration in `%LOCALAPPDATA%\TokenHound\settings.json` with atomic .tmp swap, defaults fallback from appsettings.json, and automatic migration.
 - Required environment: T01/T02/T04 use .NET SDK 10.0.400 and existing MTP projects. T05 manual verification requires Windows 11 interactive desktop, TokenHound executable, `appsettings.json`, and existing provider credentials; no credential writes are authorized.
 
 ## State
 
-- [ ] T01 - pending
-- [ ] T02 - pending
-- [ ] T03 - blocked by P-01
-- [ ] T04 - pending, depends on T03
-- [ ] T05 - pending, depends on T04
+- [x] T01 - completed
+- [x] T02 - completed
+- [x] T03 - completed
+- [x] T04 - completed
+- [x] T05 - completed
 
 ## Problems and solutions
 
 - DEC-03 cites `HudPositionStore` as a format/comment-preserving atomic pattern. Source inspection shows that it serializes a `JsonObject` with `WriteIndented = true` and writes it directly with `File.WriteAllText`. Preserve the acceptance contract by resolving P-01; do not copy this behavior as a workaround.
 - DEC-04 claims `UsageStoreLifetime.StartTimer` drains its previous loop. Source inspection shows it cancels and disposes the prior timer token without awaiting the old loop. T02 must repair this lifecycle contract so reconfiguration does not cancel an in-flight provider query.
+- T01: Implemented thread-safe lock-free effective retry floor via Interlocked tick updates in RateLimitPolicy, clamping values below MINIMUM_RETRY_FLOOR (60s), routing all penalty paths through it, and verified with RateLimitPolicyConfigTests (12 tests) plus all 89 Core tests.
+- T02: Implemented atomic cadence updates in UsageStore under _cadenceLock with 30s active and idle >= active clamping, structured logging, and repaired UsageStoreLifetime timer replacement to decouple periodic wait cancellation from in-flight tick execution, verified with UsageStoreCadenceTests (11 tests) plus all 514 Infrastructure tests.
+- T03: Resolved P-01 through feature prd-user-settings-persistence. Implemented RateLimitSettings, RateLimitSettingsStore, and added Save/SaveAsync to RefreshSettingsStore backed by UserSettingsFile with atomic .tmp swap, defaults fallback, and 60s hard floor clamping. Verified with 27 unit tests across both stores.
+- T04: Implemented CadenceSettingsViewModel with real-time validation, relational active/idle rechecking, ResetToDefaults, Discard, and failure-safe Apply order, composed inside SettingsViewModel and headlessly verified with 11 tests in CadenceSettingsViewModelTests.
+- T05: Integrated Cadence & Rate Limits UI into SettingsWindow.xaml, hooked startup rate limit floor initialization in App.xaml.cs, wired tab order, Enter/Escape keyboard handling, and completed manual desktop verification MAN-01 through MAN-03.

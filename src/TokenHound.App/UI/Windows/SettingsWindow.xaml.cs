@@ -1,15 +1,16 @@
 using System;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Media;
 using TokenHound.App.Interop;
+using TokenHound.App.ViewModels;
 
 namespace TokenHound.App.UI.Windows;
 
 /// <summary>
-/// Modeless dialog displaying the application settings surface.
+/// Modeless dialog displaying the application settings surface for provider management and cadence.
 /// </summary>
 public sealed partial class SettingsWindow : Window
 {
@@ -23,6 +24,7 @@ public sealed partial class SettingsWindow : Window
 
         SourceInitialized += OnSourceInitialized;
         Loaded += OnLoaded;
+        DataContextChanged += OnDataContextChanged;
     }
 
     /// <inheritdoc />
@@ -33,9 +35,47 @@ public sealed partial class SettingsWindow : Window
 
         if (e.Key == Key.Escape)
         {
+
             e.Handled = true;
-            Close();
+            OnCancel();
+
+            return;
         }
+
+        if (e.Key == Key.Enter)
+        {
+
+            if (FocusManager.GetFocusedElement(this) is Button button && button != ApplyButton)
+                return;
+
+            if (DataContext is SettingsViewModel vm && vm.Cadence.CanApply)
+            {
+
+                e.Handled = true;
+                vm.Cadence.Apply();
+
+                if (!vm.Cadence.HasApplyError)
+                    ShowAppliedFeedback();
+            }
+        }
+    }
+
+    /// <inheritdoc />
+    protected override void OnClosing(CancelEventArgs e)
+    {
+
+        base.OnClosing(e);
+        DiscardChanges();
+    }
+
+    /// <inheritdoc />
+    protected override void OnClosed(EventArgs e)
+    {
+
+        base.OnClosed(e);
+
+        if (DataContext is SettingsViewModel vm)
+            vm.Cadence.PropertyChanged -= OnCadencePropertyChanged;
     }
 
     private void OnSourceInitialized(object? sender, EventArgs e)
@@ -45,45 +85,72 @@ public sealed partial class SettingsWindow : Window
         WindowPlacement.EnableDarkMode(hwnd);
     }
 
-    private void OnCloseButtonClick(object sender, RoutedEventArgs e)
-    {
-
-        Close();
-    }
-
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
 
-        var firstToggle = FindFirstToggle(ProviderItems);
-
-        if (firstToggle is not null)
-        {
-            firstToggle.Focus();
-
-            return;
-        }
-
-        CloseButton.Focus();
+        ActiveIntervalTextBox.Focus();
+        ActiveIntervalTextBox.SelectAll();
     }
 
-    private static CheckBox? FindFirstToggle(DependencyObject root)
+    private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
 
-        var childCount = VisualTreeHelper.GetChildrenCount(root);
+        if (e.OldValue is SettingsViewModel oldVm)
+            oldVm.Cadence.PropertyChanged -= OnCadencePropertyChanged;
 
-        for (var index = 0; index < childCount; index++)
+        if (e.NewValue is SettingsViewModel newVm)
+            newVm.Cadence.PropertyChanged += OnCadencePropertyChanged;
+    }
+
+    private void OnCadencePropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+
+        if (e.PropertyName is not null)
+            StatusMessageTextBlock.Visibility = Visibility.Collapsed;
+    }
+
+    private void OnResetButtonClick(object sender, RoutedEventArgs e)
+    {
+
+        if (DataContext is SettingsViewModel vm)
         {
-            var child = VisualTreeHelper.GetChild(root, index);
 
-            if (child is CheckBox toggle)
-                return toggle;
-
-            var descendant = FindFirstToggle(child);
-
-            if (descendant is not null)
-                return descendant;
+            vm.Cadence.ResetToDefaults();
+            StatusMessageTextBlock.Visibility = Visibility.Collapsed;
         }
+    }
 
-        return null;
+    private void OnCancelButtonClick(object sender, RoutedEventArgs e)
+    {
+
+        OnCancel();
+    }
+
+    private void OnApplyButtonClick(object sender, RoutedEventArgs e)
+    {
+
+        if (DataContext is SettingsViewModel vm && !vm.Cadence.HasApplyError)
+            ShowAppliedFeedback();
+    }
+
+    private void OnCancel()
+    {
+
+        DiscardChanges();
+        Close();
+    }
+
+    private void DiscardChanges()
+    {
+
+        if (DataContext is SettingsViewModel vm)
+            vm.Cadence.Discard();
+    }
+
+    private void ShowAppliedFeedback()
+    {
+
+        StatusMessageTextBlock.Visibility = Visibility.Visible;
     }
 }
+

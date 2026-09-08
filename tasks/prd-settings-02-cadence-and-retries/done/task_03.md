@@ -40,10 +40,10 @@ Valid Refresh and RateLimit values can be loaded and saved without altering unre
 
 ## Work
 
-- [ ] T03.1 Do not start until P-01 names the lossless update and atomic-replacement contract. Record that decision in the TechSpec before implementation.
-- [ ] T03.2 Implement `RateLimitSettings` and load-time resolution that defaults missing settings to 60 seconds and clamps invalid values without touching Core or UI dependencies.
-- [ ] T03.3 Implement the approved shared persistence primitive and both stores so updating Refresh/RateLimit preserves unrelated sections, comments, and formatting, serializes concurrent writers, and handles absent/empty files and replacement failure safely.
-- [ ] T03.4 Add isolated temp-file tests for exact unrelated-content preservation, each section's save/reload, missing/invalid sections, concurrent-store behavior, and injected write/replacement failure.
+- [x] T03.1 Do not start until P-01 names the lossless update and atomic-replacement contract. Record that decision in the TechSpec before implementation.
+- [x] T03.2 Implement `RateLimitSettings` and load-time resolution that defaults missing settings to 60 seconds and clamps invalid values without touching Core or UI dependencies.
+- [x] T03.3 Implement the approved shared persistence primitive and both stores so updating Refresh/RateLimit preserves unrelated sections, comments, and formatting, serializes concurrent writers, and handles absent/empty files and replacement failure safely.
+- [x] T03.4 Add isolated temp-file tests for exact unrelated-content preservation, each section's save/reload, missing/invalid sections, concurrent-store behavior, and injected write/replacement failure.
 
 ## Acceptance criteria
 
@@ -79,12 +79,23 @@ Valid Refresh and RateLimit values can be loaded and saved without altering unre
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution; blocked by P-01.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
-- Open items: P-01 must be resolved before execution.
+- Produced result: Resolved P-01 via `UserSettingsFile` storing mutable configuration in `%LOCALAPPDATA%\TokenHound\settings.json` with atomic `.tmp` swap, defaults fallback from `appsettings.json`, and automatic first-run migration. Implemented `RateLimitSettings`, `RateLimitSettingsStore` (with 60s hard floor clamping), and added `Save`/`SaveAsync` to `RefreshSettingsStore`.
+- Changed files:
+  - `src/TokenHound.Infrastructure/Configuration/RefreshSettingsStore.cs`
+  - `src/TokenHound.Infrastructure/Configuration/RateLimitSettings.cs`
+  - `src/TokenHound.Infrastructure/Configuration/RateLimitSettingsStore.cs`
+  - `src/TokenHound.Infrastructure/Configuration/UserSettings.cs`
+  - `src/TokenHound.Infrastructure/Configuration/UserSettingsFile.cs`
+  - `tests/TokenHound.Infrastructure.Tests/Configuration/RefreshSettingsStoreTests.cs`
+  - `tests/TokenHound.Infrastructure.Tests/Configuration/RateLimitSettingsStoreTests.cs`
+  - `tests/TokenHound.Infrastructure.Tests/Configuration/UserSettingsFileTests.cs`
+- Checks:
+  - `rtk dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1 --filter-class "*RefreshSettingsStoreTests*"` (10 passed, 0 failed, exit code 0)
+  - `rtk dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1 --filter-class "*RateLimitSettingsStoreTests*"` (17 passed, 0 failed, exit code 0)
+  - `rtk dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1 --filter-class "*UserSettingsFileTests*"` (9 passed, 0 failed, exit code 0)
+- Validated state: Clean build and 550 tests passing in TokenHound.Infrastructure.Tests.
+- Open items: Unblocks T04 (`CadenceSettingsViewModel`).
 
 ### ADR candidates
 
-Pending execution. `sdd-execute-task` replaces this text with structured candidates or `None - direct TechSpec implementation or local decision`.
+None - direct TechSpec implementation resolving P-01 via LocalAppData user settings persistence architecture.

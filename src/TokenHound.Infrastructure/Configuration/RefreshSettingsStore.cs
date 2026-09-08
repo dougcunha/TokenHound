@@ -1,48 +1,70 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace TokenHound.Infrastructure.Configuration;
 
 /// <summary>
-/// Reads the polling cadence section of the application settings file.
+/// Reads and writes the polling cadence section of the application settings file.
 /// </summary>
 public sealed class RefreshSettingsStore
 {
     private const string DEFAULT_CONFIG_FILE = "appsettings.json";
     private const string REFRESH_SECTION_NAME = "Refresh";
 
-    private static readonly JsonSerializerOptions JSON_OPTIONS = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
-    };
-
     private static readonly JsonDocumentOptions DOCUMENT_OPTIONS = new()
     {
-        CommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
+        AllowTrailingCommas = true,
+        CommentHandling = JsonCommentHandling.Skip
     };
 
-    private readonly string _filePath;
+    private static readonly JsonSerializerOptions JSON_OPTIONS = new()
+    {
+        AllowTrailingCommas = true,
+        PropertyNameCaseInsensitive = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        WriteIndented = true
+    };
+
+    private readonly UserSettingsFile _settingsFile;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RefreshSettingsStore"/> class.
+    /// Initializes a new instance of the <see cref="RefreshSettingsStore"/> class using default user settings storage.
     /// </summary>
-    /// <param name="filePath">Optional settings file path; defaults to appsettings.json.</param>
-    /// <param name="baseDirectory">Optional base directory for relative path resolution.</param>
-    public RefreshSettingsStore(string? filePath = null, string? baseDirectory = null)
+    public RefreshSettingsStore()
+        : this(new UserSettingsFile())
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RefreshSettingsStore"/> class backed by a custom <see cref="UserSettingsFile"/>.
+    /// </summary>
+    /// <param name="settingsFile">The underlying settings persistence manager.</param>
+    public RefreshSettingsStore(UserSettingsFile settingsFile)
     {
 
-        _filePath = ResolveFilePath(filePath, baseDirectory);
+        ArgumentNullException.ThrowIfNull(settingsFile);
+
+        _settingsFile = settingsFile;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RefreshSettingsStore"/> class with file path overrides.
+    /// </summary>
+    /// <param name="filePath">Optional settings file path override.</param>
+    /// <param name="baseDirectory">Optional base directory for relative path resolution.</param>
+    public RefreshSettingsStore(string? filePath, string? baseDirectory = null)
+        : this(CreateSettingsFile(filePath, baseDirectory))
+    {
     }
 
     /// <summary>
     /// Gets the resolved settings file path backing this store.
     /// </summary>
     public string FilePath
-        => _filePath;
+        => _settingsFile.UserSettingsPath;
 
     /// <summary>
     /// Deserializes the polling cadence from a settings JSON string.
@@ -69,25 +91,63 @@ public sealed class RefreshSettingsStore
     /// </summary>
     /// <returns>The stored cadence, or an empty instance when unreadable.</returns>
     public RefreshSettings Load()
+        => _settingsFile.Load().Refresh ?? new RefreshSettings();
+
+    /// <summary>
+    /// Asynchronously loads the configured polling cadence from the settings file.
+    /// </summary>
+    /// <param name="cancellationToken">Token cancelling the read operation.</param>
+    /// <returns>The stored cadence, or an empty instance when unreadable.</returns>
+    public async Task<RefreshSettings> LoadAsync(CancellationToken cancellationToken = default)
     {
 
-        if (!File.Exists(_filePath))
-            return new RefreshSettings();
+        var settings = await _settingsFile.LoadAsync(cancellationToken).ConfigureAwait(false);
 
-        try
-        {
-
-            return FromJson(File.ReadAllText(_filePath));
-        }
-        catch (Exception)
-        {
-
-            return new RefreshSettings();
-        }
+        return settings.Refresh ?? new RefreshSettings();
     }
 
-    private static string ResolveFilePath(string? filePath, string? baseDirectory)
+    /// <summary>
+    /// Persists the polling cadence, preserving every other settings section.
+    /// </summary>
+    /// <param name="settings">The refresh cadence settings to store.</param>
+    /// <returns><see langword="true"/> when the settings were saved; otherwise <see langword="false"/>.</returns>
+    public bool Save(RefreshSettings settings)
     {
+
+        ArgumentNullException.ThrowIfNull(settings);
+
+        return _settingsFile.Update(current => current with { Refresh = settings });
+    }
+
+    /// <summary>
+    /// Asynchronously persists the polling cadence, preserving every other settings section.
+    /// </summary>
+    /// <param name="settings">The refresh cadence settings to store.</param>
+    /// <param name="cancellationToken">Token cancelling the save operation.</param>
+    /// <returns><see langword="true"/> when the settings were saved; otherwise <see langword="false"/>.</returns>
+    public Task<bool> SaveAsync(RefreshSettings settings, CancellationToken cancellationToken = default)
+    {
+
+        ArgumentNullException.ThrowIfNull(settings);
+
+        return _settingsFile.UpdateAsync(
+            current => current with { Refresh = settings },
+            cancellationToken);
+    }
+
+    private static UserSettingsFile CreateSettingsFile(string? filePath, string? baseDirectory)
+    {
+
+        var resolvedPath = ResolveFilePath(filePath, baseDirectory);
+
+        return new UserSettingsFile(userSettingsPath: resolvedPath);
+    }
+
+    private static string? ResolveFilePath(string? filePath, string? baseDirectory)
+    {
+
+        if (string.IsNullOrWhiteSpace(filePath) && string.IsNullOrWhiteSpace(baseDirectory))
+            return null;
 
         if (!string.IsNullOrWhiteSpace(filePath) && Path.IsPathRooted(filePath))
             return filePath;

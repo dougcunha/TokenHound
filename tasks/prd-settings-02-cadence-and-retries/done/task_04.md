@@ -40,10 +40,10 @@ The Settings presentation model loads active values, validates integer cadence/r
 
 ## Work
 
-- [ ] T04.1 Create a framework-independent `CadenceSettingsViewModel` with string/int input handling that treats empty and non-numeric values as errors, reports the specified accessible messages, and exposes `HasErrors`, dirty state, and Apply eligibility.
-- [ ] T04.2 Implement cross-field validation: active/idle must be at least 30 seconds, retry floor at least 60 seconds, and idle must not be shorter than active; recompute all affected errors on every edit.
-- [ ] T04.3 Implement Reset to policy constants, Discard to the most recently active persisted values, and Apply in failure-safe order: persist the complete valid settings, then update runtime cadence and effective floor only after persistence succeeds.
-- [ ] T04.4 Compose the child VM without growing `SettingsViewModel` past repository limits; link the new file into Infrastructure tests and add headless unit coverage for validation, reset, apply, discard, and persistence failure.
+- [x] T04.1 Create a framework-independent `CadenceSettingsViewModel` with string/int input handling that treats empty and non-numeric values as errors, reports the specified accessible messages, and exposes `HasErrors`, dirty state, and Apply eligibility.
+- [x] T04.2 Implement cross-field validation: active/idle must be at least 30 seconds, retry floor at least 60 seconds, and idle must not be shorter than active; recompute all affected errors on every edit.
+- [x] T04.3 Implement Reset to policy constants, Discard to the most recently active persisted values, and Apply in failure-safe order: persist the complete valid settings, then update runtime cadence and effective floor only after persistence succeeds.
+- [x] T04.4 Compose the child VM without growing `SettingsViewModel` past repository limits; link the new file into Infrastructure tests and add headless unit coverage for validation, reset, apply, discard, and persistence failure.
 
 ## Acceptance criteria
 
@@ -77,12 +77,25 @@ The Settings presentation model loads active values, validates integer cadence/r
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
-- Open items: P-01/T03 completion is required before execution.
+- Produced result: Implemented `CadenceSettingsViewModel` with real-time input and cross-field validation, dirty tracking, defaults reset, discard, and failure-safe apply ordering (persisting to `RefreshSettingsStore` and `RateLimitSettingsStore` before updating `UsageStore.UpdateCadence` and `RateLimitPolicy.SetEffectiveFloor`). Composed `CadenceSettingsViewModel` into `SettingsViewModel` as `Cadence`. Linked `CadenceSettingsViewModel.cs` into `TokenHound.Infrastructure.Tests.csproj` and added comprehensive headless unit test coverage in `CadenceSettingsViewModelTests.cs`.
+- Changed files:
+  - `src/TokenHound.App/ViewModels/CadenceSettingsViewModel.cs` (created, 296 lines)
+  - `src/TokenHound.App/ViewModels/SettingsViewModel.cs` (modified, 174 lines)
+  - `tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj` (modified link)
+  - `tests/TokenHound.Infrastructure.Tests/ViewModels/CadenceSettingsViewModelTests.cs` (created, 283 lines)
+  - `tasks/prd-settings-02-cadence-and-retries/task_04.md` (checklist and handoff updated)
+- Checks:
+  - `rtk dotnet build src/TokenHound.App/TokenHound.App.csproj -c Release --nologo --verbosity:minimal` (exit code 0, 0 errors, 0 warnings)
+  - `rtk dotnet build tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj -c Release --nologo --verbosity:minimal` (exit code 0, 0 errors, 0 warnings)
+  - `rtk dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1 --filter-class "*CadenceSettingsViewModelTests*"` (exit code 0, 11 passed, 0 failed, 0 skipped)
+  - `rtk dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1 --filter-class "*SettingsViewModelTests*"` (exit code 0, 19 passed, 0 failed, 0 skipped)
+  - `rtk dotnet run --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj -c Release -- --minimum-expected-tests 1 --filter-class "*RateLimitPolicyConfigTests*"` (exit code 0, 12 passed, 0 failed, 0 skipped)
+  - `rtk dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1 --filter-class "*RefreshSettingsStoreTests*"` (exit code 0, 10 passed, 0 failed, 0 skipped)
+  - `rtk dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1 --filter-class "*RateLimitSettingsStoreTests*"` (exit code 0, 17 passed, 0 failed, 0 skipped)
+  - `rtk dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -c Release -- --minimum-expected-tests 1 --filter-class "*UsageStoreCadenceTests*"` (exit code 0, 11 passed, 0 failed, 0 skipped)
+- Validated state: Validated on .NET SDK 10.0.400, net10.0 / net10.0-windows, Microsoft.Testing.Platform with xUnit v3 mtp-v2. All 80 focused tests across the feature pass cleanly.
+- Open items: Unblocks T05 (SettingsWindow XAML/code-behind integration and startup wiring).
 
 ### ADR candidates
 
-Pending execution. `sdd-execute-task` replaces this text with structured candidates or `None - direct TechSpec implementation or local decision`.
+None - direct TechSpec implementation or local decision.

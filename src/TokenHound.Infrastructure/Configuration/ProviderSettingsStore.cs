@@ -1,9 +1,7 @@
-using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,49 +12,54 @@ namespace TokenHound.Infrastructure.Configuration;
 /// </summary>
 public sealed class ProviderSettingsStore
 {
-    private const string ALIAS_PROVIDER_KEY = "antigravity";
-    private const string CANONICAL_PROVIDER_KEY = "gemini";
     private const string DEFAULT_CONFIG_FILE = "appsettings.json";
-    private const string ENABLED_PROPERTY_NAME = "Enabled";
-    private const string PROVIDERS_SECTION_NAME = "Providers";
 
     private static readonly JsonSerializerOptions JSON_OPTIONS = new()
     {
+        AllowTrailingCommas = true,
+        Converters = { new UserSettings.ProviderSettingsJsonConverter() },
         PropertyNameCaseInsensitive = true,
         ReadCommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true,
         WriteIndented = true
     };
 
-    private static readonly JsonDocumentOptions DOCUMENT_OPTIONS = new()
-    {
-        CommentHandling = JsonCommentHandling.Skip,
-        AllowTrailingCommas = true
-    };
-
-    private static readonly JsonNodeOptions NODE_OPTIONS = new()
-    {
-        PropertyNameCaseInsensitive = true
-    };
-
-    private readonly string _filePath;
+    private readonly UserSettingsFile _settingsFile;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="ProviderSettingsStore"/> class.
+    /// Initializes a new instance of the <see cref="ProviderSettingsStore"/> class using default user settings storage.
     /// </summary>
-    /// <param name="filePath">Optional settings file path; defaults to appsettings.json.</param>
-    /// <param name="baseDirectory">Optional base directory for relative path resolution.</param>
-    public ProviderSettingsStore(string? filePath = null, string? baseDirectory = null)
+    public ProviderSettingsStore()
+        : this(new UserSettingsFile())
+    {
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProviderSettingsStore"/> class backed by a custom <see cref="UserSettingsFile"/>.
+    /// </summary>
+    /// <param name="settingsFile">The underlying settings persistence manager.</param>
+    public ProviderSettingsStore(UserSettingsFile settingsFile)
     {
 
-        _filePath = ResolveFilePath(filePath, baseDirectory);
+        ArgumentNullException.ThrowIfNull(settingsFile);
+
+        _settingsFile = settingsFile;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ProviderSettingsStore"/> class with file path overrides.
+    /// </summary>
+    /// <param name="filePath">Optional settings file path override.</param>
+    /// <param name="baseDirectory">Optional base directory for relative path resolution.</param>
+    public ProviderSettingsStore(string? filePath, string? baseDirectory = null)
+        : this(CreateSettingsFile(filePath, baseDirectory))
+    {
     }
 
     /// <summary>
     /// Gets the resolved settings file path backing this store.
     /// </summary>
     public string FilePath
-        => _filePath;
+        => _settingsFile.UserSettingsPath;
 
     /// <summary>
     /// Deserializes provider enablement from a settings JSON string.
@@ -69,29 +72,12 @@ public sealed class ProviderSettingsStore
         if (string.IsNullOrWhiteSpace(json))
             return new ProviderSettings();
 
-        if (JsonNode.Parse(json, NODE_OPTIONS, DOCUMENT_OPTIONS) is not JsonObject root)
-            return new ProviderSettings();
-
-        if (root[PROVIDERS_SECTION_NAME] is not JsonObject section)
-            return new ProviderSettings();
-
-        return new ProviderSettings { EnabledStates = ReadStates(section) };
-    }
-
-    /// <summary>
-    /// Loads the persisted provider enablement from the settings file.
-    /// </summary>
-    /// <returns>The stored enablement, or an all-enabled instance when unreadable.</returns>
-    public ProviderSettings Load()
-    {
-
-        if (!File.Exists(_filePath))
-            return new ProviderSettings();
-
         try
         {
 
-            return FromJson(File.ReadAllText(_filePath));
+            var settings = JsonSerializer.Deserialize<UserSettings>(json, JSON_OPTIONS);
+
+            return settings?.Providers ?? new ProviderSettings();
         }
         catch (Exception)
         {
@@ -101,109 +87,99 @@ public sealed class ProviderSettingsStore
     }
 
     /// <summary>
+    /// Loads the persisted provider enablement from the settings file.
+    /// </summary>
+    /// <returns>The stored enablement, or an all-enabled instance when unreadable.</returns>
+    public ProviderSettings Load()
+        => _settingsFile.Load().Providers ?? new ProviderSettings();
+
+    /// <summary>
+    /// Asynchronously loads the persisted provider enablement from the settings file.
+    /// </summary>
+    /// <param name="cancellationToken">Token cancelling the read operation.</param>
+    /// <returns>The stored enablement, or an all-enabled instance when unreadable.</returns>
+    public async Task<ProviderSettings> LoadAsync(CancellationToken cancellationToken = default)
+    {
+
+        var settings = await _settingsFile.LoadAsync(cancellationToken).ConfigureAwait(false);
+
+        return settings.Providers ?? new ProviderSettings();
+    }
+
+    /// <summary>
     /// Persists provider enablement, preserving every other settings section and unknown provider keys.
     /// </summary>
     /// <param name="settings">The enablement map to store.</param>
-    /// <param name="cancellationToken">Token cancelling the write.</param>
     /// <returns><see langword="true"/> when the file was written; otherwise <see langword="false"/>.</returns>
-    public async Task<bool> SaveAsync(ProviderSettings settings, CancellationToken cancellationToken = default)
+    public bool Save(ProviderSettings settings)
     {
 
         ArgumentNullException.ThrowIfNull(settings);
 
-        try
+        return _settingsFile.Update(current =>
         {
 
-            using var gate = await SettingsFileGate.AcquireAsync(_filePath, cancellationToken).ConfigureAwait(false);
+            var merged = MergeStates(current.Providers, settings);
 
-            var root = await ReadRootAsync(cancellationToken).ConfigureAwait(false);
+            return current with { Providers = new ProviderSettings { EnabledStates = merged } };
+        });
+    }
 
-            ApplyStates(root, settings);
+    /// <summary>
+    /// Asynchronously persists provider enablement, preserving every other settings section and unknown provider keys.
+    /// </summary>
+    /// <param name="settings">The enablement map to store.</param>
+    /// <param name="cancellationToken">Token cancelling the write operation.</param>
+    /// <returns><see langword="true"/> when the file was written; otherwise <see langword="false"/>.</returns>
+    public Task<bool> SaveAsync(ProviderSettings settings, CancellationToken cancellationToken = default)
+    {
 
-            await File
-                .WriteAllTextAsync(_filePath, root.ToJsonString(JSON_OPTIONS), cancellationToken)
-                .ConfigureAwait(false);
+        ArgumentNullException.ThrowIfNull(settings);
 
-            return true;
-        }
-        catch (Exception ex)
+        return _settingsFile.UpdateAsync(
+            current =>
+            {
+
+                var merged = MergeStates(current.Providers, settings);
+
+                return current with { Providers = new ProviderSettings { EnabledStates = merged } };
+            },
+            cancellationToken);
+    }
+
+    private static Dictionary<string, bool> MergeStates(
+        ProviderSettings? currentProviders,
+        ProviderSettings newSettings)
+    {
+
+        var merged = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
+
+        if (currentProviders?.EnabledStates is { } existing)
         {
 
-            Log.Warning(ex, "Failed to persist provider enablement to {SettingsFilePath}", _filePath);
-
-            return false;
-        }
-    }
-
-    private static void ApplyStates(JsonObject root, ProviderSettings settings)
-    {
-
-        if (root[PROVIDERS_SECTION_NAME] is not JsonObject section)
-        {
-
-            section = new JsonObject(NODE_OPTIONS);
-            root[PROVIDERS_SECTION_NAME] = section;
+            foreach (var (key, isEnabled) in existing)
+                merged[key] = isEnabled;
         }
 
-        foreach (var state in settings.EnabledStates)
-        {
+        foreach (var (key, isEnabled) in newSettings.EnabledStates)
+            merged[key] = isEnabled;
 
-            var providerId = NormalizeKey(state.Key);
-
-            if (providerId.Length == 0)
-                continue;
-
-            WriteEnabled(section, providerId, state.Value);
-        }
+        return merged;
     }
 
-    private static bool IsAlias(string key)
-        => string.Equals(key, ALIAS_PROVIDER_KEY, StringComparison.OrdinalIgnoreCase);
-
-    private static string NormalizeKey(string? key)
+    private static UserSettingsFile CreateSettingsFile(string? filePath, string? baseDirectory)
     {
 
-        var trimmed = key?.Trim() ?? string.Empty;
+        var resolvedPath = ResolveFilePath(filePath, baseDirectory);
 
-        return IsAlias(trimmed) ? CANONICAL_PROVIDER_KEY : trimmed;
+        return new UserSettingsFile(userSettingsPath: resolvedPath);
     }
 
-    private static bool ReadEnabled(JsonNode? entry)
+    private static string? ResolveFilePath(string? filePath, string? baseDirectory)
     {
 
-        if (entry is not JsonObject provider)
-            return true;
-
-        if (provider[ENABLED_PROPERTY_NAME] is not JsonValue value)
-            return true;
-
-        return !value.TryGetValue<bool>(out var isEnabled) || isEnabled;
-    }
-
-    private static Dictionary<string, bool> ReadStates(JsonObject section)
-    {
-
-        var states = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var entry in section)
-        {
-
-            var providerId = NormalizeKey(entry.Key);
-
-            if (providerId.Length == 0)
-                continue;
-
-            if (IsAlias(entry.Key.Trim()) && states.ContainsKey(CANONICAL_PROVIDER_KEY))
-                continue;
-
-            states[providerId] = ReadEnabled(entry.Value);
-        }
-
-        return states;
-    }
-
-    private static string ResolveFilePath(string? filePath, string? baseDirectory)
-    {
+        if (string.IsNullOrWhiteSpace(filePath) && string.IsNullOrWhiteSpace(baseDirectory))
+            return null;
 
         if (!string.IsNullOrWhiteSpace(filePath) && Path.IsPathRooted(filePath))
             return filePath;
@@ -213,40 +189,5 @@ public sealed class ProviderSettingsStore
             : AppContext.BaseDirectory;
 
         return Path.Combine(baseDir, filePath ?? DEFAULT_CONFIG_FILE);
-    }
-
-    private static void WriteEnabled(JsonObject section, string providerId, bool isEnabled)
-    {
-
-        if (string.Equals(providerId, CANONICAL_PROVIDER_KEY, StringComparison.OrdinalIgnoreCase))
-            section.Remove(ALIAS_PROVIDER_KEY);
-
-        if (section[providerId] is JsonObject provider)
-        {
-
-            provider[ENABLED_PROPERTY_NAME] = JsonValue.Create(isEnabled);
-
-            return;
-        }
-
-        section[providerId] = new JsonObject(NODE_OPTIONS)
-        {
-            [ENABLED_PROPERTY_NAME] = JsonValue.Create(isEnabled)
-        };
-    }
-
-    private async Task<JsonObject> ReadRootAsync(CancellationToken cancellationToken)
-    {
-
-        if (!File.Exists(_filePath))
-            return new JsonObject(NODE_OPTIONS);
-
-        var json = await File.ReadAllTextAsync(_filePath, cancellationToken).ConfigureAwait(false);
-
-        if (string.IsNullOrWhiteSpace(json))
-            return new JsonObject(NODE_OPTIONS);
-
-        return JsonNode.Parse(json, NODE_OPTIONS, DOCUMENT_OPTIONS) as JsonObject
-               ?? new JsonObject(NODE_OPTIONS);
     }
 }
