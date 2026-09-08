@@ -13,6 +13,11 @@ public sealed record LimitWindow
     public required string Name { get; init; }
 
     /// <summary>
+    /// Gets the provider-defined group that contains the limit window, if reported.
+    /// </summary>
+    public string? GroupName { get; init; }
+
+    /// <summary>
     /// Gets the fraction of the limit used (0.0 to 1.0), or <see langword="null"/> if the total capacity is unknown or null.
     /// </summary>
     public double? UsedFraction

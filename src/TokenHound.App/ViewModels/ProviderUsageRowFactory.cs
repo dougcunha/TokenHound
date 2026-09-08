@@ -55,6 +55,7 @@ public static partial class ProviderUsageRowFactory
                 UsedFraction = window.UsedFraction,
                 PrimaryQuantityText = ResolveQuotaPrimaryText(snapshot, window),
                 SecondaryQuantityText = ResolveQuotaSecondaryText(snapshot, window),
+                ScopeText = window.GroupName,
                 ResetText = FormatResetCountdown(resetTime, nowUtc)
             });
         }

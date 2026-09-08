@@ -177,6 +177,7 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
                 windows.Add(new LimitWindow
                 {
                     Name = name,
+                    GroupName = group.DisplayName,
                     Period = period,
                     TotalUnits = usedFraction.HasValue ? 100 : null,
                     UsedFraction = usedFraction,

@@ -144,6 +144,37 @@ public sealed class ProviderUsageRowFactoryTests
     }
 
     /// <summary>
+    /// Verifies that a provider-defined quota group is shown as the row scope.
+    /// </summary>
+    [Fact]
+    public void CreateRows_WhenQuotaWindowHasGroupName_ExposesGroupAsScope()
+    {
+
+        var snapshot = new Snapshot
+        {
+            ProviderId = "gemini",
+            Status = ProviderStatus.Ok,
+            Fidelity = Fidelity.Official,
+            FetchedAtUtc = FIXED_NOW,
+            LimitWindows =
+            [
+                new LimitWindow
+                {
+                    Name = "Weekly Limit",
+                    GroupName = "Gemini models",
+                    Period = TimeSpan.FromDays(7),
+                    UsedFraction = 0.42,
+                    TotalUnits = 100
+                }
+            ]
+        };
+
+        var row = ProviderUsageRowFactory.CreateRows(snapshot).Should().ContainSingle().Subject;
+
+        row.ScopeText.Should().Be("Gemini models");
+    }
+
+    /// <summary>
     /// Verifies that Copilot finite quota window is labeled as Premium interactions while non-premium retains its name.
     /// </summary>
     [Fact]
