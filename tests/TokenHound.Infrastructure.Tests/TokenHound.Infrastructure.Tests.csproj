@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -48,6 +48,9 @@
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderRingViewModel.Status.cs" Link="ViewModels\ProviderRingViewModel.Status.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\NotchViewModel.cs" Link="ViewModels\NotchViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\HudActionsViewModel.cs" Link="ViewModels\HudActionsViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderUsageRow.cs" Link="ViewModels\ProviderUsageRow.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderUsageRowFactory.cs" Link="ViewModels\ProviderUsageRowFactory.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderUsageRowFactory.Copilot.cs" Link="ViewModels\ProviderUsageRowFactory.Copilot.cs" />
   </ItemGroup>
 
 </Project>

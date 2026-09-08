@@ -169,6 +169,82 @@ public sealed class UsageArchiveTests
         }
     }
 
+    /// <summary>
+    /// Verifies that Copilot HTTP deadlines round-trip through state.json and preserve unrelated keys.
+    /// </summary>
+    [Fact]
+    public async Task SaveCopilotHttpDeadline_RoundTripsAndPreservesUnrelatedKeys()
+    {
+        var directory = CreateDirectory();
+
+        try
+        {
+            using var archive = new UsageArchive(directory);
+            Directory.CreateDirectory(directory);
+            await File.WriteAllTextAsync(
+                archive.StatePath,
+                "{\"unrelated\":{\"count\":99},\"backoffUntil\":{\"claude\":\"2026-09-08T10:00:00.0000000+00:00\"}}",
+                TestContext.Current.CancellationToken
+            );
+
+            var deadline = DateTimeOffset.UtcNow.AddMinutes(15);
+            await archive.SaveCopilotHttpDeadlineAsync(deadline, 3, TestContext.Current.CancellationToken);
+
+            var loaded = archive.LoadCopilotHttpDeadline();
+            loaded.DeadlineUtc.Should().Be(deadline);
+            loaded.ConsecutiveFailures.Should().Be(3);
+
+            using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(archive.StatePath, TestContext.Current.CancellationToken));
+            doc.RootElement.GetProperty("unrelated").GetProperty("count").GetInt32().Should().Be(99);
+            doc.RootElement.GetProperty("backoffUntil").GetProperty("claude").GetString().Should().NotBeNull();
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    /// <summary>
+    /// Verifies that SaveSnapshotAsync strips CopilotBilling when saving to last_readings.json.
+    /// </summary>
+    [Fact]
+    public async Task SaveSnapshotAsync_StripsCopilotBillingPayload()
+    {
+        var directory = CreateDirectory();
+
+        try
+        {
+            using var archive = new UsageArchive(directory);
+            var snapshot = new Snapshot
+            {
+                ProviderId = "copilot",
+                Status = ProviderStatus.Ok,
+                Fidelity = Fidelity.Official,
+                FetchedAtUtc = DateTimeOffset.UtcNow,
+                LimitWindows = [],
+                CopilotBilling = new CopilotBillingStatus
+                {
+                    State = CopilotBillingState.Available,
+                    Reason = CopilotBillingReason.None,
+                    AttemptedAtUtc = DateTimeOffset.UtcNow
+                }
+            };
+
+            await archive.SaveSnapshotAsync(snapshot, TestContext.Current.CancellationToken);
+
+            var json = await File.ReadAllTextAsync(archive.LastReadingsPath, TestContext.Current.CancellationToken);
+            json.Should().NotContain("\"CopilotBilling\": {");
+
+            var state = archive.Load();
+            state.LastReadings["copilot"].CopilotBilling.Should().BeNull();
+        }
+        finally
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+
     private static string CreateDirectory()
     {
 

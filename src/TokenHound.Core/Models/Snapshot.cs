@@ -33,6 +33,11 @@ public sealed record Snapshot
     public required IReadOnlyList<LimitWindow> LimitWindows { get; init; }
 
     /// <summary>
+    /// Gets the independent Copilot billing state, when one was attached to the snapshot.
+    /// </summary>
+    public CopilotBillingStatus? CopilotBilling { get; init; }
+
+    /// <summary>
     /// Gets the active blocking condition, or <see langword="null"/> if the provider is unblocked.
     /// </summary>
     public UsageBlock? ActiveBlock { get; init; }

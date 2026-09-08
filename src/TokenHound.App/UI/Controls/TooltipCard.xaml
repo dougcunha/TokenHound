@@ -3,8 +3,27 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:TokenHound.App.UI.Controls"
+             xmlns:vm="clr-namespace:TokenHound.App.ViewModels"
              mc:Ignorable="d"
              Background="Transparent">
+
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis" />
+
+        <local:UsedFractionToBrushConverter x:Key="FractionBrushConverter" />
+
+        <ControlTemplate x:Key="FlatProgressBarTemplate" TargetType="ProgressBar">
+            <Grid>
+                <Border Background="#27272A" CornerRadius="3" />
+                <Border x:Name="PART_Track" />
+                <Border x:Name="PART_Indicator"
+                        HorizontalAlignment="Left"
+                        CornerRadius="3"
+                        Background="{TemplateBinding Foreground}" />
+            </Grid>
+        </ControlTemplate>
+    </UserControl.Resources>
 
     <Border Background="#121214"
             BorderBrush="#27272A"
@@ -57,83 +76,93 @@
                        Fill="#1E1E24"
                        Margin="0,10,0,10" />
 
-            <!-- Session Quota Section -->
-            <Grid Margin="0,0,0,4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+            <!-- Rows Section -->
+            <ItemsControl x:Name="RowsControl"
+                          ItemsSource="{Binding Rows, RelativeSource={RelativeSource AncestorType=UserControl}}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type vm:ProviderUsageRow}">
+                        <StackPanel Margin="0,0,0,10">
 
-                <TextBlock Grid.Column="0"
-                           Text="Current session (5h)"
-                           Foreground="#9CA3AF"
-                           FontSize="11" />
+                            <!-- Row Header: Label + Reset Countdown -->
+                            <Grid Margin="0,0,0,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
 
-                <TextBlock x:Name="SessionResetTextBlock"
-                           Grid.Column="1"
-                           Foreground="#9CA3AF"
-                           FontSize="11" />
-            </Grid>
+                                <TextBlock Grid.Column="0"
+                                           Text="{Binding Label}"
+                                           Foreground="#9CA3AF"
+                                           FontSize="11"
+                                           TextWrapping="Wrap" />
 
-            <!-- Session Bar Track -->
-            <Grid x:Name="SessionBarTrack"
-                  Height="6"
-                  Margin="0,0,0,3">
-                <Border Background="#27272A"
-                        CornerRadius="3" />
-                <Border x:Name="SessionBarFill"
-                        Background="#10B981"
-                        CornerRadius="3"
-                        HorizontalAlignment="Left"
-                        Width="0" />
-            </Grid>
+                                <TextBlock Grid.Column="1"
+                                           Text="{Binding ResetText}"
+                                           Foreground="#9CA3AF"
+                                           FontSize="11"
+                                           HorizontalAlignment="Right"
+                                           Visibility="{Binding HasReset, Converter={StaticResource BoolToVis}}" />
+                            </Grid>
 
-            <!-- Session Used Text -->
-            <TextBlock x:Name="SessionPercentText"
-                       Text="Unmeasured"
-                       Foreground="#E4E4E7"
-                       FontSize="11"
-                       FontWeight="Medium"
-                       Margin="0,0,0,10" />
+                            <!-- Scope (e.g. Org/Account) -->
+                            <TextBlock Text="{Binding ScopeText}"
+                                       Foreground="#71717A"
+                                       FontSize="10"
+                                       TextWrapping="Wrap"
+                                       Margin="0,0,0,3"
+                                       Visibility="{Binding HasScope, Converter={StaticResource BoolToVis}}" />
 
-            <!-- Weekly Quota Section -->
-            <Grid Margin="0,0,0,4">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
+                            <!-- Progress Bar Track -->
+                            <ProgressBar Minimum="0"
+                                         Maximum="1"
+                                         Value="{Binding ClampedFraction, Mode=OneWay}"
+                                         Foreground="{Binding ClampedFraction, Converter={StaticResource FractionBrushConverter}}"
+                                         Template="{StaticResource FlatProgressBarTemplate}"
+                                         Height="6"
+                                         Margin="0,2,0,3"
+                                         Visibility="{Binding HasProgress, Converter={StaticResource BoolToVis}}" />
 
-                <TextBlock Grid.Column="0"
-                           Text="Weekly limit (7d)"
-                           Foreground="#9CA3AF"
-                           FontSize="11" />
+                            <!-- Primary and Secondary Quantities -->
+                            <WrapPanel Orientation="Horizontal"
+                                       Margin="0,0,0,2">
+                                <TextBlock Text="{Binding PrimaryQuantityText}"
+                                           Foreground="#E4E4E7"
+                                           FontSize="11"
+                                           FontWeight="Medium" />
 
-                <TextBlock x:Name="WeeklyResetTextBlock"
-                           Grid.Column="1"
-                           Foreground="#9CA3AF"
-                           FontSize="11" />
-            </Grid>
+                                <TextBlock Text="{Binding SecondaryQuantityText}"
+                                           Foreground="#71717A"
+                                           FontSize="10"
+                                           Margin="6,1,0,0"
+                                           Visibility="{Binding HasSecondaryQuantity, Converter={StaticResource BoolToVis}}" />
+                            </WrapPanel>
 
-            <!-- Weekly Bar Track -->
-            <Grid x:Name="WeeklyBarTrack"
-                  Height="6"
-                  Margin="0,0,0,3">
-                <Border Background="#27272A"
-                        CornerRadius="3" />
-                <Border x:Name="WeeklyBarFill"
-                        Background="#10B981"
-                        CornerRadius="3"
-                        HorizontalAlignment="Left"
-                        Width="0" />
-            </Grid>
+                            <!-- Provenance and Coverage Info -->
+                            <TextBlock Text="{Binding ProvenanceText}"
+                                       Foreground="#71717A"
+                                       FontSize="10"
+                                       TextWrapping="Wrap"
+                                       Margin="0,1,0,0"
+                                       Visibility="{Binding HasProvenance, Converter={StaticResource BoolToVis}}" />
 
-            <!-- Weekly Used Text -->
-            <TextBlock x:Name="WeeklyPercentText"
-                       Text="Unmeasured"
-                       Foreground="#E4E4E7"
-                       FontSize="11"
-                       FontWeight="Medium"
-                       Margin="0,0,0,8" />
+                            <!-- Row-Level Error/Warning Panel -->
+                            <Border Background="#2D1515"
+                                    BorderBrush="#7F1D1D"
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Padding="6,3"
+                                    Margin="0,4,0,0"
+                                    Visibility="{Binding HasError, Converter={StaticResource BoolToVis}}">
+                                <TextBlock Text="{Binding ErrorText}"
+                                           Foreground="#FCA5A5"
+                                           FontSize="10"
+                                           TextWrapping="Wrap" />
+                            </Border>
+
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <!-- Active Session Row -->
             <Border x:Name="ActiveSessionPanel"

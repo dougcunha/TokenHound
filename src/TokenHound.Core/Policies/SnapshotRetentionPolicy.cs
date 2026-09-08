@@ -44,7 +44,7 @@ public static class SnapshotRetentionPolicy
         => new()
         {
             CurrentSnapshot = incomingSnapshot,
-            ArchivedSnapshot = incomingSnapshot,
+            ArchivedSnapshot = incomingSnapshot with { CopilotBilling = null },
             ClearsHistory = false
         };
 
@@ -67,14 +67,16 @@ public static class SnapshotRetentionPolicy
             return incomingSnapshot with
             {
                 Status = ProviderStatus.Stale,
-                LimitWindows = []
+                LimitWindows = [],
+                CopilotBilling = incomingSnapshot.CopilotBilling
             };
 
         return lastGoodSnapshot with
         {
             Status = ProviderStatus.Stale,
             ActiveBlock = incomingSnapshot.ActiveBlock,
-            ErrorDescription = incomingSnapshot.ErrorDescription
+            ErrorDescription = incomingSnapshot.ErrorDescription,
+            CopilotBilling = incomingSnapshot.CopilotBilling
         };
     }
 

@@ -102,6 +102,66 @@ public sealed class SnapshotRetentionPolicyTests
         decision.ClearsHistory.Should().BeTrue();
     }
 
+    /// <summary>
+    /// Verifies that incoming Copilot billing state is preserved across all status branches,
+    /// and that archived snapshots have billing stripped.
+    /// </summary>
+    [Theory]
+    [InlineData(ProviderStatus.Ok)]
+    [InlineData(ProviderStatus.Stale)]
+    [InlineData(ProviderStatus.NeedsAuth)]
+    [InlineData(ProviderStatus.Unsupported)]
+    public void Apply_PreservesIncomingCopilotBillingAcrossRetentionBranches(ProviderStatus incomingStatus)
+    {
+        var billing = new CopilotBillingStatus
+        {
+            State = CopilotBillingState.Available,
+            Reason = CopilotBillingReason.None,
+            AttemptedAtUtc = DateTimeOffset.UtcNow
+        };
+
+        var lastGood = CreateSnapshot(ProviderStatus.Ok, ORIGINAL_FETCH);
+        var incoming = CreateSnapshot(incomingStatus, DateTimeOffset.UtcNow) with
+        {
+            CopilotBilling = billing
+        };
+
+        var decision = SnapshotRetentionPolicy.Apply(incoming, lastGood);
+
+        decision.CurrentSnapshot.CopilotBilling.Should().Be(billing);
+
+        if (decision.ArchivedSnapshot is not null)
+            decision.ArchivedSnapshot.CopilotBilling.Should().BeNull();
+    }
+
+    /// <summary>
+    /// Verifies that generic retention never resurrects an absent billing payload.
+    /// </summary>
+    [Fact]
+    public void Apply_WhenIncomingBillingIsNull_NeverResurrectsPriorBilling()
+    {
+        var priorBilling = new CopilotBillingStatus
+        {
+            State = CopilotBillingState.Available,
+            Reason = CopilotBillingReason.None,
+            AttemptedAtUtc = ORIGINAL_FETCH
+        };
+
+        var lastGood = CreateSnapshot(ProviderStatus.Ok, ORIGINAL_FETCH) with
+        {
+            CopilotBilling = priorBilling
+        };
+
+        var incoming = CreateSnapshot(ProviderStatus.Stale, DateTimeOffset.UtcNow) with
+        {
+            CopilotBilling = null
+        };
+
+        var decision = SnapshotRetentionPolicy.Apply(incoming, lastGood);
+
+        decision.CurrentSnapshot.CopilotBilling.Should().BeNull();
+    }
+
     private static Snapshot CreateSnapshot(ProviderStatus status, DateTimeOffset fetchedAtUtc)
         => new()
         {

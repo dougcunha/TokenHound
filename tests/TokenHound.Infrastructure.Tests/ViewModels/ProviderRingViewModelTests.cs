@@ -178,4 +178,36 @@ public sealed class ProviderRingViewModelTests
         ring.IsBusy.Should().BeTrue();
         ring.ActiveSessionText.Should().Contain("PID 42");
     }
+
+    /// <summary>Verifies that UpdateFromSnapshot updates the Rows collection and raises PropertyChanged.</summary>
+    [Fact]
+    public void UpdateFromSnapshot_WhenCalled_PopulatesRowsAndRaisesPropertyChanged()
+    {
+
+        var ring = new ProviderRingViewModel("claude");
+        var changedProperties = new List<string?>();
+        ring.PropertyChanged += (_, e) => changedProperties.Add(e.PropertyName);
+
+        var snapshot = new Snapshot
+        {
+            ProviderId = "claude",
+            Status = ProviderStatus.Ok,
+            Fidelity = Fidelity.Official,
+            FetchedAtUtc = DateTimeOffset.UtcNow,
+            LimitWindows =
+            [
+                new LimitWindow
+                {
+                    Name = "Session",
+                    UsedFraction = 0.50
+                }
+            ]
+        };
+
+        ring.UpdateFromSnapshot(snapshot);
+
+        ring.Rows.Should().ContainSingle();
+        ring.Rows[0].Label.Should().Be("Current session (5h)");
+        changedProperties.Should().Contain(nameof(ring.Rows));
+    }
 }

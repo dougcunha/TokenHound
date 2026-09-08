@@ -18,6 +18,11 @@ public sealed partial class UsageArchive : IDisposable
     private const string LAST_READINGS_FILE_NAME = "last_readings.json";
     private const string STATE_FILE_NAME = "state.json";
     private const string BACKOFF_UNTIL_PROPERTY_NAME = "backoffUntil";
+    private const string COPILOT_BILLING_FILE_NAME = "copilot_billing.json";
+    private const string COPILOT_HTTP_PROPERTY_NAME = "copilotHttp";
+    private const string DEADLINE_UTC_PROPERTY_NAME = "deadlineUtc";
+    private const string CONSECUTIVE_FAILURES_PROPERTY_NAME = "consecutiveFailures";
+    private const int COPILOT_BILLING_SCHEMA_VERSION = 1;
 
     private static readonly JsonSerializerOptions SERIALIZER_OPTIONS = new()
     {
@@ -42,6 +47,7 @@ public sealed partial class UsageArchive : IDisposable
 
         LastReadingsPath = Path.Combine(DirectoryPath, LAST_READINGS_FILE_NAME);
         StatePath = Path.Combine(DirectoryPath, STATE_FILE_NAME);
+        CopilotBillingPath = Path.Combine(DirectoryPath, COPILOT_BILLING_FILE_NAME);
     }
 
     /// <summary>
@@ -58,6 +64,11 @@ public sealed partial class UsageArchive : IDisposable
     /// Gets the path of the provider deadline state file.
     /// </summary>
     public string StatePath { get; }
+
+    /// <summary>
+    /// Gets the path of the Copilot billing state file.
+    /// </summary>
+    public string CopilotBillingPath { get; }
 
     /// <summary>
     /// Loads available snapshots and deadlines without creating missing files.
@@ -94,7 +105,9 @@ public sealed partial class UsageArchive : IDisposable
         try
         {
             var readings = ReadReadingsForWrite();
-            readings[snapshot.ProviderId] = snapshot;
+            readings[snapshot.ProviderId] = snapshot.CopilotBilling is null
+                ? snapshot
+                : snapshot with { CopilotBilling = null };
             await WriteJsonAtomicallyAsync(LastReadingsPath, readings, cancellationToken).ConfigureAwait(false);
         }
         finally
