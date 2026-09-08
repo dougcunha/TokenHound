@@ -36,6 +36,7 @@ TokenHound is a lightweight, peripheral desktop notch / HUD crafted specifically
 | **Cursor** | Local SQLite (`state.vscdb`, WAL mode) | Session requests, plan thresholds, active agent status |
 | **OpenAI Codex** | stdio JSON-RPC bridge & rollout logs | Execution tokens, rate-limit resets, active command states |
 | **Google Antigravity / Gemini** | Language server IPC & Windows Credential Manager (`gemini:antigravity`) | Quota tier, prompt tokens, session transcripts |
+| **GitHub Copilot** | Borrowed `gh` / Copilot CLI OAuth token & internal quota API | Monthly premium interactions, reset windows, billing AI credits, active CLI sessions |
 | **Z.ai GLM** (soon) | Local config discovery & direct metering API | Coding plan usage, daily quota allocation |
 | **Perplexity** (soon) | Isolated WebView2 session borrowing | Real-time search queries and rate limit quotas |
 
@@ -66,7 +67,7 @@ TokenHound/
 │   │   ├── Security/                       # Windows Credential Manager P/Invoke, DPAPI
 │   │   ├── Storage/                        # SQLite WAL reader, safe shared file access
 │   │   ├── System/                         # Process discovery, TCP table helper, power events
-│   │   └── Providers/                      # Provider adapters (Claude, Cursor, Codex, Gemini, etc.)
+│   │   └── Providers/                      # Provider adapters (Claude, Cursor, Codex, Gemini, Copilot, etc.)
 │   │
 │   └── TokenHound.App/                     # Windows Presentation Foundation desktop host (net10.0-windows)
 │       ├── UI/                             # Windows, HUD controls, Bézier geometry, animations
@@ -78,7 +79,7 @@ TokenHound/
 │   └── TokenHound.Infrastructure.Tests/    # Integration tests for storage, parsing, and DPAPI
 │
 └── docs/
-    ├── specs/                              # 10 deep technical specifications per provider
+    ├── specs/                              # 11 deep technical specifications per provider
     └── design/                             # Visual design assets, layout coordinates, and mockups
 ```
 
@@ -122,6 +123,7 @@ For in-depth specifications and implementation guides, explore the `docs/` folde
 - [ARCHITECTURE.md](ARCHITECTURE.md) - Rationale for WPF (.NET 10) vs. WinUI 3, design principles, and memory targets.
 - [docs/specs/01-READING-STRATEGY-RESILIENCE.md](docs/specs/01-READING-STRATEGY-RESILIENCE.md) - Polling intervals, 429 backoff math, and offline caching.
 - [docs/specs/02-WINDOWS-CREDENTIALS-SECURITY.md](docs/specs/02-WINDOWS-CREDENTIALS-SECURITY.md) - Credential Manager P/Invoke, DPAPI encryption, and SQLite WAL mechanics.
+- [docs/specs/11-PROVIDER-COPILOT.md](docs/specs/11-PROVIDER-COPILOT.md) - GitHub Copilot lightweight internal quota, billing telemetry, and CLI activity heuristics.
 - [docs/specs/](docs/specs/) - Dedicated specifications for each supported AI provider.
 
 ---
@@ -130,7 +132,7 @@ For in-depth specifications and implementation guides, explore the `docs/` folde
 
 TokenHound was inspired by [codenotch](https://github.com/vinzdg/codenotch), a macOS notch-based monitor for AI coding tools. TokenHound is an independent implementation built from scratch for Windows 11.
 
-The monochrome provider marks in `src/TokenHound.App/Assets/Logos/ProviderGlyphs.xaml` (Claude, Codex, Cursor, Antigravity, GLM and Perplexity) are ported from codenotch's `GlyphOutline`, used under its MIT license.
+The monochrome provider marks in `src/TokenHound.App/Assets/Logos/ProviderGlyphs.xaml` (Claude, Codex, Cursor, Antigravity, GLM and Perplexity) are ported from codenotch's `GlyphOutline`, used under its MIT license; Copilot and Grok marks are flattened from official vendor SVGs.
 
 ---
 
