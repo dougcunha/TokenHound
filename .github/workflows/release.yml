@@ -50,7 +50,9 @@ jobs:
 
       - name: Pack artifact
         shell: pwsh
-        run: Compress-Archive -Path publish/${{ matrix.rid }}/* -DestinationPath TokenHound-${{ steps.version.outputs.value }}-${{ matrix.rid }}-fxdependent.zip
+        run: |
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          Compress-Archive -Path publish/${{ matrix.rid }}/* -DestinationPath dist/TokenHound-${{ steps.version.outputs.value }}-${{ matrix.rid }}-fxdependent.zip
 
       - name: Install Inno Setup 6
         shell: pwsh
@@ -68,9 +70,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: TokenHound-${{ matrix.rid }}
-          path: |
-            TokenHound-*.zip
-            dist/*.exe
+          path: dist/
           retention-days: 30
 
   release:
