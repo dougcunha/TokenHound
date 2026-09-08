@@ -3,13 +3,16 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:TokenHound.App.UI.Converters"
+        xmlns:viewModels="clr-namespace:TokenHound.App.ViewModels"
         mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=viewModels:SettingsViewModel}"
         Title="Settings"
         Icon="../../Assets/logo.ico"
-        Width="440"
-        Height="280"
-        MinWidth="380"
-        MinHeight="220"
+        Width="460"
+        Height="440"
+        MinWidth="460"
+        MinHeight="440"
         WindowStartupLocation="Manual"
         ShowInTaskbar="False"
         ResizeMode="NoResize"
@@ -18,11 +21,89 @@
         Foreground="{StaticResource TextPrimaryBrush}"
         FontFamily="Segoe UI"
         SnapsToDevicePixels="True"
-        UseLayoutRounding="True"
-        FocusManager.FocusedElement="{Binding ElementName=CloseButton}">
+        UseLayoutRounding="True">
+
+    <Window.Resources>
+        <converters:ResourceKeyConverter x:Key="ResourceKeyConverter" />
+
+        <DataTemplate x:Key="ProviderRowTemplate" DataType="{x:Type viewModels:ProviderToggleViewModel}">
+            <Grid MinHeight="46" Margin="12,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="28" />
+                    <ColumnDefinition Width="*" />
+                    <!-- Fixed so pills of different label lengths keep every toggle on the same axis -->
+                    <ColumnDefinition Width="112" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Provider mark: vector glyph, falling back to the short text badge -->
+                <Grid Grid.Column="0"
+                      Width="24"
+                      Height="24"
+                      VerticalAlignment="Center">
+                    <TextBlock Text="{Binding ProviderBadge}"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               FontSize="12"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding GlyphKey}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <Path Data="{Binding GlyphKey, Converter={StaticResource ResourceKeyConverter}}"
+                          Fill="{StaticResource TextPrimaryBrush}"
+                          Stretch="Uniform"
+                          Width="20"
+                          Height="20"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          RenderTransformOrigin="0.5,0.5">
+                        <Path.RenderTransform>
+                            <ScaleTransform ScaleX="{Binding GlyphScale}" ScaleY="{Binding GlyphScale}" />
+                        </Path.RenderTransform>
+                    </Path>
+                </Grid>
+
+                <TextBlock Grid.Column="1"
+                           Text="{Binding ProviderName}"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           FontSize="13"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           Margin="12,0,12,0" />
+
+                <!-- Status pill: state is always carried by the visible label, never by color alone -->
+                <Border Grid.Column="2"
+                        Style="{StaticResource ProviderBadgePillStyle}"
+                        Background="{Binding BadgeBackgroundKey, Converter={StaticResource ResourceKeyConverter}}"
+                        Margin="0,0,12,0">
+                    <TextBlock Text="{Binding BadgeLabel}"
+                               Style="{StaticResource ProviderBadgeTextStyle}"
+                               Foreground="{Binding BadgeForegroundKey, Converter={StaticResource ResourceKeyConverter}}"
+                               AutomationProperties.Name="{Binding BadgeLabel}" />
+                </Border>
+
+                <CheckBox Grid.Column="3"
+                          Style="{StaticResource ProviderToggleStyle}"
+                          IsChecked="{Binding IsMonitored, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                          AutomationProperties.Name="{Binding ProviderName}"
+                          AutomationProperties.HelpText="{Binding BadgeLabel}" />
+            </Grid>
+        </DataTemplate>
+    </Window.Resources>
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
@@ -34,18 +115,33 @@
                    FontSize="16"
                    FontWeight="SemiBold"
                    Foreground="{StaticResource TextPrimaryBrush}"
+                   Margin="0,0,0,4" />
+
+        <TextBlock Grid.Row="1"
+                   Text="Manage monitored AI coding assistants and provider telemetry."
+                   FontSize="12"
+                   LineHeight="18"
+                   Foreground="{StaticResource TextSecondaryBrush}"
+                   TextWrapping="Wrap"
                    Margin="0,0,0,14" />
 
-        <!-- Empty Content Body -->
-        <Border Grid.Row="1"
+        <!-- Provider Card -->
+        <Border Grid.Row="2"
                 Background="{StaticResource SurfaceCardBackgroundBrush}"
                 BorderBrush="{StaticResource SurfaceBorderSubtleBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
-                MinHeight="120" />
+                Padding="0,6"
+                VerticalAlignment="Top">
+            <ItemsControl x:Name="ProviderItems"
+                          ItemsSource="{Binding Providers}"
+                          ItemTemplate="{StaticResource ProviderRowTemplate}"
+                          KeyboardNavigation.TabNavigation="Continue"
+                          AutomationProperties.Name="Monitored providers" />
+        </Border>
 
         <!-- Dismissal Controls -->
-        <StackPanel Grid.Row="2"
+        <StackPanel Grid.Row="3"
                     Orientation="Horizontal"
                     HorizontalAlignment="Right"
                     Margin="0,16,0,0">

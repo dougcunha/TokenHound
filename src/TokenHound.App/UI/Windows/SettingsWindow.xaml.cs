@@ -1,7 +1,9 @@
 using System;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Interop;
+using System.Windows.Media;
 using TokenHound.App.Interop;
 
 namespace TokenHound.App.UI.Windows;
@@ -20,6 +22,7 @@ public sealed partial class SettingsWindow : Window
         InitializeComponent();
 
         SourceInitialized += OnSourceInitialized;
+        Loaded += OnLoaded;
     }
 
     /// <inheritdoc />
@@ -46,5 +49,41 @@ public sealed partial class SettingsWindow : Window
     {
 
         Close();
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+
+        var firstToggle = FindFirstToggle(ProviderItems);
+
+        if (firstToggle is not null)
+        {
+            firstToggle.Focus();
+
+            return;
+        }
+
+        CloseButton.Focus();
+    }
+
+    private static CheckBox? FindFirstToggle(DependencyObject root)
+    {
+
+        var childCount = VisualTreeHelper.GetChildrenCount(root);
+
+        for (var index = 0; index < childCount; index++)
+        {
+            var child = VisualTreeHelper.GetChild(root, index);
+
+            if (child is CheckBox toggle)
+                return toggle;
+
+            var descendant = FindFirstToggle(child);
+
+            if (descendant is not null)
+                return descendant;
+        }
+
+        return null;
     }
 }

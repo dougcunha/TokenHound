@@ -23,6 +23,8 @@ namespace TokenHound.App;
 /// </summary>
 public partial class App : Application
 {
+    private readonly ProviderSettingsStore _providerSettingsStore = new();
+
     private UsageStore? _usageStore;
     private DialogService? _dialogService;
     private NotchViewModel? _notchViewModel;
@@ -45,6 +47,7 @@ public partial class App : Application
         _usageStore = CreateUsageStore();
 
         RegisterProviders(_usageStore, disposableResources);
+        ApplyProviderEnablement(_usageStore);
         InitializeUi(_usageStore, disposableResources);
         ScheduleInitialRefresh();
     }
@@ -153,6 +156,39 @@ public partial class App : Application
         disposableResources.Add(copilotMonitor);
     }
 
+    /// <summary>
+    /// Applies the persisted monitoring preferences to every registered provider. Runs after registration so the
+    /// identifiers are known, and before the HUD view model is built so a disabled provider never gets a ring.
+    /// </summary>
+    /// <param name="usageStore">The usage store owning the provider registry and the enablement gate.</param>
+    private void ApplyProviderEnablement(UsageStore usageStore)
+    {
+
+        var settings = _providerSettingsStore.Load();
+
+        Log.Information(
+            "Resolving provider enablement from {SettingsFilePath}",
+            _providerSettingsStore.FilePath
+        );
+
+        foreach (var providerId in usageStore.RegisteredProviderIds)
+        {
+
+            var isEnabled = settings.IsEnabled(providerId);
+
+            usageStore.SetProviderEnabled(providerId, isEnabled);
+
+            Log.Information(
+                "Provider enablement resolved: {ProviderId} monitored {IsEnabled}",
+                providerId,
+                isEnabled
+            );
+        }
+    }
+
+    private SettingsViewModel CreateSettingsViewModel(UsageStore usageStore)
+        => new(usageStore, _providerSettingsStore.SaveAsync, DispatchUiAction);
+
     private void InitializeUi(UsageStore usageStore, List<IDisposable> disposableResources)
     {
 
@@ -165,7 +201,7 @@ public partial class App : Application
         _actionsViewModel = new HudActionsViewModel(
             usageStore.RefreshNowAsync,
             _lifetime.ShutdownAsync,
-            () => _dialogService.ShowSettings(_notchWindow),
+            () => _dialogService.ShowSettings(_notchWindow, () => CreateSettingsViewModel(usageStore)),
             () => _dialogService.ShowAbout(_notchWindow),
             () => usageStore.CurrentSnapshots.Values
         );

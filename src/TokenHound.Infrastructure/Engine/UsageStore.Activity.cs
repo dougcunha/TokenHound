@@ -21,6 +21,10 @@ public sealed partial class UsageStore
         {
 
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (!IsProviderEnabled(monitor.ProviderId))
+                continue;
+
             var session = await CheckActivityAsync(monitor, cancellationToken).ConfigureAwait(false);
             PublishActivity(monitor.ProviderId, session);
         }
@@ -44,6 +48,15 @@ public sealed partial class UsageStore
 
         if (changed)
             ActivityUpdated?.Invoke(this, new ProviderActivityChangedEventArgs(providerId, session));
+    }
+
+    private void ClearActivityState(string providerId)
+    {
+
+        lock (_activityLock)
+            _activityStates.Remove(providerId);
+
+        ActivityUpdated?.Invoke(this, new ProviderActivityChangedEventArgs(providerId, null));
     }
 
     private bool HasActivityState
@@ -110,6 +123,9 @@ public sealed partial class UsageStore
         {
 
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (!IsProviderEnabled(monitor.ProviderId))
+                continue;
 
             if (await IsBusyAsync(monitor, cancellationToken).ConfigureAwait(false))
                 return true;

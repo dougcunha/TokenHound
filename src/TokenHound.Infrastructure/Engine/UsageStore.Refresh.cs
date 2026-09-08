@@ -36,6 +36,9 @@ public sealed partial class UsageStore
 
             cancellationToken.ThrowIfCancellationRequested();
 
+            if (!IsProviderEnabled(provider.ProviderId))
+                continue;
+
             await RefreshProviderAsync(provider, cancellationToken).ConfigureAwait(false);
         }
     }

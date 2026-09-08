@@ -1,6 +1,7 @@
 using System;
 using System.Windows;
 using TokenHound.App.Interop;
+using TokenHound.App.ViewModels;
 
 namespace TokenHound.App.UI.Windows;
 
@@ -11,6 +12,7 @@ public sealed class DialogService
 {
     private readonly Func<Window?>? _ownerProvider;
     private SettingsWindow? _settingsWindow;
+    private SettingsViewModel? _settingsViewModel;
     private AboutWindow? _aboutWindow;
 
     /// <summary>
@@ -39,14 +41,18 @@ public sealed class DialogService
     /// Shows the Settings dialog modelessly, or activates and restores the existing instance if already open.
     /// </summary>
     /// <param name="owner">Optional owner window overriding the default owner provider.</param>
-    public void ShowSettings(Window? owner = null)
+    /// <param name="viewModelFactory">
+    /// Optional factory producing the view model bound to the dialog. The service owns the produced instance
+    /// and disposes it exactly once when the dialog closes. When omitted the dialog opens without a data context.
+    /// </param>
+    public void ShowSettings(Window? owner = null, Func<SettingsViewModel>? viewModelFactory = null)
     {
 
         var app = Application.Current;
 
         if (app is not null && !app.Dispatcher.CheckAccess())
         {
-            app.Dispatcher.Invoke(() => ShowSettings(owner));
+            app.Dispatcher.Invoke(() => ShowSettings(owner, viewModelFactory));
 
             return;
         }
@@ -62,15 +68,7 @@ public sealed class DialogService
         }
 
         var effectiveOwner = owner ?? _ownerProvider?.Invoke() ?? Application.Current?.MainWindow;
-        var window = new SettingsWindow();
-
-        if (effectiveOwner is not null && effectiveOwner.IsLoaded)
-            window.Owner = effectiveOwner;
-
-        WindowPlacement.PositionInWorkArea(window, effectiveOwner);
-
-        window.Closed += OnSettingsWindowClosed;
-        _settingsWindow = window;
+        var window = CreateSettingsWindow(effectiveOwner, viewModelFactory);
 
         window.Show();
         window.Activate();
@@ -91,13 +89,17 @@ public sealed class DialogService
             return;
         }
 
-        if (_settingsWindow is null)
-            return;
-
         var window = _settingsWindow;
         _settingsWindow = null;
-        window.Closed -= OnSettingsWindowClosed;
-        window.Close();
+
+        if (window is not null)
+        {
+            window.Closed -= OnSettingsWindowClosed;
+            window.DataContext = null;
+            window.Close();
+        }
+
+        DisposeSettingsViewModel();
     }
 
     /// <summary>
@@ -175,10 +177,44 @@ public sealed class DialogService
         CloseAbout();
     }
 
+    private SettingsWindow CreateSettingsWindow(Window? effectiveOwner, Func<SettingsViewModel>? viewModelFactory)
+    {
+
+        var window = new SettingsWindow();
+        var viewModel = viewModelFactory?.Invoke();
+
+        if (viewModel is not null)
+            window.DataContext = viewModel;
+
+        if (effectiveOwner is not null && effectiveOwner.IsLoaded)
+            window.Owner = effectiveOwner;
+
+        WindowPlacement.PositionInWorkArea(window, effectiveOwner);
+
+        window.Closed += OnSettingsWindowClosed;
+        _settingsWindow = window;
+        _settingsViewModel = viewModel;
+
+        return window;
+    }
+
     private void OnSettingsWindowClosed(object? sender, EventArgs e)
     {
 
         _settingsWindow = null;
+        DisposeSettingsViewModel();
+    }
+
+    /// <summary>
+    /// Releases the Settings view model and clears the field before disposing, so the closed-event path and the
+    /// explicit close path can never dispose the same instance twice nor leave one behind.
+    /// </summary>
+    private void DisposeSettingsViewModel()
+    {
+
+        var viewModel = _settingsViewModel;
+        _settingsViewModel = null;
+        viewModel?.Dispose();
     }
 
     private void OnAboutWindowClosed(object? sender, EventArgs e)

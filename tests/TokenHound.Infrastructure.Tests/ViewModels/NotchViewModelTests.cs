@@ -218,6 +218,114 @@ public sealed class NotchViewModelTests
         await store.StopAsync(TestContext.Current.CancellationToken);
     }
 
+    /// <summary>
+    /// TC-10: verifies that disabling the middle provider removes its ring and that re-enabling
+    /// restores that ring at its original index instead of appending it to the end of the capsule.
+    /// </summary>
+    [Fact]
+    public async Task ProviderEnablementChanged_WhenMiddleProviderToggled_RestoresRingAtOriginalIndex()
+    {
+
+        using var store = new UsageStore();
+        using var viewModel = new NotchViewModel(store);
+
+        await RegisterAndRefreshAsync(store, "claude");
+        await RegisterAndRefreshAsync(store, "codex");
+        await RegisterAndRefreshAsync(store, "cursor");
+
+        viewModel.Rings.Select(static r => r.ProviderId).Should().Equal("claude", "codex", "cursor");
+
+        store.SetProviderEnabled("codex", false);
+
+        viewModel.Rings.Select(static r => r.ProviderId).Should().Equal("claude", "cursor");
+
+        store.SetProviderEnabled("codex", true);
+
+        viewModel.Rings.Select(static r => r.ProviderId).Should().Equal("claude", "codex", "cursor");
+
+        var restored = viewModel.Rings.Single(static r => r.ProviderId == "codex");
+        viewModel.Rings.IndexOf(restored).Should().Be(1);
+    }
+
+    /// <summary>
+    /// TC-11: verifies that disabling every provider empties the capsule without raising an exception
+    /// and without waking the mock fallback, which stays dormant when no mock provider is configured.
+    /// </summary>
+    [Fact]
+    public async Task ProviderEnablementChanged_WhenEveryProviderDisabled_EmptiesRingsAndKeepsFallbackDormant()
+    {
+
+        using var store = new UsageStore();
+        using var viewModel = new NotchViewModel(store);
+
+        await RegisterAndRefreshAsync(store, "claude");
+        await RegisterAndRefreshAsync(store, "codex");
+        await RegisterAndRefreshAsync(store, "cursor");
+
+        viewModel.Rings.Should().HaveCount(3);
+
+        store.SetProviderEnabled("claude", false);
+        store.SetProviderEnabled("codex", false);
+        store.SetProviderEnabled("cursor", false);
+
+        viewModel.Rings.Should().BeEmpty();
+        viewModel.IsFallbackActive.Should().BeFalse();
+    }
+
+    /// <summary>
+    /// Verifies that a stored snapshot belonging to a disabled provider does not resurrect its ring
+    /// when the view model rebuilds from <see cref="UsageStore.CurrentSnapshots"/>.
+    /// </summary>
+    [Fact]
+    public async Task UpdateOrAddRing_WhenSnapshotBelongsToDisabledProvider_DoesNotAddRing()
+    {
+
+        using var store = new UsageStore();
+
+        await RegisterAndRefreshAsync(store, "claude");
+        await RegisterAndRefreshAsync(store, "codex");
+
+        store.SetProviderEnabled("codex", false);
+
+        using var viewModel = new NotchViewModel(store);
+
+        store.CurrentSnapshots.Should().ContainKey("codex");
+        viewModel.Rings.Select(static r => r.ProviderId).Should().Equal("claude");
+    }
+
+    /// <summary>
+    /// Verifies that disposing the view model also unsubscribes from provider enablement changes.
+    /// </summary>
+    [Fact]
+    public async Task Dispose_UnsubscribesFromProviderEnablementChanged()
+    {
+
+        using var store = new UsageStore();
+        var viewModel = new NotchViewModel(store);
+
+        await RegisterAndRefreshAsync(store, "claude");
+
+        viewModel.Rings.Should().ContainSingle(static r => r.ProviderId == "claude");
+
+        viewModel.Dispose();
+        store.SetProviderEnabled("claude", false);
+
+        viewModel.Rings.Should().ContainSingle(static r => r.ProviderId == "claude");
+    }
+
+    private static async Task RegisterAndRefreshAsync(UsageStore store, string providerId)
+    {
+
+        var provider = Substitute.For<IUsageProvider>();
+        provider.ProviderId.Returns(providerId);
+        provider.GetSnapshotAsync(Arg.Any<CancellationToken>()).Returns(
+            ValueTask.FromResult(CreateSnapshot(providerId, ProviderStatus.Ok, 0.25))
+        );
+
+        store.RegisterProvider(provider);
+        await store.RefreshNowAsync(TestContext.Current.CancellationToken);
+    }
+
     private static Snapshot CreateSnapshot(
         string providerId,
         ProviderStatus status,

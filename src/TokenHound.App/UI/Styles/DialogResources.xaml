@@ -29,6 +29,38 @@
     <SolidColorBrush x:Key="ButtonDisabledBackgroundBrush" Color="{StaticResource ButtonDisabledBackgroundColor}" />
     <SolidColorBrush x:Key="FocusIndicatorBrush" Color="{StaticResource FocusIndicatorColor}" />
 
+    <!--
+        Provider status badge palette. Key names are produced by ProviderBadgeResolver and must match it
+        character for character. ProviderBadgeState.Unsupported deliberately reuses the Stale slate pair,
+        so seven states map onto fourteen brushes. Background colors carry alpha and composite over
+        SurfaceCardBackgroundBrush.
+    -->
+    <SolidColorBrush x:Key="BadgeOkBackgroundBrush" Color="#202E7D32" />
+    <SolidColorBrush x:Key="BadgeOkForegroundBrush" Color="#81C784" />
+    <SolidColorBrush x:Key="BadgeStaleBackgroundBrush" Color="#20546E7A" />
+    <SolidColorBrush x:Key="BadgeStaleForegroundBrush" Color="#B0BEC5" />
+    <SolidColorBrush x:Key="BadgeNeedsAuthBackgroundBrush" Color="#20E65100" />
+    <SolidColorBrush x:Key="BadgeNeedsAuthForegroundBrush" Color="#FFB74D" />
+    <SolidColorBrush x:Key="BadgeRateLimitedBackgroundBrush" Color="#20F57F17" />
+    <SolidColorBrush x:Key="BadgeRateLimitedForegroundBrush" Color="#FFF176" />
+    <SolidColorBrush x:Key="BadgeAccessDeniedBackgroundBrush" Color="#20C62828" />
+    <SolidColorBrush x:Key="BadgeAccessDeniedForegroundBrush" Color="#E57373" />
+    <SolidColorBrush x:Key="BadgeCheckingBackgroundBrush" Color="#2000838F" />
+    <SolidColorBrush x:Key="BadgeCheckingForegroundBrush" Color="#80DEEA" />
+    <SolidColorBrush x:Key="BadgeDisabledBackgroundBrush" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="BadgeDisabledForegroundBrush" Color="#757575" />
+
+    <!-- Toggle Palette -->
+    <Color x:Key="ToggleBorderColor">#71717A</Color>
+    <Color x:Key="ToggleCheckedColor">#3B82F6</Color>
+    <Color x:Key="ToggleCheckedHoverColor">#60A5FA</Color>
+    <Color x:Key="ToggleGlyphColor">#FFFFFF</Color>
+
+    <SolidColorBrush x:Key="ToggleBorderBrush" Color="{StaticResource ToggleBorderColor}" />
+    <SolidColorBrush x:Key="ToggleCheckedBrush" Color="{StaticResource ToggleCheckedColor}" />
+    <SolidColorBrush x:Key="ToggleCheckedHoverBrush" Color="{StaticResource ToggleCheckedHoverColor}" />
+    <SolidColorBrush x:Key="ToggleGlyphBrush" Color="{StaticResource ToggleGlyphColor}" />
+
     <!-- Focus Visual Style -->
     <Style x:Key="DialogFocusVisualStyle">
         <Setter Property="Control.Template">
@@ -86,6 +118,84 @@
                             <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource ButtonDisabledBackgroundBrush}" />
                             <Setter TargetName="ButtonBorder" Property="BorderBrush" Value="{StaticResource SurfaceBorderSubtleBrush}" />
                             <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                            <Setter Property="Cursor" Value="Arrow" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- Provider Status Badge Pill Style -->
+    <Style x:Key="ProviderBadgePillStyle" TargetType="Border">
+        <Setter Property="CornerRadius" Value="9" />
+        <Setter Property="Padding" Value="8,2" />
+        <Setter Property="MinWidth" Value="64" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+    </Style>
+
+    <!-- Provider Status Badge Text Style -->
+    <Style x:Key="ProviderBadgeTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="Segoe UI" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="TextTrimming" Value="None" />
+    </Style>
+
+    <!-- Provider Monitoring Toggle Style -->
+    <Style x:Key="ProviderToggleStyle" TargetType="CheckBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="{StaticResource ToggleBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1.5" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="FocusVisualStyle" Value="{StaticResource DialogFocusVisualStyle}" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="HorizontalAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <Border x:Name="ToggleBorder"
+                            Width="20"
+                            Height="20"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4"
+                            SnapsToDevicePixels="True">
+                        <Path x:Name="CheckGlyph"
+                              Data="M 0,4.5 L 3.5,8 L 9.5,1"
+                              Stroke="{StaticResource ToggleGlyphBrush}"
+                              StrokeThickness="2"
+                              StrokeStartLineCap="Round"
+                              StrokeEndLineCap="Round"
+                              StrokeLineJoin="Round"
+                              HorizontalAlignment="Center"
+                              VerticalAlignment="Center"
+                              Visibility="Collapsed" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsChecked" Value="True">
+                            <Setter TargetName="ToggleBorder" Property="Background" Value="{StaticResource ToggleCheckedBrush}" />
+                            <Setter TargetName="ToggleBorder" Property="BorderBrush" Value="{StaticResource ToggleCheckedBrush}" />
+                            <Setter TargetName="CheckGlyph" Property="Visibility" Value="Visible" />
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ToggleBorder" Property="BorderBrush" Value="{StaticResource ToggleCheckedHoverBrush}" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsChecked" Value="True" />
+                                <Condition Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ToggleBorder" Property="Background" Value="{StaticResource ToggleCheckedHoverBrush}" />
+                        </MultiTrigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter TargetName="ToggleBorder" Property="BorderBrush" Value="{StaticResource SurfaceBorderSubtleBrush}" />
                             <Setter Property="Cursor" Value="Arrow" />
                         </Trigger>
                     </ControlTemplate.Triggers>

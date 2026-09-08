@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
@@ -16,6 +17,8 @@ public sealed class NotchViewModel : INotifyPropertyChanged, IDisposable
 {
     private readonly UsageStore _usageStore;
     private readonly Action<Action> _uiDispatcher;
+    private readonly Dictionary<string, ProviderRingViewModel> _ringsByProvider = new(StringComparer.OrdinalIgnoreCase);
+    private readonly List<string> _ringOrder = [];
     private MockUsageProvider? _mockProvider;
     private bool _isFallbackActive;
     private bool _disposed;
@@ -38,6 +41,7 @@ public sealed class NotchViewModel : INotifyPropertyChanged, IDisposable
 
         _usageStore.SnapshotUpdated += OnSnapshotUpdated;
         _usageStore.ActivityUpdated += OnActivityUpdated;
+        _usageStore.ProviderEnablementChanged += OnProviderEnablementChanged;
 
         foreach (var snapshot in _usageStore.CurrentSnapshots.Values)
         {
@@ -91,6 +95,7 @@ public sealed class NotchViewModel : INotifyPropertyChanged, IDisposable
         _disposed = true;
         _usageStore.SnapshotUpdated -= OnSnapshotUpdated;
         _usageStore.ActivityUpdated -= OnActivityUpdated;
+        _usageStore.ProviderEnablementChanged -= OnProviderEnablementChanged;
     }
 
     private void OnSnapshotUpdated(object? sender, Snapshot snapshot)
@@ -119,23 +124,81 @@ public sealed class NotchViewModel : INotifyPropertyChanged, IDisposable
         });
     }
 
+    private void OnProviderEnablementChanged(
+        object? sender,
+        ProviderEnablementChangedEventArgs args)
+        => _uiDispatcher(() => ApplyEnablement(args.ProviderId, args.IsEnabled));
+
+    private void ApplyEnablement(string providerId, bool isEnabled)
+    {
+
+        if (!_ringsByProvider.TryGetValue(providerId, out var ring))
+        {
+
+            if (isEnabled && _usageStore.CurrentSnapshots.TryGetValue(providerId, out var restored))
+                UpdateOrAddRing(restored);
+
+            return;
+        }
+
+        if (!isEnabled)
+        {
+
+            Rings.Remove(ring);
+
+            return;
+        }
+
+        if (Rings.Contains(ring))
+            return;
+
+        if (_usageStore.CurrentSnapshots.TryGetValue(providerId, out var cached))
+            ring.UpdateFromSnapshot(cached);
+
+        Rings.Insert(ResolveInsertIndex(providerId), ring);
+    }
+
+    private int ResolveInsertIndex(string providerId)
+    {
+
+        var index = 0;
+
+        foreach (var knownId in _ringOrder)
+        {
+
+            if (string.Equals(knownId, providerId, StringComparison.OrdinalIgnoreCase))
+                return index;
+
+            if (_ringsByProvider.TryGetValue(knownId, out var known) && Rings.Contains(known))
+                index++;
+        }
+
+        return index;
+    }
+
     private void UpdateOrAddRing(Snapshot snapshot)
     {
 
-        var existing = Rings.FirstOrDefault(r =>
-            string.Equals(r.ProviderId, snapshot.ProviderId, StringComparison.OrdinalIgnoreCase));
+        var isEnabled = _usageStore.IsProviderEnabled(snapshot.ProviderId);
 
-        if (existing is not null)
+        if (_ringsByProvider.TryGetValue(snapshot.ProviderId, out var existing))
         {
 
             existing.UpdateFromSnapshot(snapshot);
+
+            if (isEnabled && !Rings.Contains(existing))
+                Rings.Insert(ResolveInsertIndex(snapshot.ProviderId), existing);
 
             return;
         }
 
         var ring = new ProviderRingViewModel(snapshot.ProviderId);
         ring.UpdateFromSnapshot(snapshot);
-        Rings.Add(ring);
+        _ringsByProvider[snapshot.ProviderId] = ring;
+        _ringOrder.Add(snapshot.ProviderId);
+
+        if (isEnabled)
+            Rings.Insert(ResolveInsertIndex(snapshot.ProviderId), ring);
     }
 
     private bool ShouldFallbackToMock()

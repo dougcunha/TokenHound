@@ -43,11 +43,15 @@
     <Compile Include="..\..\src\TokenHound.App\Presentation\ApplicationInfo.cs" Link="Presentation\ApplicationInfo.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Placement\ScreenBounds.cs" Link="Placement\ScreenBounds.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Placement\NotchPlacement.cs" Link="Placement\NotchPlacement.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderBadgeState.cs" Link="ViewModels\ProviderBadgeState.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderBadgeResolver.cs" Link="ViewModels\ProviderBadgeResolver.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderCatalog.cs" Link="ViewModels\ProviderCatalog.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderRingViewModel.cs" Link="ViewModels\ProviderRingViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderRingViewModel.Status.cs" Link="ViewModels\ProviderRingViewModel.Status.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\NotchViewModel.cs" Link="ViewModels\NotchViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\HudActionsViewModel.cs" Link="ViewModels\HudActionsViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderToggleViewModel.cs" Link="ViewModels\ProviderToggleViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\SettingsViewModel.cs" Link="ViewModels\SettingsViewModel.cs" />
   </ItemGroup>
 
 </Project>

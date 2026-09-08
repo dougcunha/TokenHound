@@ -103,6 +103,8 @@ public sealed class HudPositionStore
         try
         {
 
+            using var gate = SettingsFileGate.Acquire(_filePath);
+
             var root = ReadRoot();
 
             root[HUD_SECTION_NAME] = new JsonObject
