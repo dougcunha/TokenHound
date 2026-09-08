@@ -19,4 +19,28 @@ public sealed record CopilotQuotaResponse
     /// </summary>
     [JsonPropertyName("quota_snapshots")]
     public Dictionary<string, CopilotQuotaSnapshotDto>? QuotaSnapshots { get; init; }
+
+    /// <summary>
+    /// Gets the user login reported by the internal quota response, if present.
+    /// </summary>
+    [JsonPropertyName("login")]
+    public string? Login { get; init; }
+
+    /// <summary>
+    /// Gets the Copilot plan identifier hint reported by the internal quota endpoint, if present.
+    /// </summary>
+    [JsonPropertyName("copilot_plan")]
+    public string? CopilotPlan { get; init; }
+
+    /// <summary>
+    /// Gets the access type SKU reported by the internal quota endpoint, if present.
+    /// </summary>
+    [JsonPropertyName("access_type_sku")]
+    public string? AccessTypeSku { get; init; }
+
+    /// <summary>
+    /// Gets the list of candidate organization logins reported by the internal quota endpoint, if present.
+    /// </summary>
+    [JsonPropertyName("organization_login_list")]
+    public List<string>? OrganizationLoginList { get; init; }
 }

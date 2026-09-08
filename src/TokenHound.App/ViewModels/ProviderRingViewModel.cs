@@ -24,6 +24,7 @@ public sealed partial class ProviderRingViewModel : INotifyPropertyChanged
     private string? _weeklyResetText;
     private string? _activeSessionText;
     private string? _statusMessage;
+    private IReadOnlyList<ProviderUsageRow> _rows = [];
 
     /// <summary>Initializes a new instance of the <see cref="ProviderRingViewModel"/> class.</summary>
     /// <param name="providerId">The unique identifier of the provider.</param>
@@ -161,9 +162,24 @@ public sealed partial class ProviderRingViewModel : INotifyPropertyChanged
             => SetProperty(ref _statusMessage, value);
     }
 
+    /// <summary>Gets the collection of semantic quota and credit usage rows.</summary>
+    public IReadOnlyList<ProviderUsageRow> Rows
+    {
+        get
+            => _rows;
+        private set
+            => SetProperty(ref _rows, value);
+    }
+
     /// <summary>Updates all observable properties from a domain telemetry snapshot.</summary>
     /// <param name="snapshot">The snapshot containing updated metrics and health status.</param>
     public void UpdateFromSnapshot(Snapshot snapshot)
+        => UpdateFromSnapshot(snapshot, TimeProvider.System);
+
+    /// <summary>Updates all observable properties from a domain telemetry snapshot using an injected clock.</summary>
+    /// <param name="snapshot">The snapshot containing updated metrics and health status.</param>
+    /// <param name="timeProvider">The time provider for relative countdown calculations.</param>
+    public void UpdateFromSnapshot(Snapshot snapshot, TimeProvider? timeProvider)
     {
 
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -171,7 +187,8 @@ public sealed partial class ProviderRingViewModel : INotifyPropertyChanged
         Status = snapshot.Status;
         StatusMessage = ResolveStatusMessage(snapshot);
 
-        var nowUtc = DateTimeOffset.UtcNow;
+        var provider = timeProvider ?? TimeProvider.System;
+        var nowUtc = provider.GetUtcNow();
         var sessionWindow = FindLimitWindow(snapshot.LimitWindows, isSession: true);
         var weeklyWindow = FindLimitWindow(snapshot.LimitWindows, isSession: false);
 
@@ -187,6 +204,8 @@ public sealed partial class ProviderRingViewModel : INotifyPropertyChanged
         {
             SessionResetText = $"~{count} requests";
         }
+
+        Rows = ProviderUsageRowFactory.CreateRows(snapshot, provider);
     }
 
     /// <summary>Updates the session activity state and active session description text.</summary>
@@ -241,24 +260,7 @@ public sealed partial class ProviderRingViewModel : INotifyPropertyChanged
     }
 
     private static string? FormatResetCountdown(DateTimeOffset? resetTimeUtc, DateTimeOffset nowUtc)
-    {
-
-        if (!resetTimeUtc.HasValue)
-            return null;
-
-        if (resetTimeUtc.Value <= nowUtc)
-            return "Resets now";
-
-        var diff = resetTimeUtc.Value - nowUtc;
-
-        if (diff.TotalDays >= 1.0)
-            return $"Resets in {(int)diff.TotalDays}d {diff.Hours}h";
-
-        if (diff.TotalHours >= 1.0)
-            return $"Resets in {(int)diff.TotalHours}h {diff.Minutes}m";
-
-        return $"Resets in {Math.Max(1, (int)diff.TotalMinutes)}m";
-    }
+        => ProviderUsageRowFactory.FormatResetCountdown(resetTimeUtc, nowUtc);
 
     private bool SetProperty<T>(ref T storage, T value, [CallerMemberName] string? propertyName = null)
     {

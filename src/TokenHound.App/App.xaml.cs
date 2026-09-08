@@ -44,9 +44,12 @@ public partial class App : Application
         ConfigureExceptionHandling();
 
         var disposableResources = new List<IDisposable>();
-        _usageStore = CreateUsageStore();
+        var archive = new UsageArchive();
+        disposableResources.Add(archive);
 
-        RegisterProviders(_usageStore, disposableResources);
+        _usageStore = CreateUsageStore(archive);
+
+        RegisterProviders(_usageStore, archive, disposableResources);
         ApplyProviderEnablement(_usageStore);
         InitializeUi(_usageStore, disposableResources);
         ScheduleInitialRefresh();
@@ -106,7 +109,7 @@ public partial class App : Application
         e.SetObserved();
     }
 
-    private static UsageStore CreateUsageStore()
+    private static UsageStore CreateUsageStore(UsageArchive archive)
     {
 
         var settings = new RefreshSettingsStore().Load();
@@ -121,11 +124,14 @@ public partial class App : Application
             autoStart: true,
             idleInterval: settings.IdleInterval,
             pollInterval: settings.ActiveInterval,
-            archive: new UsageArchive()
+            archive: archive
         );
     }
 
-    private static void RegisterProviders(UsageStore usageStore, List<IDisposable> disposableResources)
+    private static void RegisterProviders(
+        UsageStore usageStore,
+        UsageArchive archive,
+        List<IDisposable> disposableResources)
     {
 
         Log.Information("Registering provider adapters and activity monitors...");
@@ -148,11 +154,28 @@ public partial class App : Application
         usageStore.RegisterActivityMonitor(new CursorActivityMonitor());
         disposableResources.Add(cursorProvider);
 
-        var copilotProvider = new CopilotUsageProvider();
+        var copilotGate = new CopilotRequestGate(archive);
+        var copilotBillingClient = new CopilotBillingClient(gate: copilotGate);
+        var copilotResolver = new CopilotBillingContextResolver(copilotBillingClient);
+        var copilotBillingService = new CopilotBillingService(
+            copilotBillingClient,
+            copilotResolver,
+            archive,
+            copilotGate
+        );
+        var copilotProvider = new CopilotUsageProvider(
+            null,
+            null,
+            copilotGate,
+            copilotBillingService
+        );
         usageStore.RegisterProvider(copilotProvider);
         var copilotMonitor = new CopilotActivityMonitor();
         usageStore.RegisterActivityMonitor(copilotMonitor);
         disposableResources.Add(copilotProvider);
+        disposableResources.Add(copilotBillingService);
+        disposableResources.Add(copilotBillingClient);
+        disposableResources.Add(copilotGate);
         disposableResources.Add(copilotMonitor);
     }
 

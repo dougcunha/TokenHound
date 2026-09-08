@@ -29,10 +29,7 @@
                 DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource AncestorType=ToolTip}}"
                 ProviderName="{Binding ProviderName, FallbackValue='Claude'}"
                 Status="{Binding PlacementTarget.Status, RelativeSource={RelativeSource AncestorType=ToolTip}}"
-                SessionUsedFraction="{Binding SessionUsedFraction}"
-                SessionResetText="{Binding SessionResetText}"
-                WeeklyUsedFraction="{Binding WeeklyUsedFraction}"
-                WeeklyResetText="{Binding WeeklyResetText}"
+                Rows="{Binding Rows}"
                 ActiveSessionText="{Binding ActiveSessionText}"
                 StatusMessage="{Binding StatusMessage}" />
         </ToolTip>

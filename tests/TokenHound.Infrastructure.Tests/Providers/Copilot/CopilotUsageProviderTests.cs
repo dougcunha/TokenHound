@@ -13,7 +13,7 @@ using Xunit;
 namespace TokenHound.Infrastructure.Tests.Providers.Copilot;
 
 /// <summary>Verifies Copilot provider status, quota, overage, and guidance mapping.</summary>
-public sealed class CopilotUsageProviderTests
+public sealed partial class CopilotUsageProviderTests
 {
     private const string VALID_JSON = """
     {
@@ -180,9 +180,17 @@ public sealed class CopilotUsageProviderTests
             environmentReader: name => name == "COPILOT_GITHUB_TOKEN" ? token : null,
             ghTokenReader: static _ => ValueTask.FromResult<string?>(null));
         var harness = new ProviderHarness(status, responseBody);
+        var archiveDir = global::System.IO.Path.Combine(
+            global::System.IO.Path.GetTempPath(),
+            $"copilot_archive_{Guid.NewGuid():N}");
+        var archive = new TokenHound.Infrastructure.Engine.UsageArchive(archiveDir);
+        var gate = new CopilotRequestGate(archive);
+        var billingClient = new CopilotBillingClient(harness.HttpClient, gate);
+        var resolver = new CopilotBillingContextResolver(billingClient);
+        var billingService = new CopilotBillingService(billingClient, resolver, archive, gate);
         var client = new CopilotApiClient(harness.HttpClient);
         harness.Client = client;
-        return harness.WithProvider(new CopilotUsageProvider(discovery, client));
+        return harness.WithProvider(new CopilotUsageProvider(discovery, client, gate, billingService));
     }
 
     private sealed class EmptyCredentialStore : ICredentialStore
@@ -246,13 +254,5 @@ public sealed class CopilotUsageProviderTests
 
             return response;
         }
-    }
-
-    private sealed class DelegateHandler(Func<HttpRequestMessage, HttpResponseMessage> handler) : HttpMessageHandler
-    {
-        protected override Task<HttpResponseMessage> SendAsync(
-            HttpRequestMessage request,
-            CancellationToken cancellationToken)
-            => Task.FromResult(handler(request));
     }
 }

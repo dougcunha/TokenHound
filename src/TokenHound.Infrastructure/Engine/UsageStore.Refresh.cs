@@ -46,7 +46,9 @@ public sealed partial class UsageStore
     private async Task RefreshProviderAsync(IUsageProvider provider, CancellationToken cancellationToken)
     {
 
-        if (IsRateLimited(provider.ProviderId))
+        var isRequestGated = provider is IRequestGatedUsageProvider;
+
+        if (!isRequestGated && IsRateLimited(provider.ProviderId))
             return;
 
         try
@@ -54,35 +56,35 @@ public sealed partial class UsageStore
 
             var snapshot = await provider.GetSnapshotAsync(cancellationToken).ConfigureAwait(false);
 
-            await PersistRateLimitDeadlineAsync(snapshot, cancellationToken).ConfigureAwait(false);
+            if (!isRequestGated)
+                await PersistRateLimitDeadlineAsync(snapshot, cancellationToken).ConfigureAwait(false);
+
             await StoreSnapshotAsync(snapshot, cancellationToken).ConfigureAwait(false);
         }
-        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
         {
 
-            ProviderFaultLog.Aborted(provider.ProviderId, ex);
-
-            await StoreSnapshotAsync(
-                CreateErrorSnapshot(provider.ProviderId, ex),
-                cancellationToken
-            ).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException)
-        {
-
-            throw;
-        }
-        catch (Exception ex)
-        {
-
-            ProviderFaultLog.Failed(provider.ProviderId, ex);
-
-            await StoreSnapshotAsync(
-                CreateErrorSnapshot(provider.ProviderId, ex),
-                cancellationToken
-            ).ConfigureAwait(false);
+            await HandleRefreshFaultAsync(provider.ProviderId, ex, cancellationToken).ConfigureAwait(false);
         }
     }
+
+    private async Task HandleRefreshFaultAsync(
+        string providerId,
+        Exception ex,
+        CancellationToken cancellationToken)
+    {
+
+        if (ex is OperationCanceledException canceledEx)
+            ProviderFaultLog.Aborted(providerId, canceledEx);
+        else
+            ProviderFaultLog.Failed(providerId, ex);
+
+        await StoreSnapshotAsync(
+            CreateErrorSnapshot(providerId, ex),
+            cancellationToken
+        ).ConfigureAwait(false);
+    }
+
 
     private bool IsRateLimited(string providerId)
     {
@@ -197,6 +199,7 @@ public sealed partial class UsageStore
                 FetchedAtUtc = prev.FetchedAtUtc,
                 LimitWindows = prev.LimitWindows,
                 ActiveBlock = prev.ActiveBlock,
+                CopilotBilling = CreateStaleBilling(prev.CopilotBilling),
                 ErrorDescription = ex.Message
             }
             : new Snapshot
@@ -207,8 +210,23 @@ public sealed partial class UsageStore
                 FetchedAtUtc = _timeProvider.GetUtcNow(),
                 LimitWindows = [],
                 ActiveBlock = null,
+                CopilotBilling = null,
                 ErrorDescription = ex.Message
             };
+
+    private CopilotBillingStatus? CreateStaleBilling(CopilotBillingStatus? billing)
+    {
+
+        if (billing is null)
+            return null;
+
+        return billing with
+        {
+            State = CopilotBillingState.Stale,
+            Reason = CopilotBillingReason.NetworkFailure,
+            NextRequestAtUtc = _timeProvider.GetUtcNow()
+        };
+    }
 
     private void ThrowIfDisposedOrStopping()
     {
