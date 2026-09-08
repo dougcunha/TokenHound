@@ -55,3 +55,6 @@ Thumbs.db
 .agents/skills/handoff/
 .agents/skills/grilling/
 skills-lock.json
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
