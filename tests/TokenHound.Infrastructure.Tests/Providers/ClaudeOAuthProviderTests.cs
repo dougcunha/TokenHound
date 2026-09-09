@@ -19,7 +19,7 @@ public sealed class ClaudeOAuthProviderTests
 {
     private const string VALID_JSON = """{"claudeAiOauth":{"accessToken":"sk-valid","expiresAt":253402300799000}}""";
     private const string EXPIRED_JSON = """{"claudeAiOauth":{"accessToken":"sk-expired","expiresAt":1000000000000}}""";
-    private const string USAGE_JSON = """{"five_hour":{"utilization":0.35,"resets_at":"2026-08-28T18:00:00Z"},"seven_day":{"utilization":0.72,"resets_at":"2026-09-01T00:00:00Z"}}""";
+    private const string USAGE_JSON = """{"five_hour":{"utilization":35.0,"resets_at":"2026-08-28T18:00:00Z"},"seven_day":{"utilization":72.0,"resets_at":"2026-09-01T00:00:00Z"}}""";
 
     /// <summary>
     /// Verifies that ProviderId returns "claude".
@@ -336,7 +336,7 @@ public sealed class ClaudeOAuthProviderTests
     public async Task GetSnapshotAsync_WhenUtilizationIsPercentage_NormalizesToFraction()
     {
 
-        const string json = """{"five_hour":{"utilization":35.0},"seven_day":{"utilization":80.0}}""";
+        const string json = """{"five_hour":{"utilization":1.0},"seven_day":{"utilization":64.0}}""";
 
         using var scope = new TempProfileScope(VALID_JSON);
         var discovery = new ClaudeProfileDiscovery(scope.DirectoryPath);
@@ -351,8 +351,10 @@ public sealed class ClaudeOAuthProviderTests
 
         var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
-        snapshot.LimitWindows[0].UsedFraction.Should().Be(0.35);
-        snapshot.LimitWindows[1].UsedFraction.Should().Be(0.80);
+        snapshot.LimitWindows[0].UsedFraction.Should().Be(0.01);
+        snapshot.LimitWindows[0].RemainingUnits.Should().Be(99);
+        snapshot.LimitWindows[1].UsedFraction.Should().Be(0.64);
+        snapshot.LimitWindows[1].RemainingUnits.Should().Be(36);
     }
 
     private static TimeSpan PenaltyOf(Snapshot snapshot)

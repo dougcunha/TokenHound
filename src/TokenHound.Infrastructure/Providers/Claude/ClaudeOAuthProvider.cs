@@ -203,9 +203,7 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
         DateTimeOffset? resetsAt)
     {
 
-        var fraction = rawUtilization > 1.0
-            ? Math.Clamp(rawUtilization / 100.0, 0.0, 1.0)
-            : Math.Clamp(rawUtilization, 0.0, 1.0);
+        var fraction = Math.Clamp(rawUtilization / 100.0, 0.0, 1.0);
 
         var remaining = (long)Math.Max(0, Math.Round((1.0 - fraction) * 100));
 

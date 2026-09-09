@@ -18,11 +18,11 @@ public sealed class ClaudeOAuthClientTests
     private const string USAGE_JSON_PAYLOAD = """
         {
           "five_hour": {
-            "utilization": 0.35,
+            "utilization": 35.0,
             "resets_at": "2026-08-28T18:00:00Z"
           },
           "seven_day": {
-            "utilization": 0.72,
+            "utilization": 72.0,
             "resets_at": "2026-09-01T00:00:00Z"
           }
         }
@@ -47,11 +47,11 @@ public sealed class ClaudeOAuthClientTests
 
         response.Should().NotBeNull();
         response!.FiveHour.Should().NotBeNull();
-        response.FiveHour!.Utilization.Should().Be(0.35);
+        response.FiveHour!.Utilization.Should().Be(35.0);
         response.FiveHour.ResetsAt.Should().Be(DateTimeOffset.Parse("2026-08-28T18:00:00Z"));
 
         response.SevenDay.Should().NotBeNull();
-        response.SevenDay!.Utilization.Should().Be(0.72);
+        response.SevenDay!.Utilization.Should().Be(72.0);
         response.SevenDay.ResetsAt.Should().Be(DateTimeOffset.Parse("2026-09-01T00:00:00Z"));
     }
 

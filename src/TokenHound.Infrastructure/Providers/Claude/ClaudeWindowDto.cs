@@ -9,7 +9,7 @@ namespace TokenHound.Infrastructure.Providers.Claude;
 public sealed record ClaudeWindowDto
 {
     /// <summary>
-    /// Gets the utilization fraction or percentage for this limit window.
+    /// Gets the utilization percentage from 0 to 100 for this limit window.
     /// </summary>
     [JsonPropertyName("utilization")]
     public double Utilization { get; init; }
