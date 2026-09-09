@@ -30,10 +30,6 @@
             <Border.ContextMenu>
                 <ContextMenu x:Name="CapsuleContextMenu"
                              Style="{StaticResource HudContextMenuStyle}">
-                    <MenuItem x:Name="CloseMenuItem"
-                              Header="Close"
-                              Style="{StaticResource HudMenuItemStyle}"
-                              Click="OnCloseClick" />
                     <MenuItem x:Name="RefreshMenuItem"
                               Header="Refresh"
                               Style="{StaticResource HudMenuItemStyle}"
@@ -46,6 +42,11 @@
                               Header="About"
                               Style="{StaticResource HudMenuItemStyle}"
                               Click="OnAboutClick" />
+                    <Separator />
+                    <MenuItem x:Name="CloseMenuItem"
+                              Header="Close"
+                              Style="{StaticResource HudMenuItemStyle}"
+                              Click="OnCloseClick" />
                 </ContextMenu>
             </Border.ContextMenu>
             <Border.Effect>
