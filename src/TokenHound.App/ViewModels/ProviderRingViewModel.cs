@@ -231,7 +231,10 @@ public sealed partial class ProviderRingViewModel : INotifyPropertyChanged
             return;
         }
 
-        UpdateActivity(session.State == AgentSessionState.Busy, $"PID {session.Pid} • {(session.State == AgentSessionState.Busy ? "Active" : "Idle")}");
+        var stateText = session.State == AgentSessionState.Busy ? "Active" : "Idle";
+        var sessionText = session.Pid > 0 ? $"PID {session.Pid} • {stateText}" : stateText;
+
+        UpdateActivity(session.State == AgentSessionState.Busy, sessionText);
     }
 
     private static LimitWindow? FindLimitWindow(IReadOnlyList<LimitWindow> windows, bool isSession)

@@ -179,6 +179,25 @@ public sealed class ProviderRingViewModelTests
         ring.ActiveSessionText.Should().Contain("PID 42");
     }
 
+    /// <summary>Verifies that an unavailable process identifier is not rendered as PID zero.</summary>
+    [Fact]
+    public void UpdateActivity_WhenPidUnavailableOmitsPidFromDescription()
+    {
+        var ring = new ProviderRingViewModel("codex");
+        var session = new AgentSession
+        {
+            Pid = 0,
+            StartTimeUtc = DateTimeOffset.UtcNow,
+            State = AgentSessionState.Idle,
+            LastActivityUtc = DateTimeOffset.UtcNow
+        };
+
+        ring.UpdateActivity(session);
+
+        ring.IsBusy.Should().BeFalse();
+        ring.ActiveSessionText.Should().Be("Idle");
+    }
+
     /// <summary>Verifies that UpdateFromSnapshot updates the Rows collection and raises PropertyChanged.</summary>
     [Fact]
     public void UpdateFromSnapshot_WhenCalled_PopulatesRowsAndRaisesPropertyChanged()
