@@ -248,7 +248,7 @@ public sealed class ClaudeSessionMonitor : IActivityMonitor
     {
 
         if (element.ValueKind == JsonValueKind.Number && element.TryGetInt64(out var epochVal))
-            return ParseEpochTimestamp(epochVal);
+            return ClaudeEpochTimestampParser.Parse(epochVal);
 
         if (element.ValueKind != JsonValueKind.String)
             return null;
@@ -256,7 +256,7 @@ public sealed class ClaudeSessionMonitor : IActivityMonitor
         var str = element.GetString();
 
         if (long.TryParse(str, CultureInfo.InvariantCulture, out var parsedEpoch))
-            return ParseEpochTimestamp(parsedEpoch);
+            return ClaudeEpochTimestampParser.Parse(parsedEpoch);
 
         if (DateTimeOffset.TryParse(
             str,
@@ -266,23 +266,6 @@ public sealed class ClaudeSessionMonitor : IActivityMonitor
             return parsedDate;
 
         return null;
-    }
-
-    private static DateTimeOffset? ParseEpochTimestamp(long epochValue)
-    {
-
-        try
-        {
-
-            return epochValue > 10_000_000_000L
-                ? DateTimeOffset.FromUnixTimeMilliseconds(epochValue)
-                : DateTimeOffset.FromUnixTimeSeconds(epochValue);
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-
-            return null;
-        }
     }
 
     /// <summary>

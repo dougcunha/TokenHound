@@ -8,6 +8,9 @@ namespace TokenHound.Infrastructure.Configuration;
 /// </summary>
 public sealed record ProviderSettings
 {
+    private const string ALIAS_PROVIDER_KEY = "antigravity";
+    private const string CANONICAL_PROVIDER_KEY = "gemini";
+
     private static readonly IReadOnlyDictionary<string, bool> EMPTY_STATES
         = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
@@ -43,16 +46,57 @@ public sealed record ProviderSettings
             return EMPTY_STATES;
 
         var normalized = new Dictionary<string, bool>(states.Count, StringComparer.OrdinalIgnoreCase);
+        var hasCanonicalState = TryGetCanonicalState(states, out var canonicalState);
+
+        foreach (var state in states)
+            AddNormalizedState(normalized, state, hasCanonicalState);
+
+        if (hasCanonicalState)
+            normalized[CANONICAL_PROVIDER_KEY] = canonicalState;
+
+        return normalized;
+    }
+
+    private static void AddNormalizedState(
+        Dictionary<string, bool> normalized,
+        KeyValuePair<string, bool> state,
+        bool hasCanonicalState)
+    {
+
+        if (string.IsNullOrWhiteSpace(state.Key))
+            return;
+
+        var providerId = state.Key.Trim();
+
+        if (string.Equals(providerId, ALIAS_PROVIDER_KEY, StringComparison.OrdinalIgnoreCase))
+        {
+            if (!hasCanonicalState)
+                normalized[CANONICAL_PROVIDER_KEY] = state.Value;
+
+            return;
+        }
+
+        normalized[providerId] = state.Value;
+    }
+
+    private static bool TryGetCanonicalState(
+        IReadOnlyDictionary<string, bool> states,
+        out bool isEnabled)
+    {
 
         foreach (var state in states)
         {
 
-            if (string.IsNullOrWhiteSpace(state.Key))
+            if (!string.Equals(state.Key?.Trim(), CANONICAL_PROVIDER_KEY, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            normalized[state.Key.Trim()] = state.Value;
+            isEnabled = state.Value;
+
+            return true;
         }
 
-        return normalized;
+        isEnabled = true;
+
+        return false;
     }
 }

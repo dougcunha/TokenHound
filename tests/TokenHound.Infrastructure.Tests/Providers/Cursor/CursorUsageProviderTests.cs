@@ -15,7 +15,7 @@ namespace TokenHound.Infrastructure.Tests.Providers.Cursor;
 /// <summary>
 /// Unit tests for <see cref="CursorUsageProvider"/>.
 /// </summary>
-public sealed class CursorUsageProviderTests
+public sealed partial class CursorUsageProviderTests
 {
     [Fact]
     public async Task GetSnapshotAsync_WhenUnauthenticated_ReturnsNeedsAuthSnapshot()

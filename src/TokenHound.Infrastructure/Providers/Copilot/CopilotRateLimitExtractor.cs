@@ -1,8 +1,7 @@
 using System;
-using System.Globalization;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
+using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.Copilot;
 
@@ -45,16 +44,6 @@ internal static class CopilotRateLimitExtractor
         TimeProvider timeProvider)
     {
 
-        if (response.Headers.RetryAfter?.Delta is { } delta)
-            return (int)Math.Ceiling(delta.TotalSeconds);
-
-        if (response.Headers.RetryAfter?.Date is { } date)
-            return (int)Math.Ceiling((date - timeProvider.GetUtcNow()).TotalSeconds);
-
-        if (response.Headers.TryGetValues("Retry-After", out var values)
-            && int.TryParse(values.FirstOrDefault(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var sec))
-            return sec;
-
-        return null;
+        return HttpRetryAfterParser.ExtractSeconds(response, timeProvider);
     }
 }

@@ -43,6 +43,7 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
     private readonly ClaudeProfileDiscovery _discovery;
     private readonly ClaudeOAuthClient _client;
     private readonly Random? _backoffJitter;
+    private readonly RateLimitPolicy _rateLimitPolicy;
     private Snapshot? _lastSuccessfulSnapshot;
     private int _consecutiveRateLimits;
 
@@ -52,15 +53,18 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
     /// <param name="discovery">The profile discovery service, or <see langword="null"/> to use default discovery.</param>
     /// <param name="client">The OAuth usage API client, or <see langword="null"/> to use default client.</param>
     /// <param name="backoffJitter">The generator producing backoff jitter, or <see langword="null"/> to use <see cref="Random.Shared"/>.</param>
+    /// <param name="rateLimitPolicy">The isolated retry policy, or <see langword="null"/> to use the default floor.</param>
     public ClaudeOAuthProvider(
         ClaudeProfileDiscovery? discovery = null,
         ClaudeOAuthClient? client = null,
-        Random? backoffJitter = null)
+        Random? backoffJitter = null,
+        RateLimitPolicy? rateLimitPolicy = null)
     {
 
         _discovery = discovery ?? new ClaudeProfileDiscovery();
         _client = client ?? new ClaudeOAuthClient();
         _backoffJitter = backoffJitter;
+        _rateLimitPolicy = rateLimitPolicy ?? new RateLimitPolicy();
     }
 
     /// <inheritdoc />
@@ -231,7 +235,7 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
 
         _consecutiveRateLimits = Math.Min(_consecutiveRateLimits + 1, MAX_CONSECUTIVE_RATE_LIMITS);
 
-        var deadline = RateLimitPolicy.CalculateDeadline(
+        var deadline = _rateLimitPolicy.CalculateDeadline(
             nowUtc,
             retryAfterSeconds,
             _consecutiveRateLimits,

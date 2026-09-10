@@ -27,6 +27,7 @@ public sealed class CadenceSettingsViewModel : INotifyPropertyChanged
     private readonly UsageStore _usageStore;
     private readonly RefreshSettingsStore _refreshStore;
     private readonly RateLimitSettingsStore _rateLimitStore;
+    private readonly RateLimitPolicy _rateLimitPolicy;
     private readonly RelayCommand _applyCommand;
 
     private string _activeIntervalText = string.Empty, _idleIntervalText = string.Empty, _minimumRetryFloorText = string.Empty;
@@ -37,10 +38,12 @@ public sealed class CadenceSettingsViewModel : INotifyPropertyChanged
     /// <param name="usageStore">The central usage store receiving runtime cadence adjustments.</param>
     /// <param name="refreshStore">Optional store for persisting polling cadence settings.</param>
     /// <param name="rateLimitStore">Optional store for persisting rate-limit retry floor settings.</param>
+    /// <param name="rateLimitPolicy">Optional isolated runtime rate-limit policy.</param>
     public CadenceSettingsViewModel(
         UsageStore usageStore,
         RefreshSettingsStore? refreshStore = null,
-        RateLimitSettingsStore? rateLimitStore = null)
+        RateLimitSettingsStore? rateLimitStore = null,
+        RateLimitPolicy? rateLimitPolicy = null)
     {
 
         ArgumentNullException.ThrowIfNull(usageStore);
@@ -48,6 +51,7 @@ public sealed class CadenceSettingsViewModel : INotifyPropertyChanged
         _usageStore = usageStore;
         _refreshStore = refreshStore ?? new RefreshSettingsStore();
         _rateLimitStore = rateLimitStore ?? new RateLimitSettingsStore();
+        _rateLimitPolicy = rateLimitPolicy ?? new RateLimitPolicy();
         _applyCommand = new RelayCommand(Apply, () => CanApply);
 
         LoadInitialValues();
@@ -170,7 +174,7 @@ public sealed class CadenceSettingsViewModel : INotifyPropertyChanged
             return;
 
         _usageStore.UpdateCadence(TimeSpan.FromSeconds(_activeIntervalSeconds), TimeSpan.FromSeconds(_idleIntervalSeconds));
-        RateLimitPolicy.SetEffectiveFloor(TimeSpan.FromSeconds(_minimumRetryFloorSeconds));
+        _rateLimitPolicy.SetEffectiveFloor(TimeSpan.FromSeconds(_minimumRetryFloorSeconds));
 
         _persistedActive = _activeIntervalText;
         _persistedIdle = _idleIntervalText;

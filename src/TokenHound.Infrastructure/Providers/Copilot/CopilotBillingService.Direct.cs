@@ -12,123 +12,130 @@ namespace TokenHound.Infrastructure.Providers.Copilot;
 public sealed partial class CopilotBillingService
 {
     private async Task<CopilotBillingStatus> TryFetchDirectBillingAsync(
-        CopilotBillingContext context,
-        CopilotBillingPeriod period,
-        string accessToken,
-        CopilotPassDispatchBudget budget,
+        CopilotBillingPass pass,
         CopilotCreditUsage? cachedUsage,
-        DateTimeOffset nowUtc,
         CancellationToken cancellationToken)
     {
 
         try
         {
-            var response = await _client.GetBillingUsageAsync(
-                context.Scope,
-                context.OwnerId!,
-                period.RequestedYear,
-                period.RequestedMonth,
-                accessToken,
-                cancellationToken
-            ).ConfigureAwait(false);
+            var response = await FetchDirectBillingResponseAsync(pass, cancellationToken).ConfigureAwait(false);
 
             return await ProcessResponseAsync(
-                context,
-                period,
+                pass,
                 response,
                 cachedUsage,
-                nowUtc,
                 cancellationToken
             ).ConfigureAwait(false);
         }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        catch (Exception ex) when (IsExpectedDirectFailure(ex, cancellationToken))
         {
-            return CreateStatus(CopilotBillingReason.NetworkFailure, cachedUsage, nowUtc);
-        }
-        catch (RateLimitBlockedException)
-        {
-            return CreateRateLimitedStatus(cachedUsage, nowUtc);
-        }
-        catch (CopilotApiException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests)
-        {
-            return CreateRateLimitedStatus(cachedUsage, nowUtc);
-        }
-        catch (CopilotApiException ex) when (ex.StatusCode is HttpStatusCode.NotFound or HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized)
-        {
-            if (CanUseHistoricalReports(context.Scope))
-            {
-                _directBillingPermanentlyUnavailable = true;
-
-                return await ProcessHistoricalReportsAsync(
-                    context,
-                    period,
-                    accessToken,
-                    budget,
-                    cachedUsage,
-                    nowUtc,
-                    cancellationToken
-                ).ConfigureAwait(false);
-            }
-
-            var reason = ex.StatusCode == HttpStatusCode.NotFound
-                ? CopilotBillingReason.ReportUnavailable
-                : CopilotBillingReason.AccessDenied;
-
-            return CreateStatus(reason, cachedUsage, nowUtc);
-        }
-        catch (Exception ex) when (ex is TimeoutException or CopilotTimeoutException or HttpRequestException)
-        {
-            return CreateStatus(CopilotBillingReason.NetworkFailure, cachedUsage, nowUtc);
-        }
-        catch (JsonException)
-        {
-            return CreateStatus(CopilotBillingReason.InvalidData, cachedUsage, nowUtc);
+            return await HandleDirectFailureAsync(
+                pass,
+                cachedUsage,
+                cancellationToken,
+                ex
+            ).ConfigureAwait(false);
         }
     }
 
+    private Task<CopilotBillingResponse> FetchDirectBillingResponseAsync(
+        CopilotBillingPass pass,
+        CancellationToken cancellationToken)
+        => _client.GetBillingUsageAsync(
+            pass.Context.Scope,
+            pass.Context.OwnerId!,
+            pass.Period.RequestedYear,
+            pass.Period.RequestedMonth,
+            pass.AccessToken,
+            cancellationToken
+        );
+
+    private static bool IsExpectedDirectFailure(Exception exception, CancellationToken cancellationToken)
+        => exception switch
+        {
+            OperationCanceledException => !cancellationToken.IsCancellationRequested,
+            RateLimitBlockedException => true,
+            CopilotApiException => true,
+            TimeoutException or HttpRequestException or JsonException => true,
+            _ => false
+        };
+
+    private Task<CopilotBillingStatus> HandleDirectFailureAsync(
+        CopilotBillingPass pass,
+        CopilotCreditUsage? cachedUsage,
+        CancellationToken cancellationToken,
+        Exception exception)
+        => exception switch
+        {
+            RateLimitBlockedException or CopilotApiException { StatusCode: HttpStatusCode.TooManyRequests }
+                => Task.FromResult(CreateRateLimitedStatus(cachedUsage, pass.NowUtc)),
+            CopilotApiException api when api.StatusCode is
+                HttpStatusCode.NotFound
+                or HttpStatusCode.Forbidden
+                or HttpStatusCode.Unauthorized => HandleDirectApiFailureAsync(
+                pass,
+                cachedUsage,
+                api,
+                cancellationToken
+            ),
+            CopilotApiException
+                => Task.FromResult(CreateStatus(CopilotBillingReason.NetworkFailure, cachedUsage, pass.NowUtc)),
+            OperationCanceledException or TimeoutException or HttpRequestException
+                => Task.FromResult(CreateStatus(CopilotBillingReason.NetworkFailure, cachedUsage, pass.NowUtc)),
+            JsonException
+                => Task.FromResult(CreateStatus(CopilotBillingReason.InvalidData, cachedUsage, pass.NowUtc)),
+            _ => throw new ArgumentOutOfRangeException(nameof(exception), exception, null)
+        };
+
+    private async Task<CopilotBillingStatus> HandleDirectApiFailureAsync(
+        CopilotBillingPass pass,
+        CopilotCreditUsage? cachedUsage,
+        CopilotApiException exception,
+        CancellationToken cancellationToken)
+    {
+
+        if (CanUseHistoricalReports(pass.Context.Scope))
+        {
+            _directBillingUnavailableContexts.Add(CreateContextKey(pass.Context));
+
+            return await CollectHistoricalStatusAsync(
+                pass,
+                cachedUsage,
+                cancellationToken
+            ).ConfigureAwait(false);
+        }
+
+        var reason = exception.StatusCode == HttpStatusCode.NotFound
+            ? CopilotBillingReason.ReportUnavailable
+            : CopilotBillingReason.AccessDenied;
+
+        return CreateStatus(reason, cachedUsage, pass.NowUtc);
+    }
+
     private async Task<CopilotBillingStatus> ProcessResponseAsync(
-        CopilotBillingContext context,
-        CopilotBillingPeriod period,
+        CopilotBillingPass pass,
         CopilotBillingResponse response,
         CopilotCreditUsage? cachedUsage,
-        DateTimeOffset nowUtc,
         CancellationToken cancellationToken)
     {
 
         if (response.TimePeriod is null
-            || response.TimePeriod.Year != period.RequestedYear
-            || response.TimePeriod.Month != period.RequestedMonth)
-            return CreateStatus(CopilotBillingReason.InvalidData, cachedUsage, nowUtc);
+            || response.TimePeriod.Year != pass.Period.RequestedYear
+            || response.TimePeriod.Month != pass.Period.RequestedMonth)
+            return CreateStatus(CopilotBillingReason.InvalidData, cachedUsage, pass.NowUtc);
 
-        var items = ExtractCreditItems(response.UsageItems);
-        var coverage = CreateCoverage(period);
-        var filter = new CopilotCreditFilter
-        {
-            Product = "Copilot",
-            Sku = "Copilot AI Credits",
-            UnitType = "ai-credits"
-        };
-
-        var request = new CopilotCreditAggregationRequest
-        {
-            Context = context,
-            Period = period,
-            Coverage = coverage,
-            Source = CopilotCreditSource.BillingApi,
-            SourceAsOfUtc = null,
-            FetchedAtUtc = nowUtc,
-            IsEstimated = false,
-            Filter = filter,
-            Items = items,
-            Allowance = null
-        };
-
+        var request = CopilotBillingMapper.CreateDirectRequest(pass, response.UsageItems);
         var result = CopilotCreditPolicy.Evaluate(request);
 
         if (result.Outcome != CopilotCreditPolicyOutcome.Valid)
-            return CreateStatus(CopilotBillingReason.InvalidData, cachedUsage, nowUtc);
+            return CreateStatus(CopilotBillingReason.InvalidData, cachedUsage, pass.NowUtc);
 
-        return await PersistAndCreateAvailableStatusAsync(result.Usage, nowUtc, cancellationToken).ConfigureAwait(false);
+        return await PersistAndCreateAvailableStatusAsync(
+            result.Usage,
+            pass.NowUtc,
+            cancellationToken
+        ).ConfigureAwait(false);
     }
 
     private async Task<CopilotBillingStatus> PersistAndCreateAvailableStatusAsync(
@@ -143,23 +150,22 @@ public sealed partial class CopilotBillingService
         }
         catch (Exception)
         {
-            return new CopilotBillingStatus
-            {
-                State = CopilotBillingState.Available,
-                Reason = CopilotBillingReason.PersistenceFailure,
-                Usage = usage,
-                AttemptedAtUtc = nowUtc,
-                NextRequestAtUtc = null
-            };
+            return CreateAvailableStatus(usage, nowUtc, CopilotBillingReason.PersistenceFailure);
         }
 
-        return new CopilotBillingStatus
+        return CreateAvailableStatus(usage, nowUtc, CopilotBillingReason.None);
+    }
+
+    private static CopilotBillingStatus CreateAvailableStatus(
+        CopilotCreditUsage usage,
+        DateTimeOffset nowUtc,
+        CopilotBillingReason reason)
+        => new()
         {
             State = CopilotBillingState.Available,
-            Reason = CopilotBillingReason.None,
+            Reason = reason,
             Usage = usage,
             AttemptedAtUtc = nowUtc,
             NextRequestAtUtc = null
         };
-    }
 }

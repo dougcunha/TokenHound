@@ -6,13 +6,14 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TokenHound.Core.Policies;
 
 namespace TokenHound.Infrastructure.Configuration;
 
 /// <summary>
 /// Manages atomic persistence and fallback resolution for user settings in LocalAppData.
 /// </summary>
-public sealed class UserSettingsFile
+public sealed partial class UserSettingsFile
 {
     private const string DEFAULT_CONFIG_FILE = "appsettings.json";
 
@@ -54,6 +55,8 @@ public sealed class UserSettingsFile
     public UserSettings Load()
     {
 
+        using var gate = SettingsFileGate.Acquire(UserSettingsPath);
+
         var user = ReadRaw(UserSettingsPath);
         var defaults = ReadRaw(DefaultsFilePath);
 
@@ -61,7 +64,7 @@ public sealed class UserSettingsFile
         {
 
             var migrated = MergeWithDefaults(null, defaults);
-            Save(migrated);
+            WriteFileAtomic(migrated);
 
             return migrated;
         }
@@ -75,6 +78,8 @@ public sealed class UserSettingsFile
     public async Task<UserSettings> LoadAsync(CancellationToken cancellationToken = default)
     {
 
+        using var gate = await SettingsFileGate.AcquireAsync(UserSettingsPath, cancellationToken).ConfigureAwait(false);
+
         var user = await ReadRawAsync(UserSettingsPath, cancellationToken).ConfigureAwait(false);
         var defaults = await ReadRawAsync(DefaultsFilePath, cancellationToken).ConfigureAwait(false);
 
@@ -82,7 +87,7 @@ public sealed class UserSettingsFile
         {
 
             var migrated = MergeWithDefaults(null, defaults);
-            await SaveAsync(migrated, cancellationToken).ConfigureAwait(false);
+            await WriteFileAtomicAsync(migrated, cancellationToken).ConfigureAwait(false);
 
             return migrated;
         }
@@ -165,8 +170,10 @@ public sealed class UserSettingsFile
            || providers?.EnabledStates.Keys.Any(static key => !DEFAULT_PROVIDERS.Contains(key)) == true;
 
     private static bool HasCustomRefresh(RefreshSettings? refresh)
-        => (refresh?.ActiveIntervalSeconds is { } active && active != 180)
-           || (refresh?.IdleIntervalSeconds is { } idle && idle != 300);
+        => (refresh?.ActiveIntervalSeconds is { } active
+            && active != (int)RefreshSchedulePolicy.DEFAULT_ACTIVE_INTERVAL.TotalSeconds)
+           || (refresh?.IdleIntervalSeconds is { } idle
+               && idle != (int)RefreshSchedulePolicy.DEFAULT_IDLE_INTERVAL.TotalSeconds);
 
     private static UserSettings MergeWithDefaults(UserSettings? user, UserSettings? defaults)
         => new()
@@ -178,118 +185,4 @@ public sealed class UserSettingsFile
             ExtensionData = user?.ExtensionData ?? defaults?.ExtensionData
         };
 
-    private static UserSettings? ReadRaw(string filePath)
-    {
-
-        if (!File.Exists(filePath))
-            return null;
-
-        try
-        {
-
-            return JsonSerializer.Deserialize<UserSettings>(File.ReadAllBytes(filePath), JSON_OPTIONS);
-        }
-        catch (Exception ex)
-        {
-
-            Log.Warning(ex, "Failed to deserialize settings from {FilePath}", filePath);
-
-            return null;
-        }
-    }
-
-    private static async Task<UserSettings?> ReadRawAsync(string filePath, CancellationToken cancellationToken)
-    {
-
-        if (!File.Exists(filePath))
-            return null;
-
-        try
-        {
-
-            var bytes = await File.ReadAllBytesAsync(filePath, cancellationToken).ConfigureAwait(false);
-
-            return JsonSerializer.Deserialize<UserSettings>(bytes, JSON_OPTIONS);
-        }
-        catch (Exception ex)
-        {
-
-            Log.Warning(ex, "Failed to deserialize settings from {FilePath}", filePath);
-
-            return null;
-        }
-    }
-
-    private static void TryDeleteFile(string filePath)
-    {
-
-        try
-        {
-
-            if (File.Exists(filePath))
-                File.Delete(filePath);
-        }
-        catch
-        {
-        }
-    }
-
-    private void EnsureDirectory()
-    {
-
-        if (Path.GetDirectoryName(UserSettingsPath) is { } directory && directory.Length > 0)
-            Directory.CreateDirectory(directory);
-    }
-
-    private bool WriteFileAtomic(UserSettings settings)
-    {
-
-        EnsureDirectory();
-
-        var tempPath = $"{UserSettingsPath}.tmp";
-
-        try
-        {
-
-            File.WriteAllBytes(tempPath, JsonSerializer.SerializeToUtf8Bytes(settings, JSON_OPTIONS));
-            File.Move(tempPath, UserSettingsPath, overwrite: true);
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-
-            TryDeleteFile(tempPath);
-            Log.Warning(ex, "Failed to persist user settings to {UserSettingsPath}", UserSettingsPath);
-
-            return false;
-        }
-    }
-
-    private async Task<bool> WriteFileAtomicAsync(UserSettings settings, CancellationToken cancellationToken)
-    {
-
-        EnsureDirectory();
-
-        var tempPath = $"{UserSettingsPath}.tmp";
-
-        try
-        {
-
-            var bytes = JsonSerializer.SerializeToUtf8Bytes(settings, JSON_OPTIONS);
-
-            await File.WriteAllBytesAsync(tempPath, bytes, cancellationToken).ConfigureAwait(false);
-            File.Move(tempPath, UserSettingsPath, overwrite: true);
-
-            return true;
-        }
-        catch (Exception ex)
-        {
-
-            TryDeleteFile(tempPath);
-            Log.Warning(ex, "Failed to persist user settings to {UserSettingsPath}", UserSettingsPath);
-
-            return false;
-        }
-    }
 }

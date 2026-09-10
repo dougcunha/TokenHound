@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Contracts;
+using TokenHound.Infrastructure.Providers;
 using TokenHound.Infrastructure.Security;
 
 namespace TokenHound.Infrastructure.Providers.Antigravity;
@@ -107,7 +108,8 @@ public sealed class AntigravityCloudCodeClient : IDisposable
     /// Queries the Google Cloud Code backend for user quota summary.
     /// </summary>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>The quota summary response, or null if unlicensed, unauthenticated, or failed.</returns>
+    /// <returns>The quota summary response, or null when no borrowed credential exists.</returns>
+    /// <exception cref="ProviderHttpException">Thrown when the endpoint returns a non-success status.</exception>
     public async ValueTask<AntigravityQuotaSummaryResponse?> RetrieveUserQuotaSummaryAsync(
         CancellationToken cancellationToken = default)
     {
@@ -116,36 +118,37 @@ public sealed class AntigravityCloudCodeClient : IDisposable
         var accessToken = await GetAccessTokenAsync(cancellationToken).ConfigureAwait(false);
 
         if (string.IsNullOrWhiteSpace(accessToken))
-        {
             return null;
-        }
 
         using var request = new HttpRequestMessage(HttpMethod.Post, ENDPOINT_URL);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
         request.Content = new StringContent(EMPTY_PAYLOAD, Encoding.UTF8, "application/json");
 
-        try
-        {
-            using var response = await _httpClient.SendAsync(
-                request,
-                HttpCompletionOption.ResponseHeadersRead,
-                cancellationToken
-            ).ConfigureAwait(false);
+        using var response = await _httpClient.SendAsync(
+            request,
+            HttpCompletionOption.ResponseHeadersRead,
+            cancellationToken
+        ).ConfigureAwait(false);
 
-            if (!response.IsSuccessStatusCode)
-            {
-                return null;
-            }
+        if (!response.IsSuccessStatusCode)
+            throw CreateException(response);
 
-            var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
-            var envelope = JsonSerializer.Deserialize<AntigravityQuotaEnvelope>(content);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        var envelope = JsonSerializer.Deserialize<AntigravityQuotaEnvelope>(content);
 
-            return envelope?.Response;
-        }
-        catch
-        {
-            return null;
-        }
+        return envelope?.Response
+            ?? throw new JsonException("Google Cloud Code quota response was empty.");
+    }
+
+    private static ProviderHttpException CreateException(HttpResponseMessage response)
+    {
+
+        var retryAfterSeconds = response.StatusCode == HttpStatusCode.TooManyRequests
+            ? HttpRetryAfterParser.ExtractSeconds(response, TimeProvider.System)
+            : null;
+        var message = $"Google Cloud Code quota request failed with HTTP {(int)response.StatusCode} ({response.StatusCode}).";
+
+        return new ProviderHttpException(message, response.StatusCode, retryAfterSeconds);
     }
 
     private static string? ExtractTokenFromSecret(string secret)

@@ -16,7 +16,7 @@ namespace TokenHound.Infrastructure.Tests.Providers.Antigravity;
 /// <summary>
 /// Unit tests for <see cref="AntigravityUsageProvider"/>.
 /// </summary>
-public sealed class AntigravityUsageProviderTests
+public sealed partial class AntigravityUsageProviderTests
 {
     private sealed class MockHttpMessageHandler(
         Func<HttpRequestMessage, HttpResponseMessage> handlerFunc) : HttpMessageHandler
@@ -116,7 +116,15 @@ public sealed class AntigravityUsageProviderTests
         try
         {
             var reader = new AntigravityTranscriptReader([tempDir], timeProvider);
-            using var provider = new AntigravityUsageProvider(discovery, null, reader);
+            var credentialStore = Substitute.For<TokenHound.Core.Contracts.ICredentialStore>();
+            credentialStore.ReadCredentialAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+                .Returns(ValueTask.FromResult<string?>(null));
+            using var cloudClient = new AntigravityCloudCodeClient(
+                null,
+                credentialStore,
+                Path.Combine(tempDir, "missing_oauth_creds.json")
+            );
+            using var provider = new AntigravityUsageProvider(discovery, null, reader, cloudClient);
 
             // Act
             var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);

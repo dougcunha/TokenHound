@@ -19,6 +19,7 @@ public sealed class CopilotRequestGate : IDisposable
     private readonly TimeProvider _timeProvider;
     private readonly Random? _random;
     private readonly double? _jitterFactor;
+    private readonly RateLimitPolicy _rateLimitPolicy;
     private readonly SemaphoreSlim _gateLock = new(1, 1);
 
     private DateTimeOffset? _activeDeadlineUtc;
@@ -33,11 +34,13 @@ public sealed class CopilotRequestGate : IDisposable
     /// <param name="timeProvider">An optional time provider for testing.</param>
     /// <param name="random">An optional random generator for jitter.</param>
     /// <param name="jitterFactor">An optional fixed jitter factor for testing.</param>
+    /// <param name="rateLimitPolicy">An optional isolated retry policy.</param>
     public CopilotRequestGate(
         UsageArchive archive,
         TimeProvider? timeProvider = null,
         Random? random = null,
-        double? jitterFactor = null)
+        double? jitterFactor = null,
+        RateLimitPolicy? rateLimitPolicy = null)
     {
 
         ArgumentNullException.ThrowIfNull(archive);
@@ -45,6 +48,7 @@ public sealed class CopilotRequestGate : IDisposable
         _timeProvider = timeProvider ?? TimeProvider.System;
         _random = random;
         _jitterFactor = jitterFactor;
+        _rateLimitPolicy = rateLimitPolicy ?? new RateLimitPolicy();
 
         var loaded = archive.LoadCopilotHttpDeadline();
         _activeDeadlineUtc = loaded.DeadlineUtc;
@@ -176,8 +180,8 @@ public sealed class CopilotRequestGate : IDisposable
     {
 
         var calculated = _jitterFactor.HasValue
-            ? RateLimitPolicy.CalculateDeadline(nowUtc, retryAfterSeconds, _consecutiveFailures, _jitterFactor.Value)
-            : RateLimitPolicy.CalculateDeadline(nowUtc, retryAfterSeconds, _consecutiveFailures, _random);
+            ? _rateLimitPolicy.CalculateDeadline(nowUtc, retryAfterSeconds, _consecutiveFailures, _jitterFactor.Value)
+            : _rateLimitPolicy.CalculateDeadline(nowUtc, retryAfterSeconds, _consecutiveFailures, _random);
 
         return _activeDeadlineUtc.HasValue && _activeDeadlineUtc.Value > calculated
             ? _activeDeadlineUtc.Value

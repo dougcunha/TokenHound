@@ -129,45 +129,13 @@ public sealed partial class UsageArchive
         string path,
         object value,
         CancellationToken cancellationToken)
-    {
-
-        Directory.CreateDirectory(DirectoryPath);
-        var temporaryPath = $"{path}.{Guid.NewGuid():N}.tmp";
-
-        try
-        {
-            var json = JsonSerializer.Serialize(value, SERIALIZER_OPTIONS);
-            await File.WriteAllTextAsync(temporaryPath, json, cancellationToken).ConfigureAwait(false);
-            ReplaceFile(temporaryPath, path);
-        }
-        finally
-        {
-
-            if (File.Exists(temporaryPath))
-                File.Delete(temporaryPath);
-        }
-    }
-
-    private static void ReplaceFile(string temporaryPath, string destinationPath)
-    {
-
-        if (File.Exists(destinationPath))
-        {
-
-            try
-            {
-                File.Replace(temporaryPath, destinationPath, null, true);
-
-                return;
-            }
-            catch (FileNotFoundException)
-            {
-                // The destination was removed concurrently; Move below recreates it.
-            }
-        }
-
-        File.Move(temporaryPath, destinationPath, true);
-    }
+        => await AtomicJsonFile.WriteAsync(
+            DirectoryPath,
+            path,
+            value,
+            SERIALIZER_OPTIONS,
+            cancellationToken
+        ).ConfigureAwait(false);
 
     private static bool IsPersistenceException(Exception exception)
         => exception is JsonException

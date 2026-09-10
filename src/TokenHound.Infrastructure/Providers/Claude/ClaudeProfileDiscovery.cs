@@ -257,7 +257,7 @@ public sealed class ClaudeProfileDiscovery
     {
 
         if (element.ValueKind == JsonValueKind.Number && element.TryGetInt64(out var epochVal))
-            return ParseEpochTimestamp(epochVal);
+            return ClaudeEpochTimestampParser.Parse(epochVal);
 
         if (element.ValueKind == JsonValueKind.String)
         {
@@ -265,7 +265,7 @@ public sealed class ClaudeProfileDiscovery
             var str = element.GetString();
 
             if (long.TryParse(str, CultureInfo.InvariantCulture, out var parsedEpoch))
-                return ParseEpochTimestamp(parsedEpoch);
+                return ClaudeEpochTimestampParser.Parse(parsedEpoch);
 
             if (DateTimeOffset.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsedDate))
                 return parsedDate;
@@ -274,20 +274,4 @@ public sealed class ClaudeProfileDiscovery
         return null;
     }
 
-    private static DateTimeOffset? ParseEpochTimestamp(long epochValue)
-    {
-
-        try
-        {
-
-            return epochValue > 10_000_000_000L
-                ? DateTimeOffset.FromUnixTimeMilliseconds(epochValue)
-                : DateTimeOffset.FromUnixTimeSeconds(epochValue);
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-
-            return null;
-        }
-    }
 }

@@ -7,28 +7,9 @@ using TokenHound.Core.Models;
 
 namespace TokenHound.Infrastructure.Engine;
 
-public sealed partial class UsageArchive
+internal sealed partial class CopilotBillingArchive
 {
-    private sealed record CopilotBillingCacheDocument
-    {
-        public int Version { get; init; } = COPILOT_BILLING_SCHEMA_VERSION;
-        public Dictionary<string, CopilotBillingCacheEntry> Entries { get; init; } = new(StringComparer.Ordinal);
-    }
-
-    private sealed record CopilotBillingCacheEntry
-    {
-        public required string PrincipalId { get; init; }
-        public required CopilotBillingScope Scope { get; init; }
-        public string? OwnerId { get; init; }
-        public required int Year { get; init; }
-        public required int Month { get; init; }
-        public required string NormalizedFilters { get; init; }
-        public CopilotCreditUsage? Usage { get; init; }
-        public IReadOnlyList<CopilotDailyUsageSummary> DailySummaries { get; init; } = [];
-        public required DateTimeOffset UpdatedAtUtc { get; init; }
-    }
-
-    private static string BuildBillingCacheKey(
+    private static string BuildCacheKey(
         string principalId,
         CopilotBillingScope scope,
         string? ownerId,
@@ -46,8 +27,8 @@ public sealed partial class UsageArchive
         return string.Join(
             ";",
             filters
-                .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
-                .Select(kv => $"{kv.Key.Trim().ToLowerInvariant()}={kv.Value.Trim().ToLowerInvariant()}")
+                .OrderBy(static pair => pair.Key, StringComparer.OrdinalIgnoreCase)
+                .Select(static pair => $"{pair.Key.Trim().ToLowerInvariant()}={pair.Value.Trim().ToLowerInvariant()}")
         );
     }
 
@@ -77,7 +58,7 @@ public sealed partial class UsageArchive
     }
 
     private static void PruneOutdatedPeriods(
-        CopilotBillingCacheDocument doc,
+        CopilotBillingCacheDocument document,
         string principalId,
         CopilotBillingScope scope,
         string? ownerId,
@@ -89,15 +70,10 @@ public sealed partial class UsageArchive
         var precedingMonth = currentMonth == 1 ? 12 : currentMonth - 1;
         var keysToRemove = new List<string>();
 
-        foreach (var (key, entry) in doc.Entries)
+        foreach (var (key, entry) in document.Entries)
         {
-
-            if (!string.Equals(entry.PrincipalId, principalId, StringComparison.OrdinalIgnoreCase)
-                || entry.Scope != scope
-                || !string.Equals(entry.OwnerId ?? string.Empty, ownerId ?? string.Empty, StringComparison.OrdinalIgnoreCase))
-            {
+            if (!MatchesOwner(entry, principalId, scope, ownerId))
                 continue;
-            }
 
             var isCurrent = entry.Year == currentYear && entry.Month == currentMonth;
             var isPreceding = entry.Year == precedingYear && entry.Month == precedingMonth;
@@ -107,30 +83,60 @@ public sealed partial class UsageArchive
         }
 
         foreach (var key in keysToRemove)
-            doc.Entries.Remove(key);
+            document.Entries.Remove(key);
     }
 
-    private CopilotBillingCacheDocument? ReadBillingDocument()
+    private static bool MatchesOwner(
+        CopilotBillingCacheEntry entry,
+        string principalId,
+        CopilotBillingScope scope,
+        string? ownerId)
+        => string.Equals(entry.PrincipalId, principalId, StringComparison.OrdinalIgnoreCase)
+            && entry.Scope == scope
+            && string.Equals(entry.OwnerId ?? string.Empty, ownerId ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+
+    private CopilotBillingCacheDocument? ReadDocument()
     {
 
-        if (!File.Exists(CopilotBillingPath))
+        if (!File.Exists(_billingPath))
             return null;
 
         try
         {
+            var json = File.ReadAllText(_billingPath);
+            var document = JsonSerializer.Deserialize<CopilotBillingCacheDocument>(json, SERIALIZER_OPTIONS);
 
-            var json = File.ReadAllText(CopilotBillingPath);
-            var doc = JsonSerializer.Deserialize<CopilotBillingCacheDocument>(json, SERIALIZER_OPTIONS);
-
-            return doc?.Version == COPILOT_BILLING_SCHEMA_VERSION ? doc : null;
+            return document?.Version == SCHEMA_VERSION ? document : null;
         }
         catch (Exception ex) when (IsPersistenceException(ex))
         {
-
             return null;
         }
     }
 
-    private CopilotBillingCacheDocument ReadBillingDocumentForWrite()
-        => ReadBillingDocument() ?? new CopilotBillingCacheDocument();
+    private static bool IsPersistenceException(Exception exception)
+        => exception is JsonException
+            or NotSupportedException
+            or IOException
+            or UnauthorizedAccessException
+            or InvalidDataException;
+
+    private sealed record CopilotBillingCacheDocument
+    {
+        public int Version { get; init; } = SCHEMA_VERSION;
+        public Dictionary<string, CopilotBillingCacheEntry> Entries { get; init; } = new(StringComparer.Ordinal);
+    }
+
+    private sealed record CopilotBillingCacheEntry
+    {
+        public required string PrincipalId { get; init; }
+        public required CopilotBillingScope Scope { get; init; }
+        public string? OwnerId { get; init; }
+        public required int Year { get; init; }
+        public required int Month { get; init; }
+        public required string NormalizedFilters { get; init; }
+        public CopilotCreditUsage? Usage { get; init; }
+        public IReadOnlyList<CopilotDailyUsageSummary> DailySummaries { get; init; } = [];
+        public required DateTimeOffset UpdatedAtUtc { get; init; }
+    }
 }

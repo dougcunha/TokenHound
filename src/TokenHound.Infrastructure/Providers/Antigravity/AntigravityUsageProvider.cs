@@ -1,18 +1,20 @@
 using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Contracts;
 using TokenHound.Core.Models;
+using TokenHound.Core.Policies;
+using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.Antigravity;
 
 /// <summary>
 /// Implements the usage provider for Google Antigravity / Gemini with multi-tier fallback.
 /// </summary>
-public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
+public sealed partial class AntigravityUsageProvider : IUsageProvider, IDisposable
 {
     private const string PROVIDER_ID = "gemini";
+    private const int MAX_CONSECUTIVE_RATE_LIMITS = 10;
 
     private readonly AntigravityEndpointDiscovery _discovery;
     private readonly AntigravityLanguageServerClient _client;
@@ -20,9 +22,15 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
     private readonly AntigravityTranscriptReader _transcriptReader;
     private readonly bool _disposeClient;
     private readonly bool _disposeCloudCodeClient;
+    private readonly TimeProvider _timeProvider;
+    private readonly RateLimitPolicy _rateLimitPolicy;
+    private readonly Random? _backoffJitter;
+
+    private int _consecutiveRateLimits;
 
     /// <inheritdoc />
-    public string ProviderId => PROVIDER_ID;
+    public string ProviderId
+        => PROVIDER_ID;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AntigravityUsageProvider"/> class.
@@ -31,38 +39,40 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
     /// <param name="client">Optional language server client.</param>
     /// <param name="transcriptReader">Optional transcript reader instance.</param>
     /// <param name="cloudCodeClient">Optional Cloud Code client instance.</param>
+    /// <param name="timeProvider">Optional clock for snapshot and deadline timestamps.</param>
+    /// <param name="rateLimitPolicy">Optional isolated retry policy.</param>
+    /// <param name="backoffJitter">Optional jitter source for remote rate-limit deadlines.</param>
     public AntigravityUsageProvider(
         AntigravityEndpointDiscovery? discovery = null,
         AntigravityLanguageServerClient? client = null,
         AntigravityTranscriptReader? transcriptReader = null,
-        AntigravityCloudCodeClient? cloudCodeClient = null)
+        AntigravityCloudCodeClient? cloudCodeClient = null,
+        TimeProvider? timeProvider = null,
+        RateLimitPolicy? rateLimitPolicy = null,
+        Random? backoffJitter = null)
     {
         _discovery = discovery ?? new AntigravityEndpointDiscovery();
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _rateLimitPolicy = rateLimitPolicy ?? new RateLimitPolicy();
+        _backoffJitter = backoffJitter;
 
-        if (client is not null)
-        {
-            _client = client;
-            _disposeClient = false;
-        }
-        else
-        {
-            _client = new AntigravityLanguageServerClient();
-            _disposeClient = true;
-        }
-
-        if (cloudCodeClient is not null)
-        {
-            _cloudCodeClient = cloudCodeClient;
-            _disposeCloudCodeClient = false;
-        }
-        else
-        {
-            _cloudCodeClient = new AntigravityCloudCodeClient();
-            _disposeCloudCodeClient = true;
-        }
+        (_client, _disposeClient) = ResolveLanguageServerClient(client);
+        (_cloudCodeClient, _disposeCloudCodeClient) = ResolveCloudCodeClient(cloudCodeClient);
 
         _transcriptReader = transcriptReader ?? new AntigravityTranscriptReader();
     }
+
+    private static (AntigravityLanguageServerClient Client, bool ShouldDispose) ResolveLanguageServerClient(
+        AntigravityLanguageServerClient? client)
+        => client is not null
+            ? (client, false)
+            : (new AntigravityLanguageServerClient(), true);
+
+    private static (AntigravityCloudCodeClient Client, bool ShouldDispose) ResolveCloudCodeClient(
+        AntigravityCloudCodeClient? client)
+        => client is not null
+            ? (client, false)
+            : (new AntigravityCloudCodeClient(), true);
 
     /// <inheritdoc />
     public async ValueTask<Snapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
@@ -74,21 +84,48 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
             return officialSnapshot;
         }
 
-        var cloudCodeSnapshot = await TryGetCloudCodeSnapshotAsync(cancellationToken).ConfigureAwait(false);
+        var (cloudCodeSnapshot, cloudCodeFailure) = await GetCloudCodeOutcomeAsync(cancellationToken).ConfigureAwait(false);
 
         if (cloudCodeSnapshot is not null)
         {
             return cloudCodeSnapshot;
         }
 
+        if (cloudCodeFailure?.Status == ProviderStatus.NeedsAuth)
+            return cloudCodeFailure;
+
         var derivedSnapshot = await TryGetTranscriptSnapshotAsync(cancellationToken).ConfigureAwait(false);
 
         if (derivedSnapshot is not null)
-        {
-            return derivedSnapshot;
-        }
+            return cloudCodeFailure?.ActiveBlock is { } activeBlock
+                ? derivedSnapshot with { ActiveBlock = activeBlock }
+                : derivedSnapshot;
 
-        return CreateNeedsAuthSnapshot();
+        return cloudCodeFailure ?? CreateNeedsAuthSnapshot();
+    }
+
+    private async ValueTask<(Snapshot? Success, Snapshot? Failure)> GetCloudCodeOutcomeAsync(
+        CancellationToken cancellationToken)
+    {
+
+        try
+        {
+            var snapshot = await TryGetCloudCodeSnapshotAsync(cancellationToken).ConfigureAwait(false);
+
+            return (snapshot, null);
+        }
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (ProviderHttpException ex)
+        {
+            return (null, MapCloudCodeFailure(ex));
+        }
+        catch (Exception ex)
+        {
+            return (null, CreateStaleSnapshot(ex.Message));
+        }
     }
 
     private async ValueTask<Snapshot?> TryGetLanguageServerSnapshotAsync(CancellationToken cancellationToken)
@@ -110,20 +147,11 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
         var windows = MapQuotaGroups(quota.Groups);
 
         if (windows.Count == 0)
-        {
             return null;
-        }
 
-        return new Snapshot
-        {
-            ProviderId = PROVIDER_ID,
-            Status = ProviderStatus.Ok,
-            Fidelity = Fidelity.Official,
-            FetchedAtUtc = DateTimeOffset.UtcNow,
-            LimitWindows = windows,
-            ActiveBlock = null,
-            ErrorDescription = null
-        };
+        _consecutiveRateLimits = 0;
+
+        return CreateOfficialSnapshot(windows);
     }
 
     private async ValueTask<Snapshot?> TryGetCloudCodeSnapshotAsync(CancellationToken cancellationToken)
@@ -142,110 +170,8 @@ public sealed class AntigravityUsageProvider : IUsageProvider, IDisposable
             return null;
         }
 
-        return new Snapshot
-        {
-            ProviderId = PROVIDER_ID,
-            Status = ProviderStatus.Ok,
-            Fidelity = Fidelity.Official,
-            FetchedAtUtc = DateTimeOffset.UtcNow,
-            LimitWindows = windows,
-            ActiveBlock = null,
-            ErrorDescription = null
-        };
+        return CreateOfficialSnapshot(windows);
     }
-
-    private static IReadOnlyList<LimitWindow> MapQuotaGroups(IReadOnlyList<AntigravityGroupDto> groups)
-    {
-        var windows = new List<LimitWindow>();
-
-        foreach (var group in groups)
-        {
-
-            if (group.Buckets is null)
-                continue;
-
-            foreach (var bucket in group.Buckets)
-            {
-                var usedFraction = AntigravityLanguageServerClient.CalculateUsedFraction(bucket.RemainingFraction);
-                long? remainingUnits = bucket.RemainingFraction.HasValue
-                    ? (long)Math.Round(bucket.RemainingFraction.Value * 100.0)
-                    : null;
-
-                var period = ResolveBucketPeriod(bucket);
-                var name = bucket.DisplayName ?? group.DisplayName ?? bucket.BucketId ?? "Quota Window";
-
-                windows.Add(new LimitWindow
-                {
-                    Name = name,
-                    GroupName = group.DisplayName,
-                    Period = period,
-                    TotalUnits = usedFraction.HasValue ? 100 : null,
-                    UsedFraction = usedFraction,
-                    RemainingUnits = remainingUnits,
-                    ResetTimeUtc = bucket.ResetTime
-                });
-            }
-        }
-
-        return windows;
-    }
-
-    private static TimeSpan? ResolveBucketPeriod(AntigravityBucketDto bucket)
-        => bucket.Window switch
-        {
-            "5h" => TimeSpan.FromHours(5),
-            "weekly" => TimeSpan.FromDays(7),
-            _ => bucket.DisplayName?.Contains("five", StringComparison.OrdinalIgnoreCase) == true
-                ? TimeSpan.FromHours(5)
-                : bucket.DisplayName?.Contains("week", StringComparison.OrdinalIgnoreCase) == true
-                    ? TimeSpan.FromDays(7)
-                    : null
-        };
-
-    private async ValueTask<Snapshot?> TryGetTranscriptSnapshotAsync(CancellationToken cancellationToken)
-    {
-        var hasTranscripts = _transcriptReader.HasAnyTranscripts();
-        var hasCredentials = await _cloudCodeClient.HasCredentialAsync(cancellationToken).ConfigureAwait(false);
-
-        if (!hasTranscripts && !hasCredentials)
-        {
-            return null;
-        }
-
-        var requestsToday = await _transcriptReader.CountTodayModelRequestsAsync(cancellationToken).ConfigureAwait(false);
-
-        var limitWindow = new LimitWindow
-        {
-            Name = "Requests Today",
-            TotalUnits = null,
-            UsedFraction = null,
-            RemainingUnits = requestsToday,
-            ResetTimeUtc = null
-        };
-
-        return new Snapshot
-        {
-            ProviderId = PROVIDER_ID,
-            Status = ProviderStatus.Ok,
-            Fidelity = Fidelity.Derived,
-            FetchedAtUtc = DateTimeOffset.UtcNow,
-            LimitWindows = [limitWindow],
-            ActiveBlock = null,
-            ErrorDescription = null
-        };
-    }
-
-    private static Snapshot CreateNeedsAuthSnapshot()
-        => new()
-        {
-            ProviderId = PROVIDER_ID,
-            Status = ProviderStatus.NeedsAuth,
-            Fidelity = Fidelity.Official,
-            FetchedAtUtc = DateTimeOffset.UtcNow,
-            LimitWindows = [],
-            ActiveBlock = null,
-            ErrorDescription = "Launch Antigravity IDE or login to Gemini"
-        };
 
     /// <inheritdoc />
     public void Dispose()

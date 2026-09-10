@@ -138,24 +138,12 @@ public sealed class RefreshSettingsStore
     private static UserSettingsFile CreateSettingsFile(string? filePath, string? baseDirectory)
     {
 
-        var resolvedPath = ResolveFilePath(filePath, baseDirectory);
+        var resolvedPath = SettingsPathResolver.ResolveOverride(
+            filePath,
+            baseDirectory,
+            DEFAULT_CONFIG_FILE
+        );
 
         return new UserSettingsFile(userSettingsPath: resolvedPath);
-    }
-
-    private static string? ResolveFilePath(string? filePath, string? baseDirectory)
-    {
-
-        if (string.IsNullOrWhiteSpace(filePath) && string.IsNullOrWhiteSpace(baseDirectory))
-            return null;
-
-        if (!string.IsNullOrWhiteSpace(filePath) && Path.IsPathRooted(filePath))
-            return filePath;
-
-        var baseDir = !string.IsNullOrWhiteSpace(baseDirectory)
-            ? baseDirectory
-            : AppContext.BaseDirectory;
-
-        return Path.Combine(baseDir, filePath ?? DEFAULT_CONFIG_FILE);
     }
 }

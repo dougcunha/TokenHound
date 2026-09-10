@@ -19,10 +19,6 @@ public sealed partial class UsageArchive : IDisposable
     private const string STATE_FILE_NAME = "state.json";
     private const string BACKOFF_UNTIL_PROPERTY_NAME = "backoffUntil";
     private const string COPILOT_BILLING_FILE_NAME = "copilot_billing.json";
-    private const string COPILOT_HTTP_PROPERTY_NAME = "copilotHttp";
-    private const string DEADLINE_UTC_PROPERTY_NAME = "deadlineUtc";
-    private const string CONSECUTIVE_FAILURES_PROPERTY_NAME = "consecutiveFailures";
-    private const int COPILOT_BILLING_SCHEMA_VERSION = 1;
 
     private static readonly JsonSerializerOptions SERIALIZER_OPTIONS = new()
     {
@@ -31,6 +27,8 @@ public sealed partial class UsageArchive : IDisposable
     };
 
     private readonly SemaphoreSlim _writeLock = new(1, 1);
+    private readonly CopilotBillingArchive _copilotBillingArchive;
+    private readonly CopilotHttpArchive _copilotHttpArchive;
     private bool _disposed;
 
     /// <summary>
@@ -48,6 +46,16 @@ public sealed partial class UsageArchive : IDisposable
         LastReadingsPath = Path.Combine(DirectoryPath, LAST_READINGS_FILE_NAME);
         StatePath = Path.Combine(DirectoryPath, STATE_FILE_NAME);
         CopilotBillingPath = Path.Combine(DirectoryPath, COPILOT_BILLING_FILE_NAME);
+        _copilotBillingArchive = new CopilotBillingArchive(
+            DirectoryPath,
+            CopilotBillingPath,
+            _writeLock
+        );
+        _copilotHttpArchive = new CopilotHttpArchive(
+            DirectoryPath,
+            StatePath,
+            _writeLock
+        );
     }
 
     /// <summary>
@@ -195,13 +203,7 @@ public sealed partial class UsageArchive : IDisposable
 
             var state = ReadStateObjectForWrite();
 
-            if (state[BACKOFF_UNTIL_PROPERTY_NAME] is null)
-                return;
-
-            if (state[BACKOFF_UNTIL_PROPERTY_NAME] is not JsonObject backoffUntil)
-                throw new InvalidDataException("The backoffUntil archive value must be a JSON object.");
-
-            if (!backoffUntil.Remove(providerId))
+            if (!TryRemoveBackoffDeadline(state, providerId))
                 return;
 
             await WriteJsonAtomicallyAsync(StatePath, state, cancellationToken).ConfigureAwait(false);
@@ -210,6 +212,18 @@ public sealed partial class UsageArchive : IDisposable
         {
             _writeLock.Release();
         }
+    }
+
+    private static bool TryRemoveBackoffDeadline(JsonObject state, string providerId)
+    {
+
+        if (state[BACKOFF_UNTIL_PROPERTY_NAME] is null)
+            return false;
+
+        if (state[BACKOFF_UNTIL_PROPERTY_NAME] is not JsonObject backoffUntil)
+            throw new InvalidDataException("The backoffUntil archive value must be a JSON object.");
+
+        return backoffUntil.Remove(providerId);
     }
 
     /// <inheritdoc />

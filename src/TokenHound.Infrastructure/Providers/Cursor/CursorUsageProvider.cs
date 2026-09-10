@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Contracts;
 using TokenHound.Core.Models;
+using TokenHound.Core.Policies;
+using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.Cursor;
 
@@ -13,10 +16,16 @@ namespace TokenHound.Infrastructure.Providers.Cursor;
 public sealed class CursorUsageProvider : IUsageProvider, IDisposable
 {
     private const string PROVIDER_ID = "cursor";
+    private const int MAX_CONSECUTIVE_RATE_LIMITS = 10;
 
     private readonly CursorSessionDiscovery _discovery;
     private readonly CursorApiClient _client;
     private readonly bool _disposeClient;
+    private readonly TimeProvider _timeProvider;
+    private readonly RateLimitPolicy _rateLimitPolicy;
+    private readonly Random? _backoffJitter;
+
+    private int _consecutiveRateLimits;
 
     /// <inheritdoc />
     public string ProviderId
@@ -27,11 +36,20 @@ public sealed class CursorUsageProvider : IUsageProvider, IDisposable
     /// </summary>
     /// <param name="discovery">Optional session discovery instance.</param>
     /// <param name="client">Optional Cursor API client.</param>
+    /// <param name="timeProvider">Optional clock for snapshot and deadline timestamps.</param>
+    /// <param name="rateLimitPolicy">Optional isolated retry policy.</param>
+    /// <param name="backoffJitter">Optional jitter source for rate-limit deadlines.</param>
     public CursorUsageProvider(
         CursorSessionDiscovery? discovery = null,
-        CursorApiClient? client = null)
+        CursorApiClient? client = null,
+        TimeProvider? timeProvider = null,
+        RateLimitPolicy? rateLimitPolicy = null,
+        Random? backoffJitter = null)
     {
         _discovery = discovery ?? new CursorSessionDiscovery();
+        _timeProvider = timeProvider ?? TimeProvider.System;
+        _rateLimitPolicy = rateLimitPolicy ?? new RateLimitPolicy();
+        _backoffJitter = backoffJitter;
 
         if (client is not null)
         {
@@ -57,18 +75,38 @@ public sealed class CursorUsageProvider : IUsageProvider, IDisposable
             return CreateNeedsAuthSnapshot();
         }
 
-        var usage = await _client.GetUsageSummaryAsync(
+        return await FetchSnapshotAsync(auth, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Snapshot> FetchSnapshotAsync(
+        CursorAuthDto auth,
+        CancellationToken cancellationToken)
+    {
+
+        try
+        {
+            var usage = await _client.GetUsageSummaryAsync(
             auth.StripeMembershipAuthId,
             auth.AccessToken,
             cancellationToken
-        ).ConfigureAwait(false);
+            ).ConfigureAwait(false);
 
-        if (usage is null)
-        {
-            return CreateStaleSnapshot("Failed to retrieve usage telemetry from Cursor API.");
+            _consecutiveRateLimits = 0;
+
+            return CreateSnapshotFromUsage(usage);
         }
-
-        return CreateSnapshotFromUsage(usage);
+        catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (ProviderHttpException ex)
+        {
+            return MapHttpFailure(ex);
+        }
+        catch (Exception ex)
+        {
+            return CreateStaleSnapshot(ex.Message);
+        }
     }
 
     /// <inheritdoc />
@@ -81,7 +119,7 @@ public sealed class CursorUsageProvider : IUsageProvider, IDisposable
         }
     }
 
-    private static Snapshot CreateSnapshotFromUsage(CursorUsageResponse usage)
+    private Snapshot CreateSnapshotFromUsage(CursorUsageResponse usage)
     {
 
         var windows = new List<LimitWindow>();
@@ -104,7 +142,7 @@ public sealed class CursorUsageProvider : IUsageProvider, IDisposable
             ProviderId = PROVIDER_ID,
             Status = ProviderStatus.Ok,
             Fidelity = Fidelity.Official,
-            FetchedAtUtc = DateTimeOffset.UtcNow,
+            FetchedAtUtc = _timeProvider.GetUtcNow(),
             LimitWindows = windows
         };
     }
@@ -168,24 +206,63 @@ public sealed class CursorUsageProvider : IUsageProvider, IDisposable
         });
     }
 
-    private static Snapshot CreateNeedsAuthSnapshot()
+    private Snapshot MapHttpFailure(ProviderHttpException exception)
+        => exception.StatusCode switch
+        {
+            HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => CreateNeedsAuthSnapshot(),
+            HttpStatusCode.TooManyRequests => CreateRateLimitedSnapshot(exception),
+            _ => CreateStaleSnapshot(exception.Message)
+        };
+
+    private Snapshot CreateRateLimitedSnapshot(ProviderHttpException exception)
+    {
+
+        var nowUtc = _timeProvider.GetUtcNow();
+
+        _consecutiveRateLimits = Math.Min(_consecutiveRateLimits + 1, MAX_CONSECUTIVE_RATE_LIMITS);
+
+        var deadline = _rateLimitPolicy.CalculateDeadline(
+            nowUtc,
+            exception.RetryAfterSeconds,
+            _consecutiveRateLimits,
+            _backoffJitter
+        );
+
+        return new Snapshot
+        {
+            ProviderId = PROVIDER_ID,
+            Status = ProviderStatus.RateLimited,
+            Fidelity = Fidelity.Official,
+            FetchedAtUtc = nowUtc,
+            LimitWindows = [],
+            ActiveBlock = new UsageBlock
+            {
+                Reason = exception.Message,
+                IsBlocked = true,
+                ResetTimeUtc = deadline,
+                RetryAfterSeconds = exception.RetryAfterSeconds
+            }
+        };
+    }
+
+    private Snapshot CreateNeedsAuthSnapshot()
         => new()
         {
             ProviderId = PROVIDER_ID,
             Status = ProviderStatus.NeedsAuth,
             Fidelity = Fidelity.Official,
-            FetchedAtUtc = DateTimeOffset.UtcNow,
+            FetchedAtUtc = _timeProvider.GetUtcNow(),
             LimitWindows = [],
             ErrorDescription = "Open Cursor and log in to authenticate."
         };
 
-    private static Snapshot CreateStaleSnapshot(string description)
+    private Snapshot CreateStaleSnapshot(string description)
         => new()
         {
             ProviderId = PROVIDER_ID,
             Status = ProviderStatus.Stale,
             Fidelity = Fidelity.Official,
-            FetchedAtUtc = DateTimeOffset.UtcNow,
+            FetchedAtUtc = _timeProvider.GetUtcNow(),
             LimitWindows = [],
             ErrorDescription = description
         };

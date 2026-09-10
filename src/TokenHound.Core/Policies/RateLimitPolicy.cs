@@ -6,26 +6,36 @@ namespace TokenHound.Core.Policies;
 /// <summary>
 /// Evaluates rate-limit deadlines and calculates backoff penalties honoring minimum floor constraints.
 /// </summary>
-public static class RateLimitPolicy
+public sealed class RateLimitPolicy
 {
     /// <summary>
     /// Minimum rate limit penalty floor (60 seconds), protecting against infinite loops on <c>Retry-After: 0</c>.
     /// </summary>
     public static readonly TimeSpan MINIMUM_RETRY_FLOOR = TimeSpan.FromSeconds(60);
 
-    private static long _effectiveRetryFloorTicks = MINIMUM_RETRY_FLOOR.Ticks;
+    private long _effectiveRetryFloorTicks;
+
+    /// <summary>
+    /// Initializes an isolated rate-limit policy with the requested retry floor.
+    /// </summary>
+    /// <param name="effectiveRetryFloor">The requested retry floor, or the safety minimum when omitted.</param>
+    public RateLimitPolicy(TimeSpan? effectiveRetryFloor = null)
+    {
+
+        SetEffectiveFloor(effectiveRetryFloor ?? MINIMUM_RETRY_FLOOR);
+    }
 
     /// <summary>
     /// Gets the currently configured effective retry floor, never less than <see cref="MINIMUM_RETRY_FLOOR"/>.
     /// </summary>
-    public static TimeSpan EffectiveRetryFloor
+    public TimeSpan EffectiveRetryFloor
         => TimeSpan.FromTicks(Interlocked.Read(ref _effectiveRetryFloorTicks));
 
     /// <summary>
     /// Sets the effective retry floor, clamping values below <see cref="MINIMUM_RETRY_FLOOR"/> to <see cref="MINIMUM_RETRY_FLOOR"/>.
     /// </summary>
     /// <param name="floor">The requested retry floor duration.</param>
-    public static void SetEffectiveFloor(TimeSpan floor)
+    public void SetEffectiveFloor(TimeSpan floor)
     {
 
         var safeFloor = floor < MINIMUM_RETRY_FLOOR ? MINIMUM_RETRY_FLOOR : floor;
@@ -36,7 +46,7 @@ public static class RateLimitPolicy
     /// <summary>
     /// Resets the effective retry floor to the default <see cref="MINIMUM_RETRY_FLOOR"/>.
     /// </summary>
-    public static void ResetEffectiveFloor()
+    public void ResetEffectiveFloor()
         => SetEffectiveFloor(MINIMUM_RETRY_FLOOR);
 
     /// <summary>
@@ -65,7 +75,7 @@ public static class RateLimitPolicy
     /// <param name="consecutiveFailures">The count of consecutive failures encountered.</param>
     /// <param name="jitterFactor">A factor between 0.0 and 1.0 for deterministic jitter testing.</param>
     /// <returns>The calculated deadline <see cref="DateTimeOffset"/>.</returns>
-    public static DateTimeOffset CalculateDeadline(
+    public DateTimeOffset CalculateDeadline(
         DateTimeOffset nowUtc,
         int? retryAfterSeconds,
         int consecutiveFailures,
@@ -86,7 +96,7 @@ public static class RateLimitPolicy
     /// <param name="consecutiveFailures">The count of consecutive failures encountered.</param>
     /// <param name="random">An optional <see cref="Random"/> instance for jitter generation.</param>
     /// <returns>The calculated deadline <see cref="DateTimeOffset"/>.</returns>
-    public static DateTimeOffset CalculateDeadline(
+    public DateTimeOffset CalculateDeadline(
         DateTimeOffset nowUtc,
         int? retryAfterSeconds,
         int consecutiveFailures,
@@ -98,7 +108,7 @@ public static class RateLimitPolicy
         return nowUtc + ResolvePenalty(retryAfterSeconds, backoff, consecutiveFailures);
     }
 
-    private static TimeSpan ResolvePenalty(
+    private TimeSpan ResolvePenalty(
         int? retryAfterSeconds,
         TimeSpan backoff,
         int consecutiveFailures)

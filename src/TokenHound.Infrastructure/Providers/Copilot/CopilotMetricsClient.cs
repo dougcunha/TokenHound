@@ -41,7 +41,8 @@ public sealed class CopilotMetricsClient : IDisposable
     private readonly CopilotRequestGate? _gate;
     private readonly Uri _baseAddress;
     private readonly TimeSpan _timeout;
-    private readonly bool _disposeClients;
+    private readonly bool _disposeManifestClient;
+    private readonly bool _disposeDownloadClient;
 
     /// <summary>
     /// Initializes a client with optional HTTP clients, gate, base URI, and timeout.
@@ -63,7 +64,8 @@ public sealed class CopilotMetricsClient : IDisposable
 
         _manifestClient = manifestHttpClient ?? new HttpClient();
         _downloadClient = downloadHttpClient ?? CreateDefaultDownloadClient();
-        _disposeClients = manifestHttpClient is null && downloadHttpClient is null;
+        _disposeManifestClient = manifestHttpClient is null;
+        _disposeDownloadClient = downloadHttpClient is null;
     }
 
     /// <summary>
@@ -139,11 +141,11 @@ public sealed class CopilotMetricsClient : IDisposable
     public void Dispose()
     {
 
-        if (_disposeClients)
-        {
+        if (_disposeManifestClient)
             _manifestClient.Dispose();
+
+        if (_disposeDownloadClient)
             _downloadClient.Dispose();
-        }
     }
 
     private static HttpClient CreateDefaultDownloadClient()

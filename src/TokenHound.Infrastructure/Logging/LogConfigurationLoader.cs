@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text.Json;
+using TokenHound.Infrastructure.Configuration;
 
 namespace TokenHound.Infrastructure.Logging;
 
@@ -28,7 +29,11 @@ public static class LogConfigurationLoader
     public static LogSettings Load(string? filePath = null, string? baseDirectory = null)
     {
 
-        var targetPath = ResolveFilePath(filePath, baseDirectory);
+        var targetPath = SettingsPathResolver.Resolve(
+            filePath,
+            baseDirectory,
+            DEFAULT_CONFIG_FILE
+        );
 
         if (!File.Exists(targetPath))
             return new LogSettings();
@@ -67,16 +72,4 @@ public static class LogConfigurationLoader
         return JsonSerializer.Deserialize<LogSettings>(json, JSON_OPTIONS) ?? new LogSettings();
     }
 
-    private static string ResolveFilePath(string? filePath, string? baseDirectory)
-    {
-
-        if (!string.IsNullOrWhiteSpace(filePath) && Path.IsPathRooted(filePath))
-            return filePath;
-
-        var baseDir = !string.IsNullOrWhiteSpace(baseDirectory)
-            ? baseDirectory
-            : AppContext.BaseDirectory;
-
-        return Path.Combine(baseDir, filePath ?? DEFAULT_CONFIG_FILE);
-    }
 }

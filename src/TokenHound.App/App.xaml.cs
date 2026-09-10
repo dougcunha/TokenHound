@@ -26,6 +26,7 @@ public partial class App : Application
 {
     private readonly ProviderSettingsStore _providerSettingsStore = new();
 
+    private RateLimitPolicy? _rateLimitPolicy;
     private UsageStore? _usageStore;
     private DialogService? _dialogService;
     private NotchViewModel? _notchViewModel;
@@ -48,11 +49,16 @@ public partial class App : Application
         var archive = new UsageArchive();
         disposableResources.Add(archive);
 
-        InitializeRateLimits();
+        _rateLimitPolicy = InitializeRateLimits();
 
         _usageStore = CreateUsageStore(archive);
 
-        RegisterProviders(_usageStore, archive, disposableResources);
+        RegisterProviders(
+            _usageStore,
+            archive,
+            _rateLimitPolicy,
+            disposableResources
+        );
         ApplyProviderEnablement(_usageStore);
         InitializeUi(_usageStore, disposableResources);
         ScheduleInitialRefresh();
@@ -112,16 +118,18 @@ public partial class App : Application
         e.SetObserved();
     }
 
-    private static void InitializeRateLimits()
+    private static RateLimitPolicy InitializeRateLimits()
     {
 
         var rateLimitSettings = new RateLimitSettingsStore().Load();
-        RateLimitPolicy.SetEffectiveFloor(rateLimitSettings.MinimumRetryFloor);
+        var rateLimitPolicy = new RateLimitPolicy(rateLimitSettings.MinimumRetryFloor);
 
         Log.Information(
             "Rate limit retry floor resolved: {MinimumRetryFloorSeconds}s",
             rateLimitSettings.MinimumRetryFloor.TotalSeconds
         );
+
+        return rateLimitPolicy;
     }
 
     private static UsageStore CreateUsageStore(UsageArchive archive)
@@ -146,53 +154,99 @@ public partial class App : Application
     private static void RegisterProviders(
         UsageStore usageStore,
         UsageArchive archive,
+        RateLimitPolicy rateLimitPolicy,
         List<IDisposable> disposableResources)
     {
 
         Log.Information("Registering provider adapters and activity monitors...");
 
-        var claudeProvider = new ClaudeOAuthProvider();
-        usageStore.RegisterProvider(claudeProvider);
-        usageStore.RegisterActivityMonitor(new ClaudeSessionMonitor());
-
-        var antigravityProvider = new AntigravityUsageProvider();
-        usageStore.RegisterProvider(antigravityProvider);
-        usageStore.RegisterActivityMonitor(new AntigravityActivityMonitor());
-        disposableResources.Add(antigravityProvider);
-
-        var codexProvider = new CodexUsageProvider();
-        usageStore.RegisterProvider(codexProvider);
-        usageStore.RegisterActivityMonitor(new CodexActivityMonitor());
-
-        var cursorProvider = new CursorUsageProvider();
-        usageStore.RegisterProvider(cursorProvider);
-        usageStore.RegisterActivityMonitor(new CursorActivityMonitor());
-        disposableResources.Add(cursorProvider);
-
-        var copilotGate = new CopilotRequestGate(archive);
-        var copilotBillingClient = new CopilotBillingClient(gate: copilotGate);
-        var copilotResolver = new CopilotBillingContextResolver(copilotBillingClient);
-        var copilotBillingService = new CopilotBillingService(
-            copilotBillingClient,
-            copilotResolver,
+        RegisterClaude(usageStore, rateLimitPolicy);
+        RegisterAntigravity(usageStore, rateLimitPolicy, disposableResources);
+        RegisterCodex(usageStore);
+        RegisterCursor(usageStore, rateLimitPolicy, disposableResources);
+        RegisterCopilot(
+            usageStore,
             archive,
-            copilotGate
+            rateLimitPolicy,
+            disposableResources
         );
-        var copilotProvider = new CopilotUsageProvider(
-            null,
-            null,
-            copilotGate,
-            copilotBillingService
-        );
-        usageStore.RegisterProvider(copilotProvider);
-        var copilotMonitor = new CopilotActivityMonitor();
-        usageStore.RegisterActivityMonitor(copilotMonitor);
-        disposableResources.Add(copilotProvider);
-        disposableResources.Add(copilotBillingService);
-        disposableResources.Add(copilotBillingClient);
-        disposableResources.Add(copilotGate);
-        disposableResources.Add(copilotMonitor);
     }
+
+    private static void RegisterClaude(UsageStore usageStore, RateLimitPolicy rateLimitPolicy)
+    {
+
+        var provider = new ClaudeOAuthProvider(rateLimitPolicy: rateLimitPolicy);
+        usageStore.RegisterProvider(provider);
+        usageStore.RegisterActivityMonitor(new ClaudeSessionMonitor());
+    }
+
+    private static void RegisterAntigravity(
+        UsageStore usageStore,
+        RateLimitPolicy rateLimitPolicy,
+        List<IDisposable> disposableResources)
+    {
+
+        var provider = new AntigravityUsageProvider(rateLimitPolicy: rateLimitPolicy);
+        usageStore.RegisterProvider(provider);
+        usageStore.RegisterActivityMonitor(new AntigravityActivityMonitor());
+        disposableResources.Add(provider);
+    }
+
+    private static void RegisterCodex(UsageStore usageStore)
+    {
+
+        var provider = new CodexUsageProvider();
+        usageStore.RegisterProvider(provider);
+        usageStore.RegisterActivityMonitor(new CodexActivityMonitor());
+    }
+
+    private static void RegisterCursor(
+        UsageStore usageStore,
+        RateLimitPolicy rateLimitPolicy,
+        List<IDisposable> disposableResources)
+    {
+
+        var provider = new CursorUsageProvider(rateLimitPolicy: rateLimitPolicy);
+        usageStore.RegisterProvider(provider);
+        usageStore.RegisterActivityMonitor(new CursorActivityMonitor());
+        disposableResources.Add(provider);
+    }
+
+    private static void RegisterCopilot(
+        UsageStore usageStore,
+        UsageArchive archive,
+        RateLimitPolicy rateLimitPolicy,
+        List<IDisposable> disposableResources)
+    {
+
+        var gate = new CopilotRequestGate(archive, rateLimitPolicy: rateLimitPolicy);
+        var billingClient = new CopilotBillingClient(gate: gate);
+        var billingService = new CopilotBillingService(
+            billingClient,
+            new CopilotBillingContextResolver(billingClient),
+            archive,
+            gate
+        );
+        var provider = CreateCopilotProvider(gate, billingService);
+        usageStore.RegisterProvider(provider);
+        var monitor = new CopilotActivityMonitor();
+        usageStore.RegisterActivityMonitor(monitor);
+        disposableResources.Add(provider);
+        disposableResources.Add(billingService);
+        disposableResources.Add(billingClient);
+        disposableResources.Add(gate);
+        disposableResources.Add(monitor);
+    }
+
+    private static CopilotUsageProvider CreateCopilotProvider(
+        CopilotRequestGate gate,
+        CopilotBillingService billingService)
+        => new(
+            null,
+            null,
+            gate,
+            billingService
+        );
 
     /// <summary>
     /// Applies the persisted monitoring preferences to every registered provider. Runs after registration so the
@@ -232,7 +286,8 @@ public partial class App : Application
             new CadenceSettingsViewModel(
                 usageStore,
                 new RefreshSettingsStore(),
-                new RateLimitSettingsStore()
+                new RateLimitSettingsStore(),
+                _rateLimitPolicy ?? throw new InvalidOperationException("Rate-limit policy is not initialized.")
             )
         );
 

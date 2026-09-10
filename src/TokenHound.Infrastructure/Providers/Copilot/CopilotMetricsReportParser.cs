@@ -34,37 +34,17 @@ public static class CopilotMetricsReportParser
 
         ArgumentNullException.ThrowIfNull(reader);
 
-        var users = new Dictionary<string, CopilotMetricsUserRow>(StringComparer.OrdinalIgnoreCase);
-        var hasInvalidRows = false;
-        var isDayInvalid = false;
-        CopilotMetricsUserRow? principalRow = null;
+        var accumulator = new ReportAccumulator(
+            expectedDay,
+            principalLogin,
+            expectedOwner,
+            expectedScope
+        );
 
-        string? line;
+        while (reader.ReadLine() is { } line)
+            accumulator.ProcessLine(line);
 
-        while ((line = reader.ReadLine()) != null)
-        {
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
-
-            if (!TryParseRow(line, out var row))
-            {
-                hasInvalidRows = true;
-                continue;
-            }
-
-            if (!ValidateRow(row!, expectedDay, expectedOwner, expectedScope))
-            {
-                hasInvalidRows = true;
-                continue;
-            }
-
-            ProcessUserRow(row!, users, ref isDayInvalid, ref hasInvalidRows);
-
-            if (IsPrincipalMatch(row!, principalLogin))
-                principalRow = row;
-        }
-
-        return BuildParseResult(expectedDay, users, hasInvalidRows, isDayInvalid, principalRow);
+        return accumulator.BuildResult();
     }
 
     /// <summary>
@@ -82,12 +62,18 @@ public static class CopilotMetricsReportParser
         ArgumentNullException.ThrowIfNull(stream);
         cancellationToken.ThrowIfCancellationRequested();
 
-        using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 4096, leaveOpen: true);
+        using var reader = CreateReader(stream);
+        var accumulator = new ReportAccumulator(
+            expectedDay,
+            principalLogin,
+            expectedOwner,
+            expectedScope
+        );
 
-        return await Task.Run(
-            () => Parse(reader, expectedDay, principalLogin, expectedOwner, expectedScope),
-            cancellationToken
-        ).ConfigureAwait(false);
+        while (await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false) is { } line)
+            accumulator.ProcessLine(line);
+
+        return accumulator.BuildResult();
     }
 
     /// <summary>
@@ -108,11 +94,8 @@ public static class CopilotMetricsReportParser
 
         foreach (var partition in partitionResults)
         {
-            if (partition.Day != day || partition.HasInvalidRows)
-                hasInvalidRows = true;
-
-            if (partition.IsDayInvalid)
-                isDayInvalid = true;
+            hasInvalidRows |= partition.Day != day || partition.HasInvalidRows;
+            isDayInvalid |= partition.IsDayInvalid;
 
             foreach (var row in partition.UserRows)
             {
@@ -125,6 +108,15 @@ public static class CopilotMetricsReportParser
 
         return BuildParseResult(day, users, hasInvalidRows, isDayInvalid, principalRow);
     }
+
+    private static StreamReader CreateReader(Stream stream)
+        => new(
+            stream,
+            Encoding.UTF8,
+            detectEncodingFromByteOrderMarks: true,
+            bufferSize: 4096,
+            leaveOpen: true
+        );
 
     private static bool TryParseRow(string line, out CopilotMetricsUserRow? row)
     {
@@ -186,9 +178,7 @@ public static class CopilotMetricsReportParser
         ref bool hasInvalidRows)
     {
 
-        var userKey = !string.IsNullOrWhiteSpace(row.UserLogin)
-            ? row.UserLogin.Trim()
-            : row.UserId?.ToString(CultureInfo.InvariantCulture);
+        var userKey = GetUserKey(row);
 
         if (string.IsNullOrWhiteSpace(userKey))
         {
@@ -210,6 +200,11 @@ public static class CopilotMetricsReportParser
 
         users[userKey] = row;
     }
+
+    private static string? GetUserKey(CopilotMetricsUserRow row)
+        => !string.IsNullOrWhiteSpace(row.UserLogin)
+            ? row.UserLogin.Trim()
+            : row.UserId?.ToString(CultureInfo.InvariantCulture);
 
     private static bool IsPrincipalMatch(CopilotMetricsUserRow row, string? principalLogin)
         => !string.IsNullOrWhiteSpace(principalLogin)
@@ -235,5 +230,60 @@ public static class CopilotMetricsReportParser
             PrincipalRow = principalRow,
             UserRows = [.. users.Values]
         };
+    }
+
+    private sealed class ReportAccumulator
+    {
+        private readonly Dictionary<string, CopilotMetricsUserRow> _users = new(StringComparer.OrdinalIgnoreCase);
+        private readonly DateOnly _expectedDay;
+        private readonly string? _principalLogin;
+        private readonly string? _expectedOwner;
+        private readonly CopilotBillingScope _expectedScope;
+
+        private CopilotMetricsUserRow? _principalRow;
+        private bool _hasInvalidRows;
+        private bool _isDayInvalid;
+
+        internal ReportAccumulator(
+            DateOnly expectedDay,
+            string? principalLogin,
+            string? expectedOwner,
+            CopilotBillingScope expectedScope)
+        {
+
+            _expectedDay = expectedDay;
+            _principalLogin = principalLogin;
+            _expectedOwner = expectedOwner;
+            _expectedScope = expectedScope;
+        }
+
+        internal void ProcessLine(string line)
+        {
+
+            if (string.IsNullOrWhiteSpace(line))
+                return;
+
+            if (!TryParseRow(line, out var row)
+                || !ValidateRow(row!, _expectedDay, _expectedOwner, _expectedScope))
+            {
+                _hasInvalidRows = true;
+
+                return;
+            }
+
+            ProcessUserRow(row!, _users, ref _isDayInvalid, ref _hasInvalidRows);
+
+            if (IsPrincipalMatch(row!, _principalLogin))
+                _principalRow = row;
+        }
+
+        internal CopilotMetricsReportParseResult BuildResult()
+            => BuildParseResult(
+                _expectedDay,
+                _users,
+                _hasInvalidRows,
+                _isDayInvalid,
+                _principalRow
+            );
     }
 }

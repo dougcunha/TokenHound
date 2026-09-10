@@ -10,6 +10,7 @@ namespace TokenHound.Core.Tests.Policies;
 public sealed class RateLimitPolicyTests
 {
     private static readonly DateTimeOffset BASE_TIME = new(2026, 9, 6, 12, 0, 0, TimeSpan.Zero);
+    private readonly RateLimitPolicy _policy = new();
 
     /// <summary>
     /// Verifies that CanDispatch allows dispatch when deadline is null.
@@ -57,21 +58,21 @@ public sealed class RateLimitPolicyTests
     [Fact]
     public void CalculateDeadline_WhenRetryAfterIsBelowSixty_EnforcesSixtySecondFloor()
     {
-        var deadlineZero = RateLimitPolicy.CalculateDeadline(
+        var deadlineZero = _policy.CalculateDeadline(
             BASE_TIME,
             0,
             1,
             1.0
         );
 
-        var deadlineNegative = RateLimitPolicy.CalculateDeadline(
+        var deadlineNegative = _policy.CalculateDeadline(
             BASE_TIME,
             -15,
             1,
             1.0
         );
 
-        var deadlineThirty = RateLimitPolicy.CalculateDeadline(
+        var deadlineThirty = _policy.CalculateDeadline(
             BASE_TIME,
             30,
             1,
@@ -89,7 +90,7 @@ public sealed class RateLimitPolicyTests
     [Fact]
     public void CalculateDeadline_WhenRetryAfterExceedsSixty_PreservesProvidedSeconds()
     {
-        var deadline = RateLimitPolicy.CalculateDeadline(
+        var deadline = _policy.CalculateDeadline(
             BASE_TIME,
             180,
             1,
@@ -105,21 +106,21 @@ public sealed class RateLimitPolicyTests
     [Fact]
     public void CalculateDeadline_WhenRetryAfterIsNull_UsesBackoffCalculator()
     {
-        var zeroFailuresDeadline = RateLimitPolicy.CalculateDeadline(
+        var zeroFailuresDeadline = _policy.CalculateDeadline(
             BASE_TIME,
             null,
             0,
             1.0
         );
 
-        var oneFailureDeadline = RateLimitPolicy.CalculateDeadline(
+        var oneFailureDeadline = _policy.CalculateDeadline(
             BASE_TIME,
             null,
             1,
             1.0
         );
 
-        var fiveFailuresDeadline = RateLimitPolicy.CalculateDeadline(
+        var fiveFailuresDeadline = _policy.CalculateDeadline(
             BASE_TIME,
             null,
             5,
@@ -139,7 +140,7 @@ public sealed class RateLimitPolicyTests
     {
         var random = new Random(42);
 
-        var deadline = RateLimitPolicy.CalculateDeadline(
+        var deadline = _policy.CalculateDeadline(
             BASE_TIME,
             null,
             1,
@@ -156,14 +157,14 @@ public sealed class RateLimitPolicyTests
     [Fact]
     public void CalculateDeadline_WhenJitteredBackoffIsBelowFloor_EnforcesSixtySecondFloor()
     {
-        var nearZeroJitter = RateLimitPolicy.CalculateDeadline(
+        var nearZeroJitter = _policy.CalculateDeadline(
             BASE_TIME,
             null,
             1,
             0.01
         );
 
-        var halfJitter = RateLimitPolicy.CalculateDeadline(
+        var halfJitter = _policy.CalculateDeadline(
             BASE_TIME,
             null,
             1,
@@ -180,14 +181,14 @@ public sealed class RateLimitPolicyTests
     [Fact]
     public void CalculateDeadline_WhenJitterCollapsesBackoff_FloorsAtPreviousTier()
     {
-        var thirdFailure = RateLimitPolicy.CalculateDeadline(
+        var thirdFailure = _policy.CalculateDeadline(
             BASE_TIME,
             null,
             3,
             0.0
         );
 
-        var fifthFailure = RateLimitPolicy.CalculateDeadline(
+        var fifthFailure = _policy.CalculateDeadline(
             BASE_TIME,
             null,
             5,
@@ -204,14 +205,14 @@ public sealed class RateLimitPolicyTests
     [Fact]
     public void CalculateDeadline_WhenRetryAfterStaysLowAcrossFailures_EscalatesWithBackoff()
     {
-        var firstFailure = RateLimitPolicy.CalculateDeadline(
+        var firstFailure = _policy.CalculateDeadline(
             BASE_TIME,
             0,
             1,
             1.0
         );
 
-        var fourthFailure = RateLimitPolicy.CalculateDeadline(
+        var fourthFailure = _policy.CalculateDeadline(
             BASE_TIME,
             0,
             4,
@@ -228,7 +229,7 @@ public sealed class RateLimitPolicyTests
     [Fact]
     public void CalculateDeadline_WhenRetryAfterExceedsBackoff_PrefersServerHint()
     {
-        var deadline = RateLimitPolicy.CalculateDeadline(
+        var deadline = _policy.CalculateDeadline(
             BASE_TIME,
             600,
             2,

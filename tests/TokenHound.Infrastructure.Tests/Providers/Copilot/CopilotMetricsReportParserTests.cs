@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Models;
 using TokenHound.Infrastructure.Providers.Copilot;
@@ -111,6 +112,28 @@ public sealed class CopilotMetricsReportParserTests
     }
 
     [Fact]
+    public async Task ParseAsync_WhenCancelledAfterFirstLine_StopsReading()
+    {
+
+        using var stream = new CancellationAwareStream(
+            "{\"day\":\"2026-09-06\",\"user_id\":1,\"user_login\":\"alice\",\"ai_credits_used\":8.0}\n"
+        );
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken
+        );
+        var parseTask = CopilotMetricsReportParser.ParseAsync(
+            stream,
+            TEST_DAY,
+            cancellationToken: cancellation.Token
+        );
+
+        await stream.SecondReadStarted.WaitAsync(TestContext.Current.CancellationToken);
+        await cancellation.CancelAsync();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await parseTask);
+    }
+
+    [Fact]
     public void Merge_WithCrossPartitionIdenticalAndConflictingRows_BehavesCorrectly()
     {
         var part1 = CopilotMetricsReportParser.Parse(
@@ -169,5 +192,82 @@ public sealed class CopilotMetricsReportParserTests
         Assert.True(result.HasInvalidRows);
         Assert.Equal(0m, result.TotalCreditsUsed);
         Assert.Equal(0, result.UserCount);
+    }
+
+    private sealed class CancellationAwareStream(string firstChunk) : Stream
+    {
+        private readonly byte[] _firstChunk = Encoding.UTF8.GetBytes(firstChunk);
+        private readonly TaskCompletionSource _secondReadStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        private int _readCount;
+
+        internal Task SecondReadStarted
+            => _secondReadStarted.Task;
+
+        /// <inheritdoc />
+        public override bool CanRead => true;
+
+        /// <inheritdoc />
+        public override bool CanSeek => false;
+
+        /// <inheritdoc />
+        public override bool CanWrite => false;
+
+        /// <inheritdoc />
+        public override long Length => throw new NotSupportedException();
+
+        /// <inheritdoc />
+        public override long Position
+        {
+            get => throw new NotSupportedException();
+            set => throw new NotSupportedException();
+        }
+
+        /// <inheritdoc />
+        public override void Flush()
+            => throw new NotSupportedException();
+
+        /// <inheritdoc />
+        public override int Read(byte[] buffer, int offset, int count)
+            => throw new NotSupportedException();
+
+        /// <inheritdoc />
+        public override ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken = default)
+        {
+
+            if (Interlocked.Increment(ref _readCount) == 1)
+            {
+                _firstChunk.AsSpan().CopyTo(buffer.Span);
+
+                return ValueTask.FromResult(_firstChunk.Length);
+            }
+
+            _secondReadStarted.TrySetResult();
+
+            return new ValueTask<int>(WaitForCancellationAsync(cancellationToken));
+        }
+
+        /// <inheritdoc />
+        public override long Seek(long offset, SeekOrigin origin)
+            => throw new NotSupportedException();
+
+        /// <inheritdoc />
+        public override void SetLength(long value)
+            => throw new NotSupportedException();
+
+        /// <inheritdoc />
+        public override void Write(byte[] buffer, int offset, int count)
+            => throw new NotSupportedException();
+
+        private static async Task<int> WaitForCancellationAsync(CancellationToken cancellationToken)
+        {
+
+            await Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken);
+
+            return 0;
+        }
     }
 }

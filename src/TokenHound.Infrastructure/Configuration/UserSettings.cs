@@ -42,8 +42,6 @@ public sealed record UserSettings
     /// </summary>
     internal sealed class ProviderSettingsJsonConverter : JsonConverter<ProviderSettings>
     {
-        private const string ALIAS_PROVIDER_KEY = "antigravity";
-        private const string CANONICAL_PROVIDER_KEY = "gemini";
         private const string ENABLED_PROPERTY_NAME = "Enabled";
 
         /// <inheritdoc />
@@ -64,21 +62,7 @@ public sealed record UserSettings
             var states = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
 
             foreach (var property in document.RootElement.EnumerateObject())
-            {
-
-                var rawKey = property.Name.Trim();
-
-                if (rawKey.Length == 0)
-                    continue;
-
-                var isAlias = string.Equals(rawKey, ALIAS_PROVIDER_KEY, StringComparison.OrdinalIgnoreCase);
-                var providerId = isAlias ? CANONICAL_PROVIDER_KEY : rawKey;
-
-                if (isAlias && states.ContainsKey(CANONICAL_PROVIDER_KEY))
-                    continue;
-
-                states[providerId] = ReadEnabled(property.Value);
-            }
+                states[property.Name] = ReadEnabled(property.Value);
 
             return new ProviderSettings { EnabledStates = states };
         }
@@ -92,35 +76,9 @@ public sealed record UserSettings
 
             writer.WriteStartObject();
 
-            var writtenKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-            if (value.EnabledStates.TryGetValue(CANONICAL_PROVIDER_KEY, out var canonicalEnabled))
-            {
-
-                writtenKeys.Add(CANONICAL_PROVIDER_KEY);
-                writtenKeys.Add(ALIAS_PROVIDER_KEY);
-
-                writer.WritePropertyName(CANONICAL_PROVIDER_KEY);
-                writer.WriteStartObject();
-                writer.WriteBoolean(ENABLED_PROPERTY_NAME, canonicalEnabled);
-                writer.WriteEndObject();
-            }
-
             foreach (var (key, isEnabled) in value.EnabledStates)
             {
-
-                var trimmed = key.Trim();
-
-                if (trimmed.Length == 0)
-                    continue;
-
-                var isAlias = string.Equals(trimmed, ALIAS_PROVIDER_KEY, StringComparison.OrdinalIgnoreCase);
-                var providerId = isAlias ? CANONICAL_PROVIDER_KEY : trimmed;
-
-                if (!writtenKeys.Add(providerId))
-                    continue;
-
-                writer.WritePropertyName(providerId);
+                writer.WritePropertyName(key);
                 writer.WriteStartObject();
                 writer.WriteBoolean(ENABLED_PROPERTY_NAME, isEnabled);
                 writer.WriteEndObject();

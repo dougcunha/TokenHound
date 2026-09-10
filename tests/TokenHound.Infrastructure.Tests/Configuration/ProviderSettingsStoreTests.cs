@@ -169,6 +169,22 @@ public sealed class ProviderSettingsStoreTests : IDisposable
     }
 
     [Fact]
+    public void ProviderSettings_WhenConstructedWithAlias_NormalizesToCanonicalKey()
+    {
+
+        var settings = new ProviderSettings
+        {
+            EnabledStates = new Dictionary<string, bool>
+            {
+                [" antigravity "] = false
+            }
+        };
+
+        settings.IsEnabled("gemini").Should().BeFalse();
+        settings.EnabledStates.Keys.Should().Equal("gemini");
+    }
+
+    [Fact]
     public async Task Load_WhenAliasKeyStored_ResolvesAsCanonicalAndRewritesIt()
     {
 

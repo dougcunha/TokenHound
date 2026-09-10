@@ -4,6 +4,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using TokenHound.Infrastructure.Providers;
 using TokenHound.Infrastructure.Providers.Cursor;
 using Xunit;
 
@@ -78,7 +79,7 @@ public sealed class CursorApiClientTests
     }
 
     [Fact]
-    public async Task GetUsageSummaryAsync_When401Unauthorized_ReturnsNull()
+    public async Task GetUsageSummaryAsync_When401Unauthorized_PreservesStatus()
     {
         // Arrange
         var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Unauthorized));
@@ -86,10 +87,40 @@ public sealed class CursorApiClientTests
         using var client = new CursorApiClient(httpClient);
 
         // Act
-        var result = await client.GetUsageSummaryAsync("user_123", "bad_token", TestContext.Current.CancellationToken);
+        var exception = await Assert.ThrowsAsync<ProviderHttpException>(async () =>
+            await client.GetUsageSummaryAsync(
+                "user_123",
+                "bad_token",
+                TestContext.Current.CancellationToken
+            ));
 
         // Assert
-        Assert.Null(result);
+        Assert.Equal(HttpStatusCode.Unauthorized, exception.StatusCode);
+        Assert.Null(exception.RetryAfterSeconds);
+    }
+
+    [Fact]
+    public async Task GetUsageSummaryAsync_WhenRateLimited_PreservesRetryAfter()
+    {
+        var handler = new MockHttpMessageHandler(_ =>
+        {
+            var response = new HttpResponseMessage(HttpStatusCode.TooManyRequests);
+            response.Headers.TryAddWithoutValidation("Retry-After", "600");
+
+            return response;
+        });
+        using var httpClient = new HttpClient(handler);
+        using var client = new CursorApiClient(httpClient);
+
+        var exception = await Assert.ThrowsAsync<ProviderHttpException>(async () =>
+            await client.GetUsageSummaryAsync(
+                "user_123",
+                "test-token",
+                TestContext.Current.CancellationToken
+            ));
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, exception.StatusCode);
+        Assert.Equal(600, exception.RetryAfterSeconds);
     }
 
     [Fact]

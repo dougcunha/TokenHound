@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
 using TokenHound.Core.Contracts;
+using TokenHound.Infrastructure.Providers;
 using TokenHound.Infrastructure.Providers.Antigravity;
 using Xunit;
 
@@ -152,7 +153,7 @@ public sealed class AntigravityCloudCodeClientTests
     }
 
     [Fact]
-    public async Task RetrieveUserQuotaSummaryAsync_When403Forbidden_ReturnsNull()
+    public async Task RetrieveUserQuotaSummaryAsync_When403Forbidden_PreservesStatus()
     {
         // Arrange
         var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.Forbidden)
@@ -171,10 +172,12 @@ public sealed class AntigravityCloudCodeClientTests
             credentialsFilePath: "nonexistent.json");
 
         // Act
-        var result = await client.RetrieveUserQuotaSummaryAsync(TestContext.Current.CancellationToken);
+        var exception = await Assert.ThrowsAsync<ProviderHttpException>(async () =>
+            await client.RetrieveUserQuotaSummaryAsync(TestContext.Current.CancellationToken));
 
         // Assert
-        Assert.Null(result);
+        Assert.Equal(HttpStatusCode.Forbidden, exception.StatusCode);
+        Assert.Null(exception.RetryAfterSeconds);
     }
 
     [Fact]

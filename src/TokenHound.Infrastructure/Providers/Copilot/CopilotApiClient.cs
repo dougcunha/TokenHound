@@ -1,5 +1,4 @@
 using System;
-using System.Globalization;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -174,30 +173,11 @@ public sealed class CopilotApiClient : IDisposable
     private static CopilotApiException CreateExceptionForResponse(HttpResponseMessage response)
     {
         var retryAfterSeconds = response.StatusCode == HttpStatusCode.TooManyRequests
-            ? ReadRetryAfterSeconds(response)
+            ? CopilotRateLimitExtractor.ExtractRetryAfterSeconds(response, TimeProvider.System)
             : null;
         var message = $"Copilot quota request failed with HTTP {(int)response.StatusCode} ({response.StatusCode}).";
 
         return new CopilotApiException(message, response.StatusCode, retryAfterSeconds);
-    }
-
-    private static int? ReadRetryAfterSeconds(HttpResponseMessage response)
-    {
-        if (response.Headers.RetryAfter?.Delta is { } delta)
-            return (int)Math.Ceiling(delta.TotalSeconds);
-
-        if (response.Headers.RetryAfter?.Date is { } date)
-            return (int)Math.Ceiling((date - DateTimeOffset.UtcNow).TotalSeconds);
-
-        if (response.Headers.TryGetValues("Retry-After", out var values)
-            && int.TryParse(
-                global::System.Linq.Enumerable.FirstOrDefault(values),
-                NumberStyles.Integer,
-                CultureInfo.InvariantCulture,
-                out var seconds))
-            return seconds;
-
-        return null;
     }
 
     private static readonly JsonSerializerOptions JSON_OPTIONS = new()

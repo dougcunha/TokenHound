@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Reflection;
 using System.Security;
 using System.Text;
 using System.Threading;
@@ -223,6 +224,63 @@ public sealed class CopilotMetricsClientTests
             if (Directory.Exists(tempDir))
                 Directory.Delete(tempDir, true);
         }
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Dispose_TracksEachHttpClientOwnershipIndependently(
+        bool supplyManifestClient,
+        bool supplyDownloadClient)
+    {
+
+        using var suppliedManifest = CreateSuccessfulClient();
+        using var suppliedDownload = CreateSuccessfulClient();
+        using var client = new CopilotMetricsClient(
+            supplyManifestClient ? suppliedManifest : null,
+            supplyDownloadClient ? suppliedDownload : null
+        );
+        var manifest = GetClient(client, "_manifestClient");
+        var download = GetClient(client, "_downloadClient");
+
+        client.Dispose();
+
+        await AssertDisposedStateAsync(manifest, !supplyManifestClient);
+        await AssertDisposedStateAsync(download, !supplyDownloadClient);
+    }
+
+    private static HttpClient CreateSuccessfulClient()
+        => new(new TestHandler(static _ => new HttpResponseMessage(HttpStatusCode.OK)));
+
+    private static HttpClient GetClient(CopilotMetricsClient client, string fieldName)
+    {
+
+        var field = typeof(CopilotMetricsClient).GetField(
+            fieldName,
+            BindingFlags.Instance | BindingFlags.NonPublic
+        );
+
+        return Assert.IsType<HttpClient>(field?.GetValue(client));
+    }
+
+    private static async Task AssertDisposedStateAsync(HttpClient client, bool shouldBeDisposed)
+    {
+
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+        var send = () => client.GetAsync("https://example.invalid", cancellation.Token);
+
+        if (shouldBeDisposed)
+        {
+            await Assert.ThrowsAsync<ObjectDisposedException>(send);
+
+            return;
+        }
+
+        using var response = await send();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     private sealed class TestHandler(Func<HttpRequestMessage, HttpResponseMessage> handler) : HttpMessageHandler

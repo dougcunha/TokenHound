@@ -19,6 +19,7 @@ public sealed class CadenceSettingsViewModelTests : IDisposable
 {
     private readonly string _tempDirectory;
     private readonly string _settingsFilePath;
+    private readonly RateLimitPolicy _rateLimitPolicy = new();
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CadenceSettingsViewModelTests"/> class.
@@ -34,8 +35,6 @@ public sealed class CadenceSettingsViewModelTests : IDisposable
     /// <inheritdoc />
     public void Dispose()
     {
-
-        RateLimitPolicy.ResetEffectiveFloor();
 
         if (File.Exists(_settingsFilePath))
             File.SetAttributes(_settingsFilePath, FileAttributes.Normal);
@@ -217,7 +216,7 @@ public sealed class CadenceSettingsViewModelTests : IDisposable
 
         store.ActiveInterval.Should().Be(TimeSpan.FromSeconds(60));
         store.IdleInterval.Should().Be(TimeSpan.FromSeconds(120));
-        RateLimitPolicy.EffectiveRetryFloor.Should().Be(TimeSpan.FromSeconds(90));
+        _rateLimitPolicy.EffectiveRetryFloor.Should().Be(TimeSpan.FromSeconds(90));
 
         refreshStore.Load().ActiveIntervalSeconds.Should().Be(60);
         refreshStore.Load().IdleIntervalSeconds.Should().Be(120);
@@ -252,7 +251,7 @@ public sealed class CadenceSettingsViewModelTests : IDisposable
         viewModel.IsDirty.Should().BeTrue();
 
         store.ActiveInterval.Should().Be(TimeSpan.FromSeconds(180));
-        RateLimitPolicy.EffectiveRetryFloor.Should().Be(TimeSpan.FromSeconds(60));
+        _rateLimitPolicy.EffectiveRetryFloor.Should().Be(TimeSpan.FromSeconds(60));
     }
 
     /// <summary>
@@ -275,7 +274,12 @@ public sealed class CadenceSettingsViewModelTests : IDisposable
 
         var refreshStore = new RefreshSettingsStore(_settingsFilePath);
         var rateLimitStore = new RateLimitSettingsStore(_settingsFilePath);
-        var vm = new CadenceSettingsViewModel(store, refreshStore, rateLimitStore);
+        var vm = new CadenceSettingsViewModel(
+            store,
+            refreshStore,
+            rateLimitStore,
+            _rateLimitPolicy
+        );
 
         return (vm, refreshStore, rateLimitStore);
     }
