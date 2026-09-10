@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using TokenHound.App.Presentation;
+using TokenHound.App.UI.Tray;
 using TokenHound.App.UI.Windows;
 using TokenHound.App.ViewModels;
 using TokenHound.Core.Policies;
@@ -33,6 +34,8 @@ public partial class App : Application
     private HudActionsViewModel? _actionsViewModel;
     private ApplicationLifetime? _lifetime;
     private NotchWindow? _notchWindow;
+    private NotchVisibilityController? _visibility;
+    private TrayIconHost? _trayHost;
 
     /// <inheritdoc />
     protected override void OnStartup(StartupEventArgs e)
@@ -302,7 +305,7 @@ public partial class App : Application
 
         _actionsViewModel = new HudActionsViewModel(
             usageStore.RefreshNowAsync,
-            _lifetime.ShutdownAsync,
+            ShutdownAsync,
             () => _dialogService.ShowSettings(_notchWindow, () => CreateSettingsViewModel(usageStore)),
             () => _dialogService.ShowAbout(_notchWindow),
             () => usageStore.CurrentSnapshots.Values
@@ -318,6 +321,46 @@ public partial class App : Application
         _notchWindow.Show();
 
         Log.Information("HUD window displayed successfully.");
+
+        InitializeTray(disposableResources);
+    }
+
+    private void InitializeTray(List<IDisposable> disposableResources)
+    {
+
+        _visibility = new NotchVisibilityController(
+            () => DispatchUiAction(() => _notchWindow!.ShowNotch()),
+            () => DispatchUiAction(() => _notchWindow!.HideNotch()),
+            initiallyVisible: true
+        );
+
+        var trayViewModel = new TrayIconViewModel(
+            _actionsViewModel!,
+            _visibility,
+            new TrayMenuModel()
+        );
+
+        _trayHost = new TrayIconHost(
+            new TaskbarIconAdapter(),
+            trayViewModel,
+            DispatchUiAction,
+            new Uri("pack://application:,,,/Assets/logo.ico"),
+            Log.Logger
+        );
+
+        disposableResources.Add(_trayHost);
+        _trayHost.Initialize();
+
+        _notchWindow!.ShouldInterceptClose = () => _visibility.ShouldInterceptClose;
+        _notchWindow.CloseIntercepted = _visibility.Hide;
+    }
+
+    private Task ShutdownAsync()
+    {
+
+        _visibility!.AllowClose();
+
+        return _lifetime!.ShutdownAsync();
     }
 
     private void DispatchUiAction(Action action)

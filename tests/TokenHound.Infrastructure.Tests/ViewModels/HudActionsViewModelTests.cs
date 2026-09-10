@@ -156,20 +156,20 @@ public sealed class HudActionsViewModelTests
         );
 
         var refreshTask = viewModel.RefreshAsync(ct);
-        _ = viewModel.CloseAsync();
+        _ = viewModel.ShutdownAsync();
 
         tcs.SetException(new OperationCanceledException());
         await refreshTask;
 
         viewModel.RefreshStatusText.Should().BeNull();
-        viewModel.IsClosing.Should().BeTrue();
+        viewModel.IsShuttingDown.Should().BeTrue();
     }
 
     /// <summary>
-    /// Verifies that CloseAsync invokes close action once, caches the result task, and prevents future action dispatch.
+    /// Verifies that ShutdownAsync invokes the shutdown action once, caches the result task, and prevents future action dispatch.
     /// </summary>
     [Fact]
-    public async Task CloseAsync_GuardsRepeatedCalls_AndPreventsSubsequentActions()
+    public async Task ShutdownAsync_GuardsRepeatedCalls_AndPreventsSubsequentActions()
     {
 
         var ct = TestContext.Current.CancellationToken;
@@ -193,14 +193,14 @@ public sealed class HudActionsViewModelTests
             () => aboutCount++
         );
 
-        var close1 = viewModel.CloseAsync();
-        var close2 = viewModel.CloseAsync();
+        var close1 = viewModel.ShutdownAsync();
+        var close2 = viewModel.ShutdownAsync();
 
         close1.Should().BeSameAs(close2);
         await close1;
 
         closeCount.Should().Be(1);
-        viewModel.IsClosing.Should().BeTrue();
+        viewModel.IsShuttingDown.Should().BeTrue();
 
         viewModel.ShowSettings();
         viewModel.ShowAbout();

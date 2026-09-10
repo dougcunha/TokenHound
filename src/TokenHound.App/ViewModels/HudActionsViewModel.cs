@@ -22,40 +22,40 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
     private const string FAILED_TEXT = "Refresh failed.";
 
     private readonly Func<CancellationToken, Task> _refreshAction;
-    private readonly Func<Task> _closeAction;
+    private readonly Func<Task> _shutdownAction;
     private readonly Action _showSettings;
     private readonly Action _showAbout;
     private readonly Func<IEnumerable<Snapshot>>? _snapshotsProvider;
 
     private readonly object _syncLock = new();
-    private Task? _closeTask;
+    private Task? _shutdownTask;
     private bool _isRefreshing;
-    private bool _isClosing;
+    private bool _isShuttingDown;
     private string? _refreshStatusText;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HudActionsViewModel"/> class.
     /// </summary>
     /// <param name="refreshAction">The asynchronous refresh operation.</param>
-    /// <param name="closeAction">The asynchronous shutdown coordination operation.</param>
+    /// <param name="shutdownAction">The asynchronous coordinated-shutdown operation, invoked only by the tray "Exit" action.</param>
     /// <param name="showSettings">Action to show the modeless Settings dialog.</param>
     /// <param name="showAbout">Action to show the modeless About dialog.</param>
     /// <param name="snapshotsProvider">Optional provider to query current snapshots for status formulation.</param>
     public HudActionsViewModel(
         Func<CancellationToken, Task> refreshAction,
-        Func<Task> closeAction,
+        Func<Task> shutdownAction,
         Action showSettings,
         Action showAbout,
         Func<IEnumerable<Snapshot>>? snapshotsProvider = null)
     {
 
         ArgumentNullException.ThrowIfNull(refreshAction);
-        ArgumentNullException.ThrowIfNull(closeAction);
+        ArgumentNullException.ThrowIfNull(shutdownAction);
         ArgumentNullException.ThrowIfNull(showSettings);
         ArgumentNullException.ThrowIfNull(showAbout);
 
         _refreshAction = refreshAction;
-        _closeAction = closeAction;
+        _shutdownAction = shutdownAction;
         _showSettings = showSettings;
         _showAbout = showAbout;
         _snapshotsProvider = snapshotsProvider;
@@ -71,10 +71,10 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
         => _isRefreshing;
 
     /// <summary>
-    /// Gets a value indicating whether the application is currently shutting down.
+    /// Gets a value indicating whether the coordinated application shutdown has been initiated.
     /// </summary>
-    public bool IsClosing
-        => _isClosing;
+    public bool IsShuttingDown
+        => _isShuttingDown;
 
     /// <summary>
     /// Gets the current status feedback text, or <see langword="null"/> if no feedback is active.
@@ -113,7 +113,7 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
         lock (_syncLock)
         {
 
-            if (_isRefreshing || _isClosing)
+            if (_isRefreshing || _isShuttingDown)
                 return;
 
             _isRefreshing = true;
@@ -127,14 +127,14 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
 
             await _refreshAction(cancellationToken);
 
-            if (!_isClosing)
+            if (!_isShuttingDown)
             {
 
                 var snapshots = _snapshotsProvider?.Invoke();
                 SetStatusText(FormulateStatusText(snapshots));
             }
         }
-        catch (OperationCanceledException) when (_isClosing || cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (_isShuttingDown || cancellationToken.IsCancellationRequested)
         {
 
             SetStatusText(null);
@@ -142,13 +142,13 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
         catch (Exception)
         {
 
-            if (!_isClosing)
+            if (!_isShuttingDown)
                 SetStatusText(FAILED_TEXT);
         }
         finally
         {
 
-            if (!_isClosing)
+            if (!_isShuttingDown)
             {
 
                 _isRefreshing = false;
@@ -158,26 +158,26 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
     }
 
     /// <summary>
-    /// Initiates application shutdown, preventing future action dispatches.
+    /// Initiates the coordinated application shutdown, preventing any further action dispatch.
     /// </summary>
     /// <returns>A shared task representing the terminal shutdown operation.</returns>
-    public Task CloseAsync()
+    public Task ShutdownAsync()
     {
 
         lock (_syncLock)
         {
 
-            if (_closeTask is not null)
-                return _closeTask;
+            if (_shutdownTask is not null)
+                return _shutdownTask;
 
-            _isClosing = true;
-            _closeTask = _closeAction();
+            _isShuttingDown = true;
+            _shutdownTask = _shutdownAction();
         }
 
         SetStatusText(null);
-        OnPropertyChanged(nameof(IsClosing));
+        OnPropertyChanged(nameof(IsShuttingDown));
 
-        return _closeTask;
+        return _shutdownTask;
     }
 
     /// <summary>
@@ -186,7 +186,7 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
     public void ShowSettings()
     {
 
-        if (_isClosing)
+        if (_isShuttingDown)
             return;
 
         _showSettings();
@@ -198,7 +198,7 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
     public void ShowAbout()
     {
 
-        if (_isClosing)
+        if (_isShuttingDown)
             return;
 
         _showAbout();

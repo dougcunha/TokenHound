@@ -56,6 +56,12 @@
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderUsageRowFactory.cs" Link="ViewModels\ProviderUsageRowFactory.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderUsageRowFactory.Copilot.cs" Link="ViewModels\ProviderUsageRowFactory.Copilot.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\SettingsViewModel.cs" Link="ViewModels\SettingsViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Tray\ITrayIcon.cs" Link="Tray\ITrayIcon.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Tray\NotchVisibilityController.cs" Link="Tray\NotchVisibilityController.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Tray\TrayMenuItemKey.cs" Link="Tray\TrayMenuItemKey.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Tray\TrayMenuModel.cs" Link="Tray\TrayMenuModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Tray\TrayIconViewModel.cs" Link="Tray\TrayIconViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Tray\TrayIconHost.cs" Link="Tray\TrayIconHost.cs" />
   </ItemGroup>
 
 </Project>

@@ -104,6 +104,14 @@ TokenHound/
 │       │   │   ├── ScreenBounds.cs         # Work area and virtual screen rectangle
 │       │   │   ├── NotchPlacement.cs       # Top-edge centering and visibility clamping
 │       │   │   └── ScreenEdgeDetector.cs   # Taskbar detection and work area bounds
+│       │   ├── Tray/                       # System Tray notification icon and lifecycle
+│       │   │   ├── ITrayIcon.cs            # Notification area abstraction
+│       │   │   ├── NotchVisibilityController.cs # Notch hide/show state machine
+│       │   │   ├── TrayMenuItemKey.cs      # Menu item identifiers
+│       │   │   ├── TrayMenuModel.cs        # Menu structure, copy constants, and DTOs
+│       │   │   ├── TrayIconViewModel.cs    # Presentation model translating tray actions
+│       │   │   ├── TrayIconHost.cs         # Lifecycle coordinator and graceful degradation
+│       │   │   └── TaskbarIconAdapter.cs   # Hardcodet.NotifyIcon.Wpf implementation
 │       │   └── Animations/                 # Smooth transitions and HUD animations
 │       ├── Interop/                        # Native Win32 window hooks
 │       │   ├── WindowStyles.cs             # WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST
@@ -112,7 +120,7 @@ TokenHound/
 │       ├── ViewModels/                     # MVVM ViewModels
 │       │   ├── NotchViewModel.cs           # Active rings and HUD state
 │       │   └── SettingsViewModel.cs        # Provider visibility and preferences
-│       └── App.xaml / Program.cs           # Entry point, Single-Instance, and System Tray
+│       └── App.xaml / App.xaml.cs          # Application entry point, composition, and shutdown
 │
 └── tests/
     ├── TokenHound.Core.Tests/              # Unit tests for domain models, policies, and decoders

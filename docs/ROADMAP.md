@@ -52,7 +52,7 @@ Phase 3: Presentation Polish & Settings
   - Inline input validation, reset to defaults, and settings dialog integration.
 
 ### [PRD 11] System Tray Integration (`tasks/prd-system-tray-notifyicon/`)
-- **Status**: Planned.
+- **Status**: Complete.
 - **Scope**:
   - Native Windows taskbar notification area (`NotifyIcon`) integration using `Hardcodet.NotifyIcon.Wpf` or Win32 Shell_NotifyIcon.
   - Context menu actions: "Show/Hide Notch", "Refresh Now" (triggers `UsageStore.RefreshNowAsync`), "Settings...", "About...", and "Exit".

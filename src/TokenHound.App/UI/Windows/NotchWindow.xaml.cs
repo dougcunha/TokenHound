@@ -26,6 +26,17 @@ public sealed partial class NotchWindow : Window
     private HudPositionSettings _position = new();
 
     /// <summary>
+    /// Predicate deciding whether an incoming Notch close is intercepted and turned into a hide;
+    /// <see langword="null"/> or a <see langword="false"/> result lets the close proceed.
+    /// </summary>
+    public Func<bool>? ShouldInterceptClose;
+
+    /// <summary>
+    /// Callback that hides the Notch when a close is intercepted or the context-menu "Hide" item is clicked.
+    /// </summary>
+    public Action? CloseIntercepted;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="NotchWindow"/> class.
     /// </summary>
     public NotchWindow()
@@ -38,6 +49,7 @@ public sealed partial class NotchWindow : Window
         SizeChanged += OnSizeChanged;
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         CapsuleBorder.ContextMenuOpening += OnCapsuleContextMenuOpening;
+        Closing += OnClosing;
     }
 
     /// <summary>
@@ -63,6 +75,18 @@ public sealed partial class NotchWindow : Window
             UpdateStatusPopup();
         }
     }
+
+    /// <summary>Shows the Notch at its persisted position without activating it.</summary>
+    public void ShowNotch()
+    {
+
+        Show();
+        ApplyPlacement();
+    }
+
+    /// <summary>Hides the Notch while preserving the window instance and its native styles.</summary>
+    public void HideNotch()
+        => Hide();
 
     private void OnSourceInitialized(object? sender, EventArgs e)
     {
@@ -129,7 +153,18 @@ public sealed partial class NotchWindow : Window
     private void OnCloseClick(object sender, RoutedEventArgs e)
     {
 
-        _ = _actionsViewModel?.CloseAsync();
+        CloseIntercepted?.Invoke();
+    }
+
+    private void OnClosing(object? sender, CancelEventArgs e)
+    {
+
+        if (ShouldInterceptClose?.Invoke() == true)
+        {
+
+            e.Cancel = true;
+            CloseIntercepted?.Invoke();
+        }
     }
 
     private void OnRefreshClick(object sender, RoutedEventArgs e)

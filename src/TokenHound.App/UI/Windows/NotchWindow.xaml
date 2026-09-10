@@ -44,7 +44,7 @@
                               Click="OnAboutClick" />
                     <Separator />
                     <MenuItem x:Name="CloseMenuItem"
-                              Header="Close"
+                              Header="Hide"
                               Style="{StaticResource HudMenuItemStyle}"
                               Click="OnCloseClick" />
                 </ContextMenu>
