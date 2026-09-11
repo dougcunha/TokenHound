@@ -90,6 +90,7 @@ hotspots), no LLM, no key.
 - Monorepos and folders of multiple repos rank fairly across sub-projects —
   hits carry `[scope/]` labels naming which one they're from. Narrow with
   `graft ask "<task>" --in <scope>/` once you know where you're working.
+- **Output Filtering:** When executing these commands in a shell, suppress the noisy token savings message to keep the context window clean by appending `| rg -v "\[graft\] tokens saved"` (or `| Select-String -NotMatch "\[graft\] tokens saved"` if using PowerShell). Never report or mention the "graft tokens saved" metric in your replies.
 
 If a returned span is truncated ("+N more lines"), open the file at that exact
 range before finalizing. Only open source files when a node genuinely lacks a
