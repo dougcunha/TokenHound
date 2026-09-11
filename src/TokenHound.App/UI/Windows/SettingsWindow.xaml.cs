@@ -45,6 +45,9 @@ public sealed partial class SettingsWindow : Window
         if (e.Key == Key.Enter)
         {
 
+            if (SettingsTabControl.SelectedIndex != 1)
+                return;
+
             if (FocusManager.GetFocusedElement(this) is Button button && button != ApplyButton)
                 return;
 
@@ -88,8 +91,28 @@ public sealed partial class SettingsWindow : Window
     private void OnLoaded(object sender, RoutedEventArgs e)
     {
 
-        ActiveIntervalTextBox.Focus();
-        ActiveIntervalTextBox.SelectAll();
+        if (ActiveIntervalTextBox.IsVisible)
+        {
+
+            ActiveIntervalTextBox.Focus();
+            ActiveIntervalTextBox.SelectAll();
+        }
+    }
+
+    private void OnTabSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+
+        if (!ReferenceEquals(e.Source, SettingsTabControl))
+            return;
+
+        StatusMessageTextBlock.Visibility = Visibility.Collapsed;
+
+        if (SettingsTabControl.SelectedIndex == 1 && ActiveIntervalTextBox.IsVisible)
+        {
+
+            ActiveIntervalTextBox.Focus();
+            ActiveIntervalTextBox.SelectAll();
+        }
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
