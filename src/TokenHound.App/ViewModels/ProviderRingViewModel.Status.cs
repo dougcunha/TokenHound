@@ -30,6 +30,7 @@ public sealed partial class ProviderRingViewModel
             ProviderStatus.AccessDenied => snapshot.ErrorDescription ?? "Access denied",
             ProviderStatus.Stale => snapshot.ErrorDescription ?? "Telemetry is stale",
             ProviderStatus.Unsupported => snapshot.ErrorDescription ?? "No usable quota available",
+            ProviderStatus.NotRunning => !string.IsNullOrWhiteSpace(snapshot.ErrorDescription) ? snapshot.ErrorDescription : "Provider is not running",
             _ => null
         };
     }

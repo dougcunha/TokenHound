@@ -103,6 +103,21 @@ public sealed class SnapshotRetentionPolicyTests
     }
 
     /// <summary>
+    /// Verifies that a not-running data source has the same explicit history-clearing behavior.
+    /// </summary>
+    [Fact]
+    public void Apply_WhenNotRunning_ClearsHistoryButPreservesStatus()
+    {
+        var incoming = CreateSnapshot(ProviderStatus.NotRunning, DateTimeOffset.UtcNow);
+
+        var decision = SnapshotRetentionPolicy.Apply(incoming, CreateSnapshot(ProviderStatus.Ok, ORIGINAL_FETCH));
+
+        decision.CurrentSnapshot.Should().Be(incoming);
+        decision.ArchivedSnapshot.Should().BeNull();
+        decision.ClearsHistory.Should().BeTrue();
+    }
+
+    /// <summary>
     /// Verifies that incoming Copilot billing state is preserved across all status branches,
     /// and that archived snapshots have billing stripped.
     /// </summary>
@@ -111,6 +126,7 @@ public sealed class SnapshotRetentionPolicyTests
     [InlineData(ProviderStatus.Stale)]
     [InlineData(ProviderStatus.NeedsAuth)]
     [InlineData(ProviderStatus.Unsupported)]
+    [InlineData(ProviderStatus.NotRunning)]
     public void Apply_PreservesIncomingCopilotBillingAcrossRetentionBranches(ProviderStatus incomingStatus)
     {
         var billing = new CopilotBillingStatus

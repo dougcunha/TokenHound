@@ -74,6 +74,7 @@ public sealed class ProviderBadgeResolverTests
     [InlineData(ProviderBadgeState.Disabled, "Disabled")]
     [InlineData(ProviderBadgeState.Checking, "Checking...")]
     [InlineData(ProviderBadgeState.Unsupported, "No Quota")]
+    [InlineData(ProviderBadgeState.NotRunning, "Not Running")]
     public void ResolveLabel_WhenKnownState_ReturnsSpecifiedWording(ProviderBadgeState state, string expectedLabel)
     {
 

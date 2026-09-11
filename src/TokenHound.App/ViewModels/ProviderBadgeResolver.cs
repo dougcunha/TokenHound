@@ -16,6 +16,7 @@ public static class ProviderBadgeResolver
     private const string LABEL_RATE_LIMITED = "Rate Limited";
     private const string LABEL_ACCESS_DENIED = "Access Denied";
     private const string LABEL_UNSUPPORTED = "No Quota";
+    private const string LABEL_NOT_RUNNING = "Not Running";
     private const string LABEL_DISABLED = "Disabled";
 
     private const string BACKGROUND_CHECKING = "BadgeCheckingBackgroundBrush";
@@ -58,6 +59,7 @@ public static class ProviderBadgeResolver
             ProviderStatus.RateLimited => ProviderBadgeState.RateLimited,
             ProviderStatus.AccessDenied => ProviderBadgeState.AccessDenied,
             ProviderStatus.Unsupported => ProviderBadgeState.Unsupported,
+            ProviderStatus.NotRunning => ProviderBadgeState.NotRunning,
             _ => ProviderBadgeState.Checking
         };
     }
@@ -74,6 +76,7 @@ public static class ProviderBadgeResolver
             ProviderBadgeState.RateLimited => LABEL_RATE_LIMITED,
             ProviderBadgeState.AccessDenied => LABEL_ACCESS_DENIED,
             ProviderBadgeState.Unsupported => LABEL_UNSUPPORTED,
+            ProviderBadgeState.NotRunning => LABEL_NOT_RUNNING,
             ProviderBadgeState.Disabled => LABEL_DISABLED,
             _ => LABEL_CHECKING
         };
@@ -81,8 +84,9 @@ public static class ProviderBadgeResolver
     /// <summary>Resolves the resource key of the pill background brush for a badge state.</summary>
     /// <param name="state">The badge state to style.</param>
     /// <returns>The resource key name of the background brush.</returns>
-    /// <remarks><see cref="ProviderBadgeState.Unsupported"/> shares the neutral slate treatment of
-    /// <see cref="ProviderBadgeState.Stale"/>, which the product palette does not distinguish.</remarks>
+    /// <remarks><see cref="ProviderBadgeState.Unsupported"/> and <see cref="ProviderBadgeState.NotRunning"/>
+    /// share the neutral slate treatment of <see cref="ProviderBadgeState.Stale"/>, which the product
+    /// palette does not distinguish.</remarks>
     public static string ResolveBackgroundKey(ProviderBadgeState state)
         => state switch
         {
@@ -92,6 +96,7 @@ public static class ProviderBadgeResolver
             ProviderBadgeState.RateLimited => BACKGROUND_RATE_LIMITED,
             ProviderBadgeState.AccessDenied => BACKGROUND_ACCESS_DENIED,
             ProviderBadgeState.Unsupported => BACKGROUND_STALE,
+            ProviderBadgeState.NotRunning => BACKGROUND_STALE,
             ProviderBadgeState.Disabled => BACKGROUND_DISABLED,
             _ => BACKGROUND_CHECKING
         };
@@ -99,8 +104,9 @@ public static class ProviderBadgeResolver
     /// <summary>Resolves the resource key of the pill foreground brush for a badge state.</summary>
     /// <param name="state">The badge state to style.</param>
     /// <returns>The resource key name of the foreground brush.</returns>
-    /// <remarks><see cref="ProviderBadgeState.Unsupported"/> shares the neutral slate treatment of
-    /// <see cref="ProviderBadgeState.Stale"/>, which the product palette does not distinguish.</remarks>
+    /// <remarks><see cref="ProviderBadgeState.Unsupported"/> and <see cref="ProviderBadgeState.NotRunning"/>
+    /// share the neutral slate treatment of <see cref="ProviderBadgeState.Stale"/>, which the product
+    /// palette does not distinguish.</remarks>
     public static string ResolveForegroundKey(ProviderBadgeState state)
         => state switch
         {
@@ -110,6 +116,7 @@ public static class ProviderBadgeResolver
             ProviderBadgeState.RateLimited => FOREGROUND_RATE_LIMITED,
             ProviderBadgeState.AccessDenied => FOREGROUND_ACCESS_DENIED,
             ProviderBadgeState.Unsupported => FOREGROUND_STALE,
+            ProviderBadgeState.NotRunning => FOREGROUND_STALE,
             ProviderBadgeState.Disabled => FOREGROUND_DISABLED,
             _ => FOREGROUND_CHECKING
         };

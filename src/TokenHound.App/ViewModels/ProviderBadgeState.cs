@@ -43,6 +43,11 @@ public enum ProviderBadgeState
     Unsupported,
 
     /// <summary>
+    /// The provider's data source application is not running and no fallback data is available.
+    /// </summary>
+    NotRunning,
+
+    /// <summary>
     /// The user turned monitoring off for the provider, so no telemetry is collected.
     /// </summary>
     Disabled

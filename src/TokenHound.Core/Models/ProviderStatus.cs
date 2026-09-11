@@ -33,5 +33,10 @@ public enum ProviderStatus
     /// <summary>
     /// The provider is reachable but has no usable entitlement or finite quota.
     /// </summary>
-    Unsupported
+    Unsupported,
+
+    /// <summary>
+    /// The provider's data source application is not running and no fallback data is available.
+    /// </summary>
+    NotRunning
 }

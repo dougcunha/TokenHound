@@ -284,7 +284,7 @@ public sealed partial class AntigravityUsageProviderTests
     }
 
     [Fact]
-    public async Task GetSnapshotAsync_WhenAllSourcesUnavailable_ReturnsNeedsAuth()
+    public async Task GetSnapshotAsync_WhenAllSourcesUnavailable_ReturnsNotRunning()
     {
         // Arrange
         var discovery = new AntigravityEndpointDiscovery(
@@ -305,7 +305,7 @@ public sealed partial class AntigravityUsageProviderTests
         // Assert
         Assert.NotNull(snapshot);
         Assert.Equal("gemini", snapshot.ProviderId);
-        Assert.Equal(ProviderStatus.NeedsAuth, snapshot.Status);
+        Assert.Equal(ProviderStatus.NotRunning, snapshot.Status);
         Assert.Empty(snapshot.LimitWindows);
     }
 }

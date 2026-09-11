@@ -193,7 +193,7 @@ public sealed partial class ProviderRing : UserControl
 
         var brush = ResolveStatusBrush(Status, UsedFraction);
         BusyIndicator.Fill = brush;
-        Opacity = Status == ProviderStatus.Stale ? 0.5 : 1.0;
+        Opacity = Status is ProviderStatus.Stale or ProviderStatus.NotRunning ? 0.5 : 1.0;
 
         if (UsedFraction.HasValue && UsedFraction.Value > 0.0)
         {
@@ -250,6 +250,7 @@ public sealed partial class ProviderRing : UserControl
         {
             ProviderStatus.NeedsAuth => PURPLE_BRUSH,
             ProviderStatus.Stale => GREY_BRUSH,
+            ProviderStatus.NotRunning => GREY_BRUSH,
             ProviderStatus.RateLimited or ProviderStatus.AccessDenied => RED_BRUSH,
             _ when fraction >= 0.9 => RED_BRUSH,
             _ when fraction >= 0.7 => AMBER_BRUSH,

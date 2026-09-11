@@ -21,7 +21,7 @@ public static class SnapshotRetentionPolicy
 
         ArgumentNullException.ThrowIfNull(incomingSnapshot);
 
-        if (incomingSnapshot.Status is ProviderStatus.NeedsAuth or ProviderStatus.Unsupported)
+        if (incomingSnapshot.Status is ProviderStatus.NeedsAuth or ProviderStatus.Unsupported or ProviderStatus.NotRunning)
             return CreateClearedDecision(incomingSnapshot);
 
         if (incomingSnapshot.Status == ProviderStatus.Ok)

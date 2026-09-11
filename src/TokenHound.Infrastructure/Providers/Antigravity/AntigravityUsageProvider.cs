@@ -77,7 +77,7 @@ public sealed partial class AntigravityUsageProvider : IUsageProvider, IDisposab
     /// <inheritdoc />
     public async ValueTask<Snapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
     {
-        var officialSnapshot = await TryGetLanguageServerSnapshotAsync(cancellationToken).ConfigureAwait(false);
+        var (officialSnapshot, isRunning) = await TryGetLanguageServerSnapshotAsync(cancellationToken).ConfigureAwait(false);
 
         if (officialSnapshot is not null)
         {
@@ -91,7 +91,7 @@ public sealed partial class AntigravityUsageProvider : IUsageProvider, IDisposab
             return cloudCodeSnapshot;
         }
 
-        if (cloudCodeFailure?.Status == ProviderStatus.NeedsAuth)
+        if (cloudCodeFailure?.Status == ProviderStatus.NeedsAuth && isRunning)
             return cloudCodeFailure;
 
         var derivedSnapshot = await TryGetTranscriptSnapshotAsync(cancellationToken).ConfigureAwait(false);
@@ -101,7 +101,17 @@ public sealed partial class AntigravityUsageProvider : IUsageProvider, IDisposab
                 ? derivedSnapshot with { ActiveBlock = activeBlock }
                 : derivedSnapshot;
 
-        return cloudCodeFailure ?? CreateNeedsAuthSnapshot();
+        return ResolveUnavailableSnapshot(isRunning, cloudCodeFailure);
+    }
+
+    private Snapshot ResolveUnavailableSnapshot(bool isRunning, Snapshot? cloudCodeFailure)
+    {
+        if (cloudCodeFailure is { Status: not ProviderStatus.NeedsAuth })
+            return cloudCodeFailure;
+
+        return isRunning
+            ? CreateNeedsAuthSnapshot()
+            : CreateNotRunningSnapshot();
     }
 
     private async ValueTask<(Snapshot? Success, Snapshot? Failure)> GetCloudCodeOutcomeAsync(
@@ -128,30 +138,30 @@ public sealed partial class AntigravityUsageProvider : IUsageProvider, IDisposab
         }
     }
 
-    private async ValueTask<Snapshot?> TryGetLanguageServerSnapshotAsync(CancellationToken cancellationToken)
+    private async ValueTask<(Snapshot? Snapshot, bool IsRunning)> TryGetLanguageServerSnapshotAsync(CancellationToken cancellationToken)
     {
         var endpoint = _discovery.DiscoverEndpoint();
 
         if (endpoint is null)
         {
-            return null;
+            return (null, false);
         }
 
         var quota = await _client.RetrieveUserQuotaSummaryAsync(endpoint, cancellationToken).ConfigureAwait(false);
 
         if (quota?.Groups is null || quota.Groups.Count == 0)
         {
-            return null;
+            return (null, true);
         }
 
         var windows = MapQuotaGroups(quota.Groups);
 
         if (windows.Count == 0)
-            return null;
+            return (null, true);
 
         _consecutiveRateLimits = 0;
 
-        return CreateOfficialSnapshot(windows);
+        return (CreateOfficialSnapshot(windows), true);
     }
 
     private async ValueTask<Snapshot?> TryGetCloudCodeSnapshotAsync(CancellationToken cancellationToken)

@@ -120,6 +120,7 @@ public sealed partial class TooltipCard : UserControl
         {
             ProviderStatus.Ok => BADGE_OK,
             ProviderStatus.Stale => BADGE_STALE,
+            ProviderStatus.NotRunning => BADGE_STALE,
             ProviderStatus.NeedsAuth => BADGE_AUTH,
             _ => BADGE_ERR
         };
@@ -169,6 +170,7 @@ public sealed partial class TooltipCard : UserControl
         {
             ProviderStatus.Ok => "OK",
             ProviderStatus.Stale => "STALE",
+            ProviderStatus.NotRunning => "NOT RUNNING",
             ProviderStatus.NeedsAuth => "NEEDS AUTH",
             ProviderStatus.AccessDenied => "ACCESS DENIED",
             ProviderStatus.RateLimited => "RATE LIMITED",

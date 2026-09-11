@@ -207,3 +207,20 @@ Because transcript steps are written continuously as the agent progresses:
 1. The monitor polls `LastWriteTimeUtc` across `transcript.jsonl` files every 2 seconds.
 2. If any transcript file was updated within the last **45 seconds** (`staleAfter = 45`), the agent is marked as **Busy**.
 3. A generous 45-second window accounts for the extended inference time complex reasoning models spend thinking before executing subsequent tool calls.
+
+---
+
+## 7. Provider Status Mapping
+
+The waterfall distinguishes a closed application from a genuine authentication failure:
+
+| Condition | Resulting Status |
+| :--- | :--- |
+| Layer 1 Language Server replied with quota windows | `Ok` (`.official`) |
+| Layer 2 Cloud Code replied with quota windows | `Ok` (`.official`) |
+| Layer 3 transcripts produced a daily request count | `Ok` (`.derived`) |
+| No Language Server discovered and no Cloud Code or transcript fallback produced data | `NotRunning` |
+| Language Server running but Cloud Code reports `401 Unauthorized` | `NeedsAuth` |
+| Cloud Code returns `429` or a transport failure | `RateLimited` / `Stale` (preserved) |
+
+Because a closed Antigravity rotates and expires its borrowed OAuth token, the tool **must not** report `NeedsAuth` while the Language Server is absent. Launching the IDE refreshes the token, so `NotRunning` carries the guidance to start Antigravity instead of prompting for re-login.

@@ -79,6 +79,7 @@ public abstract record ProviderStatus
     public sealed record NeedsAuth(string Message) : ProviderStatus;
     public sealed record AccessDenied(string Message) : ProviderStatus;
     public sealed record Unsupported(string Reason) : ProviderStatus;
+    public sealed record NotRunning : ProviderStatus;
     public sealed record Error(string Message) : ProviderStatus;
 }
 ```
@@ -101,12 +102,16 @@ public abstract record ProviderStatus
 5. **Missing Authentication / Logged Out (`NeedsAuth`)**:
    - Occurs when no credential exists or the API explicitly returns `401 Unauthorized` / `403 Forbidden` without indication of temporary expiration.
    - **History Suppression Rule (`SupersedesHistory`)**: Because the credential no longer exists or is revoked, old readings are invalid and **must be discarded immediately**, displaying an empty dash `—` and appropriate sign-in guidance.
+6. **Data Source Not Running (`NotRunning`)**:
+   - Occurs when a provider depends on a live local process (such as the Antigravity Language Server) that is not discovered, and neither remote nor derived fallbacks produce data.
+   - **Rule**: This is not an authentication failure. Report `NotRunning` with guidance to launch the source application instead of prompting for credentials.
 
 ### Historical Decision Matrix (`SupersedesHistory`)
 
 | Failure Condition | Resulting Status | Retain Previous Reading? | Visual Ring Effect |
 | :--- | :--- | :--- | :--- |
 | HTTP 401 / 403 (Revoked Auth) | `NeedsAuth` | **No** (Discard) | Empty ring with dash `—` and login prompt |
+| Data source application not running (no fallback data) | `NotRunning` | **No** (Discard) | Empty ring with "Not Running" guide |
 | Unsupported Plan / No Quota | `Unsupported` | **No** (Discard) | Empty ring with plan notice |
 | Expired Token (Past expiry) | `Stale` | **Yes** (Retain) | Dimmed value with original timestamp |
 | HTTP 429 (Rate Limit) | `Stale` | **Yes** (Retain) | Dimmed value with penalty countdown |

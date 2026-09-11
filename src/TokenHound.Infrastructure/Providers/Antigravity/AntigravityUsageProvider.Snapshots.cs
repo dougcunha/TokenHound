@@ -118,7 +118,19 @@ public sealed partial class AntigravityUsageProvider
             FetchedAtUtc = _timeProvider.GetUtcNow(),
             LimitWindows = [],
             ActiveBlock = null,
-            ErrorDescription = "Launch Antigravity IDE or login to Gemini"
+            ErrorDescription = "Re-authenticate in Antigravity"
+        };
+
+    private Snapshot CreateNotRunningSnapshot()
+        => new()
+        {
+            ProviderId = PROVIDER_ID,
+            Status = ProviderStatus.NotRunning,
+            Fidelity = Fidelity.Official,
+            FetchedAtUtc = _timeProvider.GetUtcNow(),
+            LimitWindows = [],
+            ActiveBlock = null,
+            ErrorDescription = "Launch Antigravity to collect usage"
         };
 
     private Snapshot? MapCloudCodeFailure(ProviderHttpException exception)

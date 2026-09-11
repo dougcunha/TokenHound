@@ -31,9 +31,9 @@
 
     <!--
         Provider status badge palette. Key names are produced by ProviderBadgeResolver and must match it
-        character for character. ProviderBadgeState.Unsupported deliberately reuses the Stale slate pair,
-        so seven states map onto fourteen brushes. Background colors carry alpha and composite over
-        SurfaceCardBackgroundBrush.
+        character for character. ProviderBadgeState.Unsupported and ProviderBadgeState.NotRunning
+        deliberately reuse the Stale slate pair, so eight states map onto fourteen brushes. Background
+        colors carry alpha and composite over SurfaceCardBackgroundBrush.
     -->
     <SolidColorBrush x:Key="BadgeOkBackgroundBrush" Color="#202E7D32" />
     <SolidColorBrush x:Key="BadgeOkForegroundBrush" Color="#81C784" />

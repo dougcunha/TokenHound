@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using NSubstitute;
@@ -15,10 +16,13 @@ namespace TokenHound.Infrastructure.Tests.Providers.Antigravity;
 public sealed partial class AntigravityUsageProviderTests
 {
     [Fact]
-    public async Task GetSnapshotAsync_WhenCloudCodeUnauthorized_ReturnsNeedsAuth()
+    public async Task GetSnapshotAsync_WhenCloudCodeUnauthorizedAndServerRunning_ReturnsNeedsAuth()
     {
 
-        var discovery = CreateUnavailableDiscovery();
+        using var languageHttpClient = new HttpClient(new MockHttpMessageHandler(
+            static _ => CreateEmptyGroupsResponse()
+        ));
+        using var languageClient = new AntigravityLanguageServerClient(languageHttpClient);
         using var httpClient = new HttpClient(new MockHttpMessageHandler(
             static _ => new HttpResponseMessage(HttpStatusCode.Unauthorized)
         ));
@@ -27,8 +31,12 @@ public sealed partial class AntigravityUsageProviderTests
             CreateCredentialStore(),
             "nonexistent.json"
         );
-        var reader = new AntigravityTranscriptReader([]);
-        using var provider = new AntigravityUsageProvider(discovery, null, reader, cloudClient);
+        using var provider = new AntigravityUsageProvider(
+            CreateRunningDiscovery(),
+            languageClient,
+            new AntigravityTranscriptReader([]),
+            cloudClient
+        );
 
         var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
@@ -91,6 +99,22 @@ public sealed partial class AntigravityUsageProviderTests
             processEnumerator: static () => [],
             portResolver: static _ => []
         );
+
+    private static AntigravityEndpointDiscovery CreateRunningDiscovery()
+        => new(
+            processEnumerator: static () => [(1234, "--csrf_token token-abc")],
+            portResolver: static _ => [5555]
+        );
+
+    private static HttpResponseMessage CreateEmptyGroupsResponse()
+        => new(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                """{"response":{"groups":[]}}""",
+                Encoding.UTF8,
+                "application/json"
+            )
+        };
 
     private static ICredentialStore CreateCredentialStore()
     {
