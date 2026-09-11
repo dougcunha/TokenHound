@@ -19,6 +19,7 @@ internal static class ProviderCatalog
             "codex" => "Codex",
             "cursor" => "Cursor",
             "copilot" => "Copilot",
+            "opencode" => "OpenCode",
             "glm" => "GLM",
             "grok" => "Grok",
             "perplexity" => "Perplexity",
@@ -37,6 +38,7 @@ internal static class ProviderCatalog
             "codex" => "X",
             "cursor" => "Cu",
             "copilot" => "Cp",
+            "opencode" => "OC",
             "glm" => "GL",
             "grok" => "Gr",
             "perplexity" => "P",
@@ -57,6 +59,7 @@ internal static class ProviderCatalog
             "copilot" => "Glyph.Copilot",
             "glm" => "Glyph.Glm",
             "grok" => "Glyph.Grok",
+            "opencode" => "Glyph.Opencode",
             "perplexity" => "Glyph.Perplexity",
             _ => null
         };
@@ -78,6 +81,7 @@ internal static class ProviderCatalog
             "copilot" => 1.0,
             "glm" => 0.95,
             "grok" => 1.0,
+            "opencode" => 1.0,
             "perplexity" => 1.0344,
             _ => 1.0
         };

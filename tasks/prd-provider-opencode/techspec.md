@@ -17,7 +17,7 @@
 
 Implement the `opencode` provider adapter in `TokenHound.Infrastructure` following the established provider architecture. 
 
-The integration extracts the developer's OpenCode Go API key from `%USERPROFILE%\.local\share\opencode\auth.json` in read-only mode (`FileShare.ReadWrite | FileShare.Delete`), queries the official telemetry endpoint `https://opencode.ai/zen/go/v1/usage`, maps three authoritative limit windows (5-Hour Rolling, Weekly, Monthly) into an immutable `Snapshot`, and monitors agent execution via `opencode` / `OpenCode` process discovery.
+The integration extracts the developer's OpenCode Go API key from `%USERPROFILE%\.local\share\opencode\auth.json` in read-only mode (`FileShare.ReadWrite | FileShare.Delete`), queries the official telemetry endpoint `https://opencode.ai/zen/go/v1/usage`, maps three authoritative limit windows (5-Hour Rolling, Weekly, Monthly) into an immutable `Snapshot`, and monitors agent execution via validated `opencode` / `OpenCode` process discovery plus read-only `opencode.db` session activity.
 
 ---
 
@@ -28,7 +28,7 @@ The integration extracts the developer's OpenCode Go API key from `%USERPROFILE%
 | DEC-01 | FR-01, FR-02, NFR-03 | Borrow API key directly from `%USERPROFILE%\.local\share\opencode\auth.json` with fallback to `OPENCODE_GO_API_KEY` / `OPENCODE_API_KEY`. | OpenCode CLI/TUI stores credentials in JSON format under the XDG data home on Windows. Adheres to *Borrow-Don't-Own*. | Storing a duplicate key in TokenHound requires user onboarding; DPAPI/Credential Manager is not used by OpenCode. |
 | DEC-02 | FR-03, FR-04, NFR-02 | Map `https://opencode.ai/zen/go/v1/usage` to 3 distinct `LimitWindow` items with `Fidelity.Official`. | The Go endpoint provides authoritative `percent` and `resetsAt` ISO timestamps for rolling (5h), weekly, and monthly windows. | Pay-as-you-go Zen has no public usage endpoint; Go usage API is fully verified and stable. |
 | DEC-03 | FR-05, NFR-04 | Enforce `RateLimitPolicy` when receiving HTTP 429 or `status: "rate-limited"`. | Respects `Retry-After` header and persists backoff deadline across polling cycles, preventing client hammering. | Naive retries risk account throttling; ignoring 429 causes stale or incorrect UI. |
-| DEC-04 | FR-06 | Implement `OpenCodeActivityMonitor : IActivityMonitor` using `ProcessDiscovery` for `opencode` and `OpenCode`. | Provides real-time liveness state on HUD without polling SQLite continuously or injecting hooks. | Polling `opencode.db` frequently consumes disk I/O; process discovery is lightweight and sufficient. |
+| DEC-04 | FR-06 | Implement `OpenCodeActivityMonitor : IActivityMonitor` using `ProcessDiscovery` and `ProcessLiveness` for `opencode` / `OpenCode`, then read `session.time_updated` through `SafeSqliteReader`. Report `Busy` only when activity is within 60 seconds, `Idle` for a validated live process with stale or unavailable activity, and null when no process is live. | Combines process liveness with the provider-specified local activity signal without writing or locking OpenCode's WAL database. | Process-only detection cannot distinguish an idle OpenCode process from an active prompt; database failures degrade a live process to `Idle`. |
 | DEC-05 | NFR-01, NFR-05 | Encapsulate HTTP transport in `OpenCodeApiClient` accepting `HttpMessageHandler` in constructor. | Ensures 100% unit-testability in memory without hitting live endpoints during test execution. | Using static `HttpClient` prevents deterministic test mocking. |
 
 ---
@@ -80,8 +80,9 @@ flowchart TD
 | CMP-03 | `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeCredentialDiscovery.cs` | New | Discovers OpenCode API key from env or `auth.json` with safe read-only file sharing. | CMP-01 |
 | CMP-04 | `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeApiClient.cs` | New | Dispatches HTTP GET to `zen/go/v1/usage`, extracts `Retry-After`, and deserializes responses. | CMP-02 |
 | CMP-05 | `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeUsageProvider.cs` | New | Implements `IUsageProvider` (`ProviderId = "opencode"`), builds `Snapshot` with 3 `LimitWindow` records. | CMP-03, CMP-04, `RateLimitPolicy` |
-| CMP-06 | `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeActivityMonitor.cs` | New | Implements `IActivityMonitor`, discovers `opencode` / `OpenCode` process liveness. | `ProcessDiscovery`, `ProcessLiveness` |
+| CMP-06 | `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeActivityMonitor.cs` | New | Implements `IActivityMonitor`, validates `opencode` / `OpenCode` process liveness, and maps recent database activity to `Busy` or `Idle`. | `ProcessDiscovery`, `ProcessLiveness`, CMP-08 |
 | CMP-07 | `src/TokenHound.App/appsettings.json` | Modified | Adds default entry for `"OpenCode": { "Enabled": true }`. | None |
+| CMP-08 | `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeActivityReader.cs` | New | Reads the latest `session.time_updated` from `%USERPROFILE%\.local\share\opencode\opencode.db` using read-only WAL access with immutable fallback. | `SafeSqliteReader` |
 
 ---
 
@@ -180,6 +181,7 @@ var windows = new List<LimitWindow>
 - **HTTP 401 Unauthorized**: Transitions to `ProviderStatus.NeedsAuth`.
 - **HTTP 403 Forbidden / EntitlementError**: User has key but no active OpenCode Go subscription. Sets `ProviderStatus.AccessDenied` with description `"OpenCode Go subscription required"`.
 - **HTTP 429 Rate Limited**:
+  - Transitions the provider to `ProviderStatus.RateLimited`.
   - Parses `Retry-After` header (seconds).
   - Falls back to `resetsAt` timestamp of the rolling window.
   - Sets `Snapshot.ActiveBlock = new UsageBlock { Reason = BlockedReason.RateLimitReached, BlockedUntilUtc = deadline }`.
@@ -196,7 +198,7 @@ var windows = new List<LimitWindow>
 | 1. Create DTOs & Credential Discovery | — | Unit tests verify JSON extraction from mock `auth.json` and env overrides. |
 | 2. Implement `OpenCodeApiClient` | Step 1 | Unit tests with `MockHttpMessageHandler` verify 200, 401, 403, and 429 responses. |
 | 3. Implement `OpenCodeUsageProvider` | Step 2 | Snapshots return 3 valid `LimitWindow` instances with correct `Fidelity.Official`. |
-| 4. Implement `OpenCodeActivityMonitor` | — | Unit tests verify process discovery for `opencode` and `OpenCode`. |
+| 4. Implement `OpenCodeActivityMonitor` and activity reader | — | Unit/integration tests verify validated process discovery, recent/stale database activity, read-only WAL fallback, and cancellation. |
 | 5. Register in DI and Configuration | Steps 3, 4 | Provider appears in `UsageStore` and settings schemas. |
 
 ---
@@ -213,7 +215,7 @@ var windows = new List<LimitWindow>
 | TC-02 | FR-03, FR-04 | Unit | Parse successful 3-window usage response | 3 `LimitWindow` records generated with accurate `UsedFraction` | `TokenHound.Infrastructure.Tests` |
 | TC-03 | FR-05 | Unit | API returns HTTP 429 with `Retry-After` | `ActiveBlock` created and backoff deadline set | `TokenHound.Infrastructure.Tests` |
 | TC-04 | FR-07 | Unit | HTTP 401 and 403 handling | Maps to `NeedsAuth` and `AccessDenied` | `TokenHound.Infrastructure.Tests` |
-| TC-05 | FR-06 | Unit | Process liveness check | Detects running agent process | `TokenHound.Infrastructure.Tests` |
+| TC-05 | FR-06 | Unit/integration | Process liveness and SQLite activity check | Recent `session.time_updated` within 60 seconds is `Busy`; stale activity is `Idle`; absent or invalid process is null; WAL/immutable fallback remains read-only | `TokenHound.Infrastructure.Tests` |
 
 ---
 

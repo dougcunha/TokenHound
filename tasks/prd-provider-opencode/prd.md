@@ -43,7 +43,7 @@ Integrating OpenCode into TokenHound enables instant, floating HUD telemetry for
 | FR-04 | Multi-Window Parsing | Parse `usage.rolling`, `usage.weekly`, and `usage.monthly` into distinct `LimitWindow` instances with exact percentage, reset UTC, and period. |
 | FR-05 | Rate-Limit & 429 Handling | When response is 429 or `status == "rate-limited"`, parse `Retry-After` or `resetsAt`, set `ActiveBlock`, and apply backoff via `RateLimitPolicy`. |
 | FR-06 | Process Liveness Monitoring | Implement `OpenCodeActivityMonitor : IActivityMonitor` tracking `opencode` and `OpenCode` process presence. |
-| FR-07 | Status State Machine | Transition to `Ok` on success, `NeedsAuth` on missing/unauthorized key (401), `RateLimitReached` on 429, and `Stale` when network fails with cached reading. |
+| FR-07 | Status State Machine | Transition to `ProviderStatus.Ok` on success, `ProviderStatus.NeedsAuth` on missing/unauthorized key (401), `ProviderStatus.RateLimited` on 429, and `ProviderStatus.Stale` when network fails with cached reading. |
 | FR-08 | Configuration & Registration | Add `OpenCode` to default provider configurations in `appsettings.json` and settings schemas. |
 
 ---

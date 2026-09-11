@@ -49,9 +49,9 @@ Implements `OpenCodeApiClient` and strongly typed DTOs to query `https://opencod
 
 ## Work
 
-- [ ] T02.1 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeUsageDto.cs` with JSON property attributes.
-- [ ] T02.2 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeApiClient.cs` implementing `GetUsageAsync(string apiKey, CancellationToken ct)`.
-- [ ] T02.3 Create unit tests in `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeApiClientTests.cs` using `MockHttpMessageHandler` covering 200 OK, 401 Unauthorized, 403 EntitlementError, 429 Too Many Requests (with `Retry-After`), and transient socket timeouts.
+- [x] T02.1 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeUsageDto.cs` with JSON property attributes.
+- [x] T02.2 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeApiClient.cs` implementing `GetUsageAsync(string apiKey, CancellationToken ct)`.
+- [x] T02.3 Create unit tests in `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeApiClientTests.cs` using `MockHttpMessageHandler` covering 200 OK, 401 Unauthorized, 403 EntitlementError, 429 Too Many Requests (with `Retry-After`), and transient socket timeouts.
 
 ## Acceptance criteria
 
@@ -72,6 +72,10 @@ Implements `OpenCodeApiClient` and strongly typed DTOs to query `https://opencod
 ## Affected files
 
 - Create: `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeUsageDto.cs`
+- Create: `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeRateLimitException.cs`
+- Create: `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeAuthException.cs`
+- Create: `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeEntitlementException.cs`
+- Create: `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeTimeoutException.cs`
 - Create: `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeApiClient.cs`
 - Create: `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeApiClientTests.cs`
 
@@ -84,12 +88,24 @@ Implements `OpenCodeApiClient` and strongly typed DTOs to query `https://opencod
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Implemented `OpenCodeApiClient`, strongly typed DTOs (`OpenCodeUsageResponse`, `OpenCodeUsageData`, `OpenCodeLimitWindowDto`, `OpenCodeErrorResponse`), and typed exceptions (`OpenCodeRateLimitException`, `OpenCodeAuthException`, `OpenCodeEntitlementException`, `OpenCodeTimeoutException`). All requests enforce <= 10s timeouts, Bearer authentication, User-Agent `TokenHound`, and HTTP 429 `Retry-After` seconds and date header parsing. Unit test suite includes 13 passing tests with 100% assertion pass rate.
+- Changed files:
+  - `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeUsageDto.cs`
+  - `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeRateLimitException.cs`
+  - `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeAuthException.cs`
+  - `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeEntitlementException.cs`
+  - `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeTimeoutException.cs`
+  - `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeApiClient.cs`
+  - `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeApiClientTests.cs`
+  - `tasks/prd-provider-opencode/task_02.md`
+- Checks:
+  - `rtk dotnet build tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-restore --nologo --verbosity:minimal` -> 0 errors, 0 warnings.
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --filter-class "*OpenCodeApiClientTests*" --minimum-expected-tests 1` -> 13 passed, 0 warnings (1.0 s).
+  - OpenCode suite: `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --filter-class "*OpenCode*" --minimum-expected-tests 1` -> 33 passed, 0 warnings (1.0 s).
+  - Full suite: `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1` -> 639 passed, 0 warnings (3.9 s).
+- Validated state: .NET 10 (`net10.0`), all acceptance criteria satisfied, zero regressions.
+- Open items: None for T02. Unblocks T03 (OpenCode usage provider adapter and snapshot mapping).
 
 ### ADR candidates
 
-Pending execution.
+None. Implementation strictly adheres to TechSpec DEC-02, DEC-03, DEC-05, and repository architectural invariants.

@@ -17,6 +17,7 @@ using TokenHound.Infrastructure.Providers.Claude;
 using TokenHound.Infrastructure.Providers.Codex;
 using TokenHound.Infrastructure.Providers.Copilot;
 using TokenHound.Infrastructure.Providers.Cursor;
+using TokenHound.Infrastructure.Providers.OpenCode;
 
 namespace TokenHound.App;
 
@@ -173,6 +174,7 @@ public partial class App : Application
             rateLimitPolicy,
             disposableResources
         );
+        RegisterOpenCode(usageStore, rateLimitPolicy, disposableResources);
     }
 
     private static void RegisterClaude(UsageStore usageStore, RateLimitPolicy rateLimitPolicy)
@@ -250,6 +252,18 @@ public partial class App : Application
             gate,
             billingService
         );
+
+    private static void RegisterOpenCode(
+        UsageStore usageStore,
+        RateLimitPolicy rateLimitPolicy,
+        List<IDisposable> disposableResources)
+    {
+
+        var provider = new OpenCodeUsageProvider(rateLimitPolicy: rateLimitPolicy);
+        usageStore.RegisterProvider(provider);
+        usageStore.RegisterActivityMonitor(new OpenCodeActivityMonitor());
+        disposableResources.Add(provider);
+    }
 
     /// <summary>
     /// Applies the persisted monitoring preferences to every registered provider. Runs after registration so the

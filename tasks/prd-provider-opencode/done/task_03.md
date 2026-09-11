@@ -52,9 +52,9 @@ Implements `OpenCodeUsageProvider : IUsageProvider` (`ProviderId = "opencode"`),
 
 ## Work
 
-- [ ] T03.1 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeUsageProvider.cs` implementing `IUsageProvider`.
-- [ ] T03.2 Implement `GetSnapshotAsync` with status resolution, 3-tier limit window mapping, and `RateLimitPolicy` deadline checks.
-- [ ] T03.3 Create unit tests in `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeUsageProviderTests.cs` verifying snapshot generation, limit window properties, 429 block handling, unauthenticated transitions, and stale state on network failure.
+- [x] T03.1 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeUsageProvider.cs` implementing `IUsageProvider`.
+- [x] T03.2 Implement `GetSnapshotAsync` with status resolution, 3-tier limit window mapping, and `RateLimitPolicy` deadline checks.
+- [x] T03.3 Create unit tests in `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeUsageProviderTests.cs` verifying snapshot generation, limit window properties, 429 block handling, unauthenticated transitions, and stale state on network failure.
 
 ## Acceptance criteria
 
@@ -87,12 +87,18 @@ Implements `OpenCodeUsageProvider : IUsageProvider` (`ProviderId = "opencode"`),
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Implemented `OpenCodeUsageProvider : IUsageProvider, IDisposable` (`ProviderId = "opencode"`) mapping 3 authoritative limit windows (5-Hour Rolling, Weekly, Monthly) with strict `UsedFraction` clamping, `RateLimitPolicy` backoff and polling lockout, and robust status state machine transitions (`Ok`, `NeedsAuth`, `AccessDenied`, `RateLimited`, `Stale`). Implemented 13 unit tests in `OpenCodeUsageProviderTests`.
+- Changed files:
+  - `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeUsageProvider.cs`
+  - `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeUsageProviderTests.cs`
+  - `tasks/prd-provider-opencode/task_03.md`
+- Checks:
+  - `rtk dotnet build tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-restore --nologo --verbosity:minimal` (0 errors, 0 warnings)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --filter-class "*OpenCodeUsageProviderTests*" --minimum-expected-tests 1` (13 passed, 0 failed, 100% assertions)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --filter-class "*OpenCode*" --minimum-expected-tests 1` (46 passed, 0 failed)
+- Validated state: All 6 acceptance criteria verified and validated.
+- Open items: None for T03. Ready for orchestrator approval to advance to T04.
 
 ### ADR candidates
 
-Pending execution.
+None.

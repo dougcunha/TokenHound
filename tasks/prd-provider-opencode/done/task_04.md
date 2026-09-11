@@ -45,10 +45,10 @@ Implements `OpenCodeActivityMonitor : IActivityMonitor` to track running `openco
 
 ## Work
 
-- [ ] T04.1 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeActivityMonitor.cs` implementing `IActivityMonitor`.
-- [ ] T04.2 Create unit tests in `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeActivityMonitorTests.cs` validating liveness detection when processes are present vs absent.
-- [ ] T04.3 Update `src/TokenHound.App/appsettings.json` to include `"OpenCode": { "Enabled": true }` in the default provider settings.
-- [ ] T04.4 Verify the entire test suite passes across `TokenHound.Infrastructure.Tests`.
+- [x] T04.1 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeActivityMonitor.cs` implementing `IActivityMonitor`.
+- [x] T04.2 Create unit tests in `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeActivityMonitorTests.cs` validating liveness detection when processes are present vs absent.
+- [x] T04.3 Update `src/TokenHound.App/appsettings.json` to include `"OpenCode": { "Enabled": true }` in the default provider settings.
+- [x] T04.4 Verify the entire test suite passes across `TokenHound.Infrastructure.Tests`.
 
 ## Acceptance criteria
 
@@ -71,6 +71,8 @@ Implements `OpenCodeActivityMonitor : IActivityMonitor` to track running `openco
 - Create: `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeActivityMonitor.cs`
 - Create: `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeActivityMonitorTests.cs`
 - Modify: `src/TokenHound.App/appsettings.json`
+- Modify: `src/TokenHound.Infrastructure/Configuration/UserSettingsFile.cs`
+- Modify: `tasks/prd-provider-opencode/task_04.md`
 
 ## Observability and recovery
 
@@ -81,12 +83,24 @@ Implements `OpenCodeActivityMonitor : IActivityMonitor` to track running `openco
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Implemented `OpenCodeActivityMonitor : IActivityMonitor` (`ProviderId = "opencode"`) supporting process liveness discovery for `opencode` (CLI) and `OpenCode` (Desktop), with injectable process locator delegate and `TimeProvider` for 100% deterministic testing without OS dependence. Registered `"opencode": { "Enabled": true }` in `src/TokenHound.App/appsettings.json` and added `"opencode"` to `DEFAULT_PROVIDERS` in `src/TokenHound.Infrastructure/Configuration/UserSettingsFile.cs`. Created 11 unit tests in `OpenCodeActivityMonitorTests` validating process discovery, process absence, invalid PIDs, CLI vs Desktop discovery, cancellation propagation, and default constructor execution.
+- Changed files:
+  - `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeActivityMonitor.cs`
+  - `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeActivityMonitorTests.cs`
+  - `src/TokenHound.App/appsettings.json`
+  - `src/TokenHound.Infrastructure/Configuration/UserSettingsFile.cs`
+  - `tasks/prd-provider-opencode/task_04.md`
+- Checks:
+  - `rtk dotnet build tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-restore --nologo --verbosity:minimal` (0 errors, 0 warnings)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --filter-class "*OpenCodeActivityMonitor*" --minimum-expected-tests 1` (11 passed, 0 failed, 100% assertions)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --filter-class "*OpenCode*" --minimum-expected-tests 1` (57 passed, 0 failed)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --filter-class "*UserSettingsFile*" --minimum-expected-tests 1` (12 passed, 0 failed)
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1` (663 passed, 0 failed)
+  - `rtk dotnet test --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --minimum-expected-tests 1` (89 passed, 0 failed)
+  - `rtk dotnet build src/TokenHound.App/TokenHound.App.csproj --no-restore --nologo --verbosity:minimal` (0 errors, 0 warnings)
+- Validated state: All acceptance criteria verified and validated.
+- Open items: None for T04. Ready for orchestrator approval.
 
 ### ADR candidates
 
-Pending execution.
+None.

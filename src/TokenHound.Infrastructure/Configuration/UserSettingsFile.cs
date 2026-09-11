@@ -18,7 +18,7 @@ public sealed partial class UserSettingsFile
     private const string DEFAULT_CONFIG_FILE = "appsettings.json";
 
     private static readonly HashSet<string> DEFAULT_PROVIDERS = new(
-        ["antigravity", "claude", "codex", "copilot", "cursor", "gemini"],
+        ["antigravity", "claude", "codex", "copilot", "cursor", "gemini", "opencode"],
         StringComparer.OrdinalIgnoreCase);
 
     private static readonly JsonSerializerOptions JSON_OPTIONS = new()

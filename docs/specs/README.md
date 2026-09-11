@@ -70,6 +70,12 @@ The central objective is to monitor resource usage metrics, rate limits, and pla
     - Lightweight quota endpoint `copilot_internal/user` and defensive `quota_snapshots` parsing.
     - Heuristic activity tracking via CLI `session-state/events.jsonl` writes plus process liveness.
 
+12. **[Provider Specification: OpenCode (Go Quotas & Local Telemetry)](12-PROVIDER-OPENCODE.md)**
+    - Borrowed API key discovery from `%USERPROFILE%\.local\share\opencode\auth.json`.
+    - Official quota telemetry endpoint `https://opencode.ai/zen/go/v1/usage`.
+    - 5-hour rolling, weekly, and monthly limit windows.
+    - Local SQLite session token tracking (`opencode.db`) and process liveness monitoring.
+
 ---
 
 ## Provider Comparison Matrix
@@ -83,6 +89,7 @@ The central objective is to monitor resource usage metrics, rate limits, and pla
 | **GLM (Z.ai)** | Config files (Claude Code / ZCode / OpenCode) | HTTPS GET `api.z.ai` / `bigmodel.cn` | % Session (5h), % Weekly, MCP Quota | Not directly available |
 | **Perplexity** | Isolated WebView2 session profile | JS execution in authenticated page context | Absolute remaining count (Pro, Labs, etc.) | N/A |
 | **Copilot** | `gh` OAuth token (OS keychain) / `%USERPROFILE%\.copilot\config.json` | HTTPS GET `api.github.com/copilot_internal/user` | % Monthly premium interactions, reset date | Heuristic (`session-state/events.jsonl` writes + host process liveness) |
+| **OpenCode** | `%USERPROFILE%\.local\share\opencode\auth.json` | HTTPS GET `opencode.ai/zen/go/v1/usage` | % 5-Hour rolling, % Weekly, % Monthly, reset dates | Yes (Process liveness + `opencode.db` activity) |
 
 ---
 

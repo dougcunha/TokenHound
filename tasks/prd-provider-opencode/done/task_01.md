@@ -45,9 +45,9 @@ Extracts the OpenCode Go API key from `%USERPROFILE%\.local\share\opencode\auth.
 
 ## Work
 
-- [ ] T01.1 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeAuthDto.cs`.
-- [ ] T01.2 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeCredentialDiscovery.cs` implementing path resolution and JSON extraction.
-- [ ] T01.3 Create unit tests in `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeCredentialDiscoveryTests.cs` verifying environment variable overrides, valid `auth.json` extraction, missing keys, and absent files.
+- [x] T01.1 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeAuthDto.cs`.
+- [x] T01.2 Create `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeCredentialDiscovery.cs` implementing path resolution and JSON extraction.
+- [x] T01.3 Create unit tests in `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeCredentialDiscoveryTests.cs` verifying environment variable overrides, valid `auth.json` extraction, missing keys, and absent files.
 
 ## Acceptance criteria
 
@@ -80,12 +80,18 @@ Extracts the OpenCode Go API key from `%USERPROFILE%\.local\share\opencode\auth.
 
 > Updated by `sdd-execute-task` during implementation.
 
-- Produced result: Pending execution.
-- Changed files: Pending execution.
-- Checks: Pending execution.
-- Validated state: Pending execution.
-- Open items: Pending execution.
+- Produced result: Implemented immutable `OpenCodeAuthDto` and `OpenCodeCredentialDiscovery` supporting environment variable overrides (`OPENCODE_GO_API_KEY`, `OPENCODE_API_KEY`) and read-only non-locking access to `%USERPROFILE%\.local\share\opencode\auth.json` (`opencode-go`, falling back to `opencode`). Added comprehensive unit and concurrency test suite with 20 passing tests.
+- Changed files:
+  - `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeAuthDto.cs`
+  - `src/TokenHound.Infrastructure/Providers/OpenCode/OpenCodeCredentialDiscovery.cs`
+  - `tests/TokenHound.Infrastructure.Tests/Providers/OpenCode/OpenCodeCredentialDiscoveryTests.cs`
+- Checks:
+  - `rtk dotnet build tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-restore --nologo --verbosity:minimal` -> 0 errors, 0 warnings.
+  - `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --filter-class "*OpenCodeCredentialDiscoveryTests*" --minimum-expected-tests 1` -> 20 passed, 0 warnings.
+  - Full suite: `rtk dotnet test --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1` -> 626 passed, 0 warnings.
+- Validated state: .NET 10 (`net10.0`), all acceptance criteria satisfied, zero regressions.
+- Open items: None for T01. Unblocks T02 (HTTP API client) and T03 (Usage provider).
 
 ### ADR candidates
 
-Pending execution.
+None. Implementation strictly follows TechSpec DEC-01 and existing provider patterns.
