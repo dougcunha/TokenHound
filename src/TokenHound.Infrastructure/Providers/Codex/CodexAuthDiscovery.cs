@@ -59,14 +59,6 @@ public sealed class CodexAuthDiscovery
         => LoadFromFileAsync(AuthFilePath, cancellationToken);
 
     /// <summary>
-    /// Reads the local Codex auth file and extracts its account identity.
-    /// </summary>
-    /// <param name="cancellationToken">The cancellation token to observe.</param>
-    /// <returns>The discovered account identity, or <see langword="null"/> if unavailable.</returns>
-    public Task<AccountInfo?> DiscoverAccountAsync(CancellationToken cancellationToken = default)
-        => DiscoverAsync(cancellationToken);
-
-    /// <summary>
     /// Reads and parses a Codex auth file from the specified path.
     /// </summary>
     /// <param name="filePath">The path to the Codex auth file.</param>

@@ -134,43 +134,36 @@ public sealed partial class AntigravityUsageProvider
         };
 
     private Snapshot? MapCloudCodeFailure(ProviderHttpException exception)
-        => exception.StatusCode switch
+        => SnapshotFailureMapper.Classify(exception.StatusCode, hasCredential: true, ClassifyForbiddenAsIgnored) switch
         {
-            HttpStatusCode.Unauthorized => CreateNeedsAuthSnapshot(),
-            HttpStatusCode.Forbidden => null,
-            HttpStatusCode.TooManyRequests => CreateRateLimitedSnapshot(exception),
+            SnapshotFailureMapper.Outcome.Ignored => null,
+            SnapshotFailureMapper.Outcome.NeedsAuth => CreateNeedsAuthSnapshot(),
+            SnapshotFailureMapper.Outcome.RateLimited => CreateRateLimitedSnapshot(exception.Message, exception.RetryAfterSeconds),
             _ => CreateStaleSnapshot(exception.Message)
         };
 
-    private Snapshot CreateRateLimitedSnapshot(ProviderHttpException exception)
+    private static SnapshotFailureMapper.Outcome? ClassifyForbiddenAsIgnored(HttpStatusCode? statusCode)
+        => statusCode == HttpStatusCode.Forbidden
+            ? SnapshotFailureMapper.Outcome.Ignored
+            : null;
+
+    private Snapshot CreateRateLimitedSnapshot(string reason, int? retryAfterSeconds)
     {
 
-        var nowUtc = _timeProvider.GetUtcNow();
-
-        _consecutiveRateLimits = Math.Min(_consecutiveRateLimits + 1, MAX_CONSECUTIVE_RATE_LIMITS);
-
-        var deadline = _rateLimitPolicy.CalculateDeadline(
-            nowUtc,
-            exception.RetryAfterSeconds,
+        var (snapshot, consecutiveRateLimits) = RateLimitedSnapshotFactory.Create(
+            PROVIDER_ID,
+            reason,
+            retryAfterSeconds,
+            _timeProvider,
+            _rateLimitPolicy,
+            _backoffJitter,
             _consecutiveRateLimits,
-            _backoffJitter
+            MAX_CONSECUTIVE_RATE_LIMITS
         );
 
-        return new Snapshot
-        {
-            ProviderId = PROVIDER_ID,
-            Status = ProviderStatus.RateLimited,
-            Fidelity = Fidelity.Official,
-            FetchedAtUtc = nowUtc,
-            LimitWindows = [],
-            ActiveBlock = new UsageBlock
-            {
-                Reason = exception.Message,
-                IsBlocked = true,
-                ResetTimeUtc = deadline,
-                RetryAfterSeconds = exception.RetryAfterSeconds
-            }
-        };
+        _consecutiveRateLimits = consecutiveRateLimits;
+
+        return snapshot;
     }
 
     private Snapshot CreateStaleSnapshot(string description)

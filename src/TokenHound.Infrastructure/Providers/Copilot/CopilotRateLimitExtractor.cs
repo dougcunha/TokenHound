@@ -1,7 +1,6 @@
 using System;
 using System.Net;
 using System.Net.Http;
-using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.Copilot;
 
@@ -37,13 +36,5 @@ internal static class CopilotRateLimitExtractor
         retryAfterSeconds = null;
 
         return false;
-    }
-
-    internal static int? ExtractRetryAfterSeconds(
-        HttpResponseMessage response,
-        TimeProvider timeProvider)
-    {
-
-        return HttpRetryAfterParser.ExtractSeconds(response, timeProvider);
     }
 }

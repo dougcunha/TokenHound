@@ -1,6 +1,5 @@
 using System;
 using System.IO;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -131,24 +130,17 @@ public sealed class AntigravityCloudCodeClient : IDisposable
         ).ConfigureAwait(false);
 
         if (!response.IsSuccessStatusCode)
-            throw CreateException(response);
+        {
+            var message = $"Google Cloud Code quota request failed with HTTP {(int)response.StatusCode} ({response.StatusCode}).";
+
+            throw ProviderHttpException.FromResponse(response, message);
+        }
 
         var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         var envelope = JsonSerializer.Deserialize<AntigravityQuotaEnvelope>(content);
 
         return envelope?.Response
             ?? throw new JsonException("Google Cloud Code quota response was empty.");
-    }
-
-    private static ProviderHttpException CreateException(HttpResponseMessage response)
-    {
-
-        var retryAfterSeconds = response.StatusCode == HttpStatusCode.TooManyRequests
-            ? HttpRetryAfterParser.ExtractSeconds(response, TimeProvider.System)
-            : null;
-        var message = $"Google Cloud Code quota request failed with HTTP {(int)response.StatusCode} ({response.StatusCode}).";
-
-        return new ProviderHttpException(message, response.StatusCode, retryAfterSeconds);
     }
 
     private static string? ExtractTokenFromSecret(string secret)

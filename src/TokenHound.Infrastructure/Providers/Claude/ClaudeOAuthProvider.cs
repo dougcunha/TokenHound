@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TokenHound.Core.Contracts;
 using TokenHound.Core.Models;
 using TokenHound.Core.Policies;
+using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.Claude;
 
@@ -231,33 +232,21 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
     private Snapshot CreateRateLimitedSnapshot(string reason, int? retryAfterSeconds)
     {
 
-        var nowUtc = DateTimeOffset.UtcNow;
-
-        _consecutiveRateLimits = Math.Min(_consecutiveRateLimits + 1, MAX_CONSECUTIVE_RATE_LIMITS);
-
-        var deadline = _rateLimitPolicy.CalculateDeadline(
-            nowUtc,
+        var (snapshot, consecutiveRateLimits) = RateLimitedSnapshotFactory.Create(
+            PROVIDER_ID,
+            reason,
             retryAfterSeconds,
+            TimeProvider.System,
+            _rateLimitPolicy,
+            _backoffJitter,
             _consecutiveRateLimits,
-            _backoffJitter
+            MAX_CONSECUTIVE_RATE_LIMITS,
+            _lastSuccessfulSnapshot?.LimitWindows
         );
 
-        return new Snapshot
-        {
-            ProviderId = PROVIDER_ID,
-            Status = ProviderStatus.RateLimited,
-            Fidelity = Fidelity.Official,
-            FetchedAtUtc = nowUtc,
-            LimitWindows = _lastSuccessfulSnapshot?.LimitWindows ?? [],
-            ActiveBlock = new UsageBlock
-            {
-                Reason = reason,
-                IsBlocked = true,
-                ResetTimeUtc = deadline,
-                RetryAfterSeconds = retryAfterSeconds
-            },
-            ErrorDescription = null
-        };
+        _consecutiveRateLimits = consecutiveRateLimits;
+
+        return snapshot;
     }
 
     private Snapshot CreateDegradedSnapshot(Exception ex)

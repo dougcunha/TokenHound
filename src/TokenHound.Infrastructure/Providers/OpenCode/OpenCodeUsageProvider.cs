@@ -2,13 +2,13 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Contracts;
 using TokenHound.Core.Models;
 using TokenHound.Core.Policies;
+using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.OpenCode;
 
@@ -124,7 +124,7 @@ public sealed class OpenCodeUsageProvider : IUsageProvider, IDisposable
         catch (HttpRequestException ex)
         {
 
-            return MapHttpFailure(ex);
+            return MapFailure(ex);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -133,19 +133,14 @@ public sealed class OpenCodeUsageProvider : IUsageProvider, IDisposable
         }
     }
 
-    private Snapshot MapHttpFailure(HttpRequestException ex)
-        => ex switch
+    private Snapshot MapFailure(HttpRequestException ex)
+        => SnapshotFailureMapper.Classify(ex.StatusCode, hasCredential: true) switch
         {
-            OpenCodeRateLimitException rateEx => HandleRateLimit(
-                rateEx.RetryAfterSeconds,
-                rateEx.Message,
-                rateEx.ResetTimeUtc
-            ),
-            OpenCodeAuthException authEx => CreateNeedsAuthSnapshot(_timeProvider.GetUtcNow(), authEx.Message),
-            OpenCodeEntitlementException => CreateAccessDeniedSnapshot(_timeProvider.GetUtcNow()),
-            _ when ex.StatusCode == HttpStatusCode.TooManyRequests => HandleRateLimit(null, ex.Message),
-            _ when ex.StatusCode == HttpStatusCode.Unauthorized => CreateNeedsAuthSnapshot(_timeProvider.GetUtcNow(), ex.Message),
-            _ when ex.StatusCode == HttpStatusCode.Forbidden => CreateAccessDeniedSnapshot(_timeProvider.GetUtcNow()),
+            SnapshotFailureMapper.Outcome.RateLimited => ex is OpenCodeRateLimitException rateLimitEx
+                ? HandleRateLimit(rateLimitEx.RetryAfterSeconds, rateLimitEx.Message, rateLimitEx.ResetTimeUtc)
+                : HandleRateLimit(null, ex.Message),
+            SnapshotFailureMapper.Outcome.NeedsAuth => CreateNeedsAuthSnapshot(_timeProvider.GetUtcNow(), ex.Message),
+            SnapshotFailureMapper.Outcome.AccessDenied => CreateAccessDeniedSnapshot(_timeProvider.GetUtcNow()),
             _ => CreateStaleSnapshot(_timeProvider.GetUtcNow(), ex.Message)
         };
 

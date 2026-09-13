@@ -5,6 +5,7 @@ using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.Copilot;
 
@@ -145,15 +146,6 @@ public sealed class CopilotApiClient : IDisposable
         }
     }
 
-    /// <summary>Alias for <see cref="GetQuotaAsync(string, CancellationToken)"/>.</summary>
-    /// <param name="accessToken">The borrowed OAuth or token value.</param>
-    /// <param name="cancellationToken">A caller cancellation token.</param>
-    /// <returns>The deserialized quota response.</returns>
-    public Task<CopilotQuotaResponse> GetUsageAsync(
-        string accessToken,
-        CancellationToken cancellationToken = default)
-        => GetQuotaAsync(accessToken, cancellationToken);
-
     /// <inheritdoc />
     public void Dispose()
     {
@@ -173,7 +165,7 @@ public sealed class CopilotApiClient : IDisposable
     private static CopilotApiException CreateExceptionForResponse(HttpResponseMessage response)
     {
         var retryAfterSeconds = response.StatusCode == HttpStatusCode.TooManyRequests
-            ? CopilotRateLimitExtractor.ExtractRetryAfterSeconds(response, TimeProvider.System)
+            ? HttpRetryAfterParser.ExtractSeconds(response, TimeProvider.System)
             : null;
         var message = $"Copilot quota request failed with HTTP {(int)response.StatusCode} ({response.StatusCode}).";
 

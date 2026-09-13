@@ -101,7 +101,7 @@ public sealed class CursorUsageProvider : IUsageProvider, IDisposable
         }
         catch (ProviderHttpException ex)
         {
-            return MapHttpFailure(ex);
+            return MapFailure(ex);
         }
         catch (Exception ex)
         {
@@ -206,43 +206,36 @@ public sealed class CursorUsageProvider : IUsageProvider, IDisposable
         });
     }
 
-    private Snapshot MapHttpFailure(ProviderHttpException exception)
-        => exception.StatusCode switch
+    private Snapshot MapFailure(ProviderHttpException exception)
+        => SnapshotFailureMapper.Classify(exception.StatusCode, hasCredential: true, ClassifyForbiddenAsAuth) switch
         {
-            HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden => CreateNeedsAuthSnapshot(),
-            HttpStatusCode.TooManyRequests => CreateRateLimitedSnapshot(exception),
+            SnapshotFailureMapper.Outcome.NeedsAuth => CreateNeedsAuthSnapshot(),
+            SnapshotFailureMapper.Outcome.RateLimited => CreateRateLimitedSnapshot(exception.Message, exception.RetryAfterSeconds),
             _ => CreateStaleSnapshot(exception.Message)
         };
 
-    private Snapshot CreateRateLimitedSnapshot(ProviderHttpException exception)
+    private static SnapshotFailureMapper.Outcome? ClassifyForbiddenAsAuth(HttpStatusCode? statusCode)
+        => statusCode == HttpStatusCode.Forbidden
+            ? SnapshotFailureMapper.Outcome.NeedsAuth
+            : null;
+
+    private Snapshot CreateRateLimitedSnapshot(string reason, int? retryAfterSeconds)
     {
 
-        var nowUtc = _timeProvider.GetUtcNow();
-
-        _consecutiveRateLimits = Math.Min(_consecutiveRateLimits + 1, MAX_CONSECUTIVE_RATE_LIMITS);
-
-        var deadline = _rateLimitPolicy.CalculateDeadline(
-            nowUtc,
-            exception.RetryAfterSeconds,
+        var (snapshot, consecutiveRateLimits) = RateLimitedSnapshotFactory.Create(
+            PROVIDER_ID,
+            reason,
+            retryAfterSeconds,
+            _timeProvider,
+            _rateLimitPolicy,
+            _backoffJitter,
             _consecutiveRateLimits,
-            _backoffJitter
+            MAX_CONSECUTIVE_RATE_LIMITS
         );
 
-        return new Snapshot
-        {
-            ProviderId = PROVIDER_ID,
-            Status = ProviderStatus.RateLimited,
-            Fidelity = Fidelity.Official,
-            FetchedAtUtc = nowUtc,
-            LimitWindows = [],
-            ActiveBlock = new UsageBlock
-            {
-                Reason = exception.Message,
-                IsBlocked = true,
-                ResetTimeUtc = deadline,
-                RetryAfterSeconds = exception.RetryAfterSeconds
-            }
-        };
+        _consecutiveRateLimits = consecutiveRateLimits;
+
+        return snapshot;
     }
 
     private Snapshot CreateNeedsAuthSnapshot()

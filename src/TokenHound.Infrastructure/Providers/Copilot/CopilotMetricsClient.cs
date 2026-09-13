@@ -8,6 +8,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Models;
+using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.Copilot;
 
@@ -280,7 +281,7 @@ public sealed class CopilotMetricsClient : IDisposable
     private static CopilotApiException CreateApiException(HttpResponseMessage response)
     {
 
-        var retryAfterSeconds = CopilotRateLimitExtractor.ExtractRetryAfterSeconds(response, TimeProvider.System);
+        var retryAfterSeconds = HttpRetryAfterParser.ExtractSeconds(response, TimeProvider.System);
         var message = $"Copilot metrics request failed with HTTP {(int)response.StatusCode} ({response.StatusCode}).";
 
         return new CopilotApiException(message, response.StatusCode, retryAfterSeconds);

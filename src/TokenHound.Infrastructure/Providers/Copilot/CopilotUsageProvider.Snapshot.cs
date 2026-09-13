@@ -1,6 +1,7 @@
 using System;
 using System.Net;
 using TokenHound.Core.Models;
+using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.Copilot;
 
@@ -24,20 +25,34 @@ public sealed partial class CopilotUsageProvider
         CopilotCredential credential)
     {
 
-        return exception.StatusCode switch
+        return SnapshotFailureMapper.Classify(
+        exception.StatusCode,
+        hasCredential: true,
+        statusCode => ClassifyForbidden(statusCode, credential)
+        ) switch
         {
-            HttpStatusCode.Unauthorized => CreateNeedsAuthSnapshot(),
-            HttpStatusCode.Forbidden => CopilotCredential.IsPatShaped(credential.AccessToken)
-                ? CreateNeedsAuthSnapshot(NEEDS_AUTH_MESSAGE + OVERRIDE_WARNING)
-                : CreateUnsupportedSnapshot(
-                    "Copilot has no usable finite quota or entitlement." + OVERRIDE_WARNING),
-            HttpStatusCode.TooManyRequests => CreateRateLimitedSnapshot(
+            SnapshotFailureMapper.Outcome.NeedsAuth => CreateNeedsAuthSnapshot(
+                exception.StatusCode == HttpStatusCode.Forbidden
+                    ? NEEDS_AUTH_MESSAGE + OVERRIDE_WARNING
+                    : null),
+            SnapshotFailureMapper.Outcome.Unsupported => CreateUnsupportedSnapshot(
+                "Copilot has no usable finite quota or entitlement." + OVERRIDE_WARNING),
+            SnapshotFailureMapper.Outcome.RateLimited => CreateRateLimitedSnapshot(
                 _timeProvider.GetUtcNow().AddSeconds(exception.RetryAfterSeconds ?? 60),
                 exception.RetryAfterSeconds
             ),
             _ => CreateStaleSnapshot($"Copilot quota request returned HTTP {(int?)exception.StatusCode}.")
         };
     }
+
+    private static SnapshotFailureMapper.Outcome? ClassifyForbidden(
+        HttpStatusCode? statusCode,
+        CopilotCredential credential)
+        => statusCode == HttpStatusCode.Forbidden
+            ? CopilotCredential.IsPatShaped(credential.AccessToken)
+                ? SnapshotFailureMapper.Outcome.NeedsAuth
+                : SnapshotFailureMapper.Outcome.Unsupported
+            : null;
 
     private Snapshot CreateSuccessSnapshot(CopilotQuotaParseResult result)
     {

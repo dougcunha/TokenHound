@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Http;
 
@@ -26,4 +27,16 @@ public sealed class ProviderHttpException : HttpRequestException
 
     /// <summary>Gets the parsed Retry-After value in seconds, if present.</summary>
     public int? RetryAfterSeconds { get; }
+
+    internal static ProviderHttpException FromResponse(
+        HttpResponseMessage response,
+        string message)
+    {
+
+        var retryAfterSeconds = response.StatusCode == HttpStatusCode.TooManyRequests
+            ? HttpRetryAfterParser.ExtractSeconds(response, TimeProvider.System)
+            : null;
+
+        return new ProviderHttpException(message, response.StatusCode, retryAfterSeconds);
+    }
 }

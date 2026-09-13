@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Policies;
 using TokenHound.Infrastructure.Engine;
+using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.Copilot;
 
@@ -242,7 +243,7 @@ public sealed class CopilotRequestGate : IDisposable
         if (result is HttpResponseMessage response && response.StatusCode == HttpStatusCode.TooManyRequests)
         {
 
-            var retryAfter = CopilotRateLimitExtractor.ExtractRetryAfterSeconds(response, _timeProvider);
+            var retryAfter = HttpRetryAfterParser.ExtractSeconds(response, _timeProvider);
             await HandleRateLimitAsync(retryAfter, cancellationToken).ConfigureAwait(false);
 
             return;

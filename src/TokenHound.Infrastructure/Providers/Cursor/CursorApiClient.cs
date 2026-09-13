@@ -1,5 +1,4 @@
 using System;
-using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -72,7 +71,11 @@ public sealed class CursorApiClient : IDisposable
         ).ConfigureAwait(false);
 
         if (!response.IsSuccessStatusCode)
-            throw CreateException(response);
+        {
+            var message = $"Cursor usage request failed with HTTP {(int)response.StatusCode} ({response.StatusCode}).";
+
+            throw ProviderHttpException.FromResponse(response, message);
+        }
 
         var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
 
@@ -103,16 +106,5 @@ public sealed class CursorApiClient : IDisposable
         request.Headers.UserAgent.ParseAdd(USER_AGENT_VALUE);
 
         return request;
-    }
-
-    private static ProviderHttpException CreateException(HttpResponseMessage response)
-    {
-
-        var retryAfterSeconds = response.StatusCode == HttpStatusCode.TooManyRequests
-            ? HttpRetryAfterParser.ExtractSeconds(response, TimeProvider.System)
-            : null;
-        var message = $"Cursor usage request failed with HTTP {(int)response.StatusCode} ({response.StatusCode}).";
-
-        return new ProviderHttpException(message, response.StatusCode, retryAfterSeconds);
     }
 }

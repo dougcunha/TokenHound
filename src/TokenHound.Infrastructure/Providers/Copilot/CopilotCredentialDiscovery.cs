@@ -87,13 +87,6 @@ public sealed class CopilotCredentialDiscovery
         return configToken is null ? null : Create(configToken, CONFIG_SOURCE);
     }
 
-    /// <summary>Alias for <see cref="DiscoverAsync(CancellationToken)"/>.</summary>
-    /// <param name="cancellationToken">A token to observe during discovery.</param>
-    /// <returns>The first usable borrowed credential, or null.</returns>
-    public ValueTask<CopilotCredential?> DiscoverCredentialAsync(
-        CancellationToken cancellationToken = default)
-        => DiscoverAsync(cancellationToken);
-
     private async ValueTask<string?> ReadCredentialAsync(
         string target,
         CancellationToken cancellationToken)

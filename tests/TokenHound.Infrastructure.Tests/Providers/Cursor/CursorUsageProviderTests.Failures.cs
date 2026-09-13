@@ -38,6 +38,31 @@ public sealed partial class CursorUsageProviderTests
     }
 
     [Fact]
+    public async Task GetSnapshotAsync_WhenApiReturnsForbidden_ReturnsNeedsAuth()
+    {
+
+        var databasePath = CreateTemporaryAuthDatabase();
+
+        try
+        {
+            using var httpClient = new HttpClient(new ResponseHandler(
+                static _ => new HttpResponseMessage(HttpStatusCode.Forbidden)
+            ));
+            using var client = new CursorApiClient(httpClient);
+            using var provider = new CursorUsageProvider(new CursorSessionDiscovery(databasePath), client);
+
+            var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(ProviderStatus.NeedsAuth, snapshot.Status);
+            Assert.Null(snapshot.ActiveBlock);
+        }
+        finally
+        {
+            DeleteTemporaryDatabase(databasePath);
+        }
+    }
+
+    [Fact]
     public async Task GetSnapshotAsync_WhenApiReturnsRateLimited_ReturnsActiveBlock()
     {
 
@@ -59,6 +84,37 @@ public sealed partial class CursorUsageProviderTests
             Assert.Equal(ProviderStatus.RateLimited, snapshot.Status);
             Assert.True(snapshot.ActiveBlock?.IsBlocked);
             Assert.Equal(0, snapshot.ActiveBlock?.RetryAfterSeconds);
+            Assert.True(snapshot.ActiveBlock?.ResetTimeUtc >= nowUtc.AddMinutes(1));
+        }
+        finally
+        {
+            DeleteTemporaryDatabase(databasePath);
+        }
+    }
+
+    [Fact]
+    public async Task GetSnapshotAsync_WhenApiReturnsRateLimitedWithoutRetryAfter_ReturnsFutureDeadline()
+    {
+
+        var databasePath = CreateTemporaryAuthDatabase();
+        var nowUtc = new DateTimeOffset(2026, 9, 10, 12, 0, 0, TimeSpan.Zero);
+
+        try
+        {
+            var handler = new ResponseHandler(static _ => CreateRateLimitResponseWithoutRetryAfter());
+            using var httpClient = new HttpClient(handler);
+            using var client = new CursorApiClient(httpClient);
+            using var provider = new CursorUsageProvider(
+                new CursorSessionDiscovery(databasePath),
+                client,
+                new FixedTimeProvider(nowUtc)
+            );
+
+            var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(ProviderStatus.RateLimited, snapshot.Status);
+            Assert.True(snapshot.ActiveBlock?.IsBlocked);
+            Assert.Null(snapshot.ActiveBlock?.RetryAfterSeconds);
             Assert.True(snapshot.ActiveBlock?.ResetTimeUtc >= nowUtc.AddMinutes(1));
         }
         finally
@@ -123,6 +179,9 @@ public sealed partial class CursorUsageProviderTests
 
         return response;
     }
+
+    private static HttpResponseMessage CreateRateLimitResponseWithoutRetryAfter()
+        => new(HttpStatusCode.TooManyRequests);
 
     private sealed class FixedTimeProvider(DateTimeOffset nowUtc) : TimeProvider
     {

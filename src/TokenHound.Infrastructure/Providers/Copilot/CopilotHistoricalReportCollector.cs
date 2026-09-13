@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Models;
 using TokenHound.Infrastructure.Engine;
+using TokenHound.Infrastructure.Providers;
 
 namespace TokenHound.Infrastructure.Providers.Copilot;
 
@@ -276,11 +277,21 @@ internal sealed partial class CopilotHistoricalReportCollector
         => exception switch
         {
             RateLimitBlockedException => CopilotBillingReason.RateLimited,
-            CopilotApiException { StatusCode: HttpStatusCode.TooManyRequests }
-                => CopilotBillingReason.RateLimited,
-            CopilotApiException { StatusCode: HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized }
-                => CopilotBillingReason.AccessDenied,
+            CopilotApiException apiException => MapApiFailure(apiException),
             SecurityException => CopilotBillingReason.InvalidData,
             _ => CopilotBillingReason.NetworkFailure
         };
+
+    private static CopilotBillingReason MapApiFailure(CopilotApiException exception)
+        => SnapshotFailureMapper.Classify(exception.StatusCode, hasCredential: true, ClassifyUnauthorizedAsDenied) switch
+        {
+            SnapshotFailureMapper.Outcome.RateLimited => CopilotBillingReason.RateLimited,
+            SnapshotFailureMapper.Outcome.AccessDenied => CopilotBillingReason.AccessDenied,
+            _ => CopilotBillingReason.NetworkFailure
+        };
+
+    private static SnapshotFailureMapper.Outcome? ClassifyUnauthorizedAsDenied(HttpStatusCode? statusCode)
+        => statusCode == HttpStatusCode.Unauthorized
+            ? SnapshotFailureMapper.Outcome.AccessDenied
+            : null;
 }

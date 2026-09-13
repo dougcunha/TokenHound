@@ -30,12 +30,6 @@ public sealed class CopilotPassDispatchBudget
         => _dispatchesUsed;
 
     /// <summary>
-    /// Gets the remaining number of allowed dispatches.
-    /// </summary>
-    public int RemainingDispatches
-        => Math.Max(0, _maxDispatches - _dispatchesUsed);
-
-    /// <summary>
     /// Gets a value indicating whether another dispatch may be made.
     /// </summary>
     public bool CanDispatch
