@@ -56,6 +56,27 @@
 | --- | --- | --- | --- | --- | --- |
 | TC-01 | RF-01 | [level allowed by profile] | [scenario] | [result] | `[command or script]` |
 
+## Quality profile
+
+Rules this feature can violate. A blocking hit prevents task completion and rejects the review; a reservation becomes an optional improvement and counts toward escalation. A hit covered by `DEC-NN` is expected, not a finding.
+
+| ID | Rule | Class | Verification command | Prior justification |
+| --- | --- | --- | --- | --- |
+| QA-01 | [rule] | blocking/reservation | `[rg command scoped to the diff]` | `DEC-NN` or — |
+
+- Verification scope: [files in the task diff]
+- Escalation trigger: [8+ reservations, file above 500 lines, or duplication in 3+ places]
+
+### Terrain baseline
+
+Hits that already existed in the target files before implementation. A hit listed here is not a task finding; a new hit is. A target file without a row in this table counts as unmeasured, and every hit in it will be treated as new.
+
+| File | Lines | Public members | Constructor deps | Cases | Pre-existing hits | Destination |
+| --- | --- | --- | --- | --- | --- | --- |
+| `[path]` | [n] | [n] | [n] | [n] | `QA-NN: file:line` | recorded / absorbed in `DEC-NN` / prior refactoring |
+
+- Preparatory refactoring: [not recommended | recommended — minimal scope, reason, and what it makes easy]
+
 ## Observability and rollout
 
 - Signals: [applicable logs, metrics, or health checks]

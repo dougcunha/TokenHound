@@ -27,6 +27,17 @@
 | --- | --- | --- |
 | [name] | OK/NOT OK/N/A | `[file:line or command]` |
 
+## Quality profile
+
+| ID | Rule | Class | Command | Hits | State |
+| --- | --- | --- | --- | --- | --- |
+| QA-01 | [rule] | blocking/reservation | `[command]` | [new/aggravated of total] | OK/NOT OK/justified by `DEC-NN`/pre-existing |
+
+- Terrain baseline: [applied from TechSpec | missing — every hit treated as new, see limitations]
+- Hits discounted by baseline: [n]
+- Reservations accumulated in the feature: [n]
+- Suggested escalation: [skill and counted trigger, or `no trigger fired`]
+
 ## TechSpec adherence
 
 | Decision or contract | State | Evidence |

@@ -42,6 +42,17 @@
 - Observability: [regression signal]
 - Rollback: [procedure]
 
+## Quality profile
+
+Rules this refactoring must satisfy at the end. Here the baseline is the target to reduce, not debt to tolerate: a pre-existing hit the refactoring sets out to eliminate is an obligation, and a new hit is a regression in any class.
+
+| ID | Rule | Class | Verification command | Baseline | Target |
+| --- | --- | --- | --- | --- | --- |
+| QA-01 | [rule] | blocking/reservation | `[rg command scoped to the target]` | [n hits today] | [n hits at the end, or zero] |
+
+- Target measures today: [lines, public members, constructor deps, cases]
+- Expected measures at the end: [the same, after the refactoring]
+
 ## Risks and open items
 
 - Risk: [probability, impact, and mitigation]

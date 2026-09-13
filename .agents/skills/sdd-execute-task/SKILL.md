@@ -14,8 +14,9 @@ argument-hint: --task tasks/prd-name/task_01.md
    **Output:** implementation limited to the contract, with no global state changed.
 4. Apply the TechSpec profile. In desktop C#/.NET, omit E2E even when legacy commands include it: select projects/filters without E2E and record the divergence. Preserve acceptance with relevant unit, integration, and manual scripts; unexecuted manual work remains pending. When available, use `dotnet-efficient-validation` for runner and build reuse.
    Run checks required by the diff; reuse evidence only from the same code, configuration, and environment. Zero tests or listing are not success. Record pre-existing failures separately.
-   **Output:** every acceptance item has evidence or a reproducible block.
-5. Update one `## Handoff`: result, files, commands, results, validated version, and pending items. Return a short summary and path for independent review; on retry, change the same section and preserve valid evidence.
+   Also run the TechSpec quality profile commands, scoped to the files you touched. Empty output settles the matter. Check every hit against the Terrain baseline: a hit already listed there is prior debt and not yours, unless your change aggravated it. A new blocking hit without a `DEC-NN` covering it is your defect: fix it before the handoff; do not report it as a pending item. A new reservation hit remains and goes to the handoff with file and line. A profile or baseline missing from the TechSpec is recorded as a gap, not filled in on your own.
+   **Output:** every acceptance item has evidence or a reproducible block; no unjustified blocking hit survives in the diff.
+5. Update one `## Handoff`: result, files, commands, results, validated version, quality profile reservation hits, and pending items. Return a short summary and path for independent review; on retry, change the same section and preserve valid evidence.
    **Output:** handoff sufficient for the caller to review diff, tests, and acceptance; task remains at root until approval.
 
 ## Decisions and failures

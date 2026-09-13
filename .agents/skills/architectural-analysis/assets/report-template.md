@@ -1,5 +1,7 @@
 # Architectural Analysis Report
 **Date**: [timestamp]
+**Solution / Projects**: [Solution.sln — N projects]
+**Target framework(s)**: [net8.0]
 **Files Analyzed**: X
 **Dead Code Files**: Y
 **Duplication Groups**: Z
@@ -7,13 +9,24 @@
 ---
 
 ## Executive Summary
-- **Dead Code**: X files, Y exports completely unused
+- **Dead Code**: X files, Y members completely unreferenced
 - **Duplicated Functionality**: Z duplication groups
 - **Architectural Anti-Patterns**: W issues
-- **Type Issues**: V problematic usages
+- **Type & Nullability Issues**: V problematic usages
 - **Code Smells**: U instances
 
 **Estimated Cleanup**: Remove ~X lines of dead code, consolidate Y duplications
+
+---
+
+## Nullable & Analyzer Posture
+
+| Project | `<Nullable>` | `<TreatWarningsAsErrors>` | `<LangVersion>` |
+|---------|--------------|---------------------------|-----------------|
+| `src/Acme.Api/Acme.Api.csproj` | enable | true | latest |
+| `src/Acme.Legacy/Acme.Legacy.csproj` | *absent* | *absent* | default |
+
+**Issue**: projects without `<Nullable>enable</Nullable>` have no null tracking; every finding in Type & Nullability below is unverified by the compiler there.
 
 ---
 
@@ -22,26 +35,29 @@
 ### Completely Dead Files (DELETE)
 | File | Reason | Confidence |
 |------|--------|------------|
-| `src/old/legacy-processor.ts` | No imports found | HIGH |
-| `src/utils/unused-helper.ts` | Exported but never used | HIGH |
-| `src/temp/temp-service.ts` | Temporary file left behind | HIGH |
+| `src/Acme.Legacy/LegacyOrderProcessor.cs` | No references; not DI-registered | HIGH |
+| `src/Acme.Core/Helpers/UnusedStringHelper.cs` | Public but never referenced | HIGH |
+| `src/Acme.Api/Services/TempSyncService.cs` | Left behind; no `AddHostedService` registration | HIGH |
 
 **Total Lines**: X,XXX lines can be deleted
 
-### Dead Exports (REMOVE)
-| File | Export | Reason |
+### Dead Members (REMOVE)
+| File | Member | Reason |
 |------|--------|--------|
-| `src/utils/format.ts` | `formatOldDate()` | Replaced by `formatDate()`, no usage |
-| `src/services/auth.ts` | `oldLogin()` | Deprecated, no usage found |
+| `src/Acme.Core/Formatting/DateFormatter.cs` | `FormatLegacyDate()` | Replaced by `FormatDate()`, no references |
+| `src/Acme.Api/Services/AuthService.cs` | `LoginWithBasicAsync()` | Deprecated, no references in code or markup |
+| `src/Acme.Core/Contracts/IOrderArchiver.cs` | whole interface | No implementation, no consumer |
 
 ### Possibly Dead (VERIFY)
-| File | Export | Reason | Verification Needed |
+| File | Member | Reason | Verification Needed |
 |------|--------|--------|---------------------|
-| `src/lib/api.ts` | `fetchOldApi()` | Only used in commented code | Check if truly deprecated |
+| `src/Acme.Core/Http/LegacyApiClient.cs` | `FetchLegacyAsync()` | Referenced only from commented-out code | Confirm the endpoint is retired |
+| `src/Acme.Core/Options/ImportOptions.cs` | `BatchSize` | Bound by name only | Grep `appsettings*.json` for the key |
 
 ### Internal Dead Code
-- `src/services/user.ts:125` - Private method `_validateLegacy()` never called
-- `src/components/form.tsx:89` - Variable `tempData` assigned but never read
+- `src/Acme.Core/Users/UserService.cs:125` — private method `ValidateLegacyDocument()` never called
+- `src/Acme.Api/Endpoints/OrderEndpoints.cs:89` — local `tempPayload` assigned but never read
+- `src/Acme.Core/Import/CsvReader.cs:47` — parameter `culture` accepted but never used
 
 ---
 
@@ -49,46 +65,46 @@
 
 ### CRITICAL: Exact Duplicates
 
-#### Duplication Group 1: Email Validation
+#### Duplication Group 1: Document (CPF) validation
 **Instances**: 3
 **Files**:
-- `src/utils/validators.ts:42` - `validateEmail(email: string)`
-- `src/lib/email.ts:15` - `isValidEmail(email: string)`
-- `src/components/forms/validation.ts:67` - `checkEmailFormat(email: string)`
+- `src/Acme.Core/Validation/DocumentValidator.cs:42` — `IsValidCpf(string cpf)`
+- `src/Acme.Api/Filters/CpfFilter.cs:15` — `ValidateCpf(string value)`
+- `src/Acme.Import/Rules/CpfRule.cs:67` — `CheckCpf(string input)`
 
-**Analysis**: All three use identical regex pattern `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
-**Lines Duplicated**: ~15 lines × 3 = 45 lines
+**Analysis**: identical check-digit loop, same `Regex` for stripping punctuation
+**Lines Duplicated**: ~22 lines × 3 = 66 lines
 **Recommendation**:
-- Keep: `src/utils/validators.ts:validateEmail()`
-- Remove: Other two implementations
-- Update: All imports to use validators version
+- Keep: `src/Acme.Core/Validation/DocumentValidator.cs:IsValidCpf()`
+- Remove: the other two
+- Update: all call sites to the `Acme.Core` version
 
-#### Duplication Group 2: API Error Handling
+#### Duplication Group 2: HTTP error handling
 **Instances**: 4
 **Files**: [list]
 **Analysis**: [similar]
 
 ### HIGH: Similar Logic
 
-#### Duplication Group: Date Formatting
+#### Duplication Group: Entity → DTO mapping
 **Instances**: 2
 **Files**:
-- `src/utils/date.ts:30` - `formatDate()` - Uses date-fns
-- `src/lib/format.ts:45` - `formatDateTime()` - Uses native Date
+- `src/Acme.Api/Mapping/OrderMapper.cs:30` — hand-written `ToDto()`
+- `src/Acme.Api/Mapping/OrderProfile.cs:18` — AutoMapper `Profile` for the same pair
 
-**Analysis**: Both format dates but use different libraries
-**Recommendation**: Standardize on date-fns, remove native version
+**Analysis**: two mapping mechanisms for one type pair; they already disagree on `Total` rounding
+**Recommendation**: standardize on one mechanism, delete the other
 
-### Type Duplication
+### HIGH: Contract Duplication
 
-#### Type Group: User Interface
+#### Contract Group: Order payload
 **Instances**: 3
 **Files**:
-- `src/types/user.ts` - `User` interface
-- `src/models/user.ts` - `UserModel` interface (identical fields)
-- `src/api/types.ts` - `UserData` interface (identical fields)
+- `src/Acme.Core/Contracts/OrderDto.cs` — `OrderDto`
+- `src/Acme.Api/Models/OrderRequest.cs` — `OrderRequest` (identical members)
+- `src/Acme.Import/Models/OrderData.cs` — `OrderData` (identical members)
 
-**Recommendation**: Use single `User` type from `src/types/user.ts`
+**Recommendation**: one `OrderDto` in `Acme.Core.Contracts`, referenced by both consumers
 
 ---
 
@@ -96,97 +112,157 @@
 
 ### God Objects
 
-#### `src/services/application-manager.ts` (850 lines)
-**Responsibilities**: Database, auth, config, logging, caching, validation
-**Issue**: Violates SRP, does everything
-**Recommendation**: Split into:
-- `database.service.ts`
-- `auth.service.ts`
-- `config.service.ts`
-- `logging.service.ts`
+#### `src/Acme.Api/Services/ApplicationService.cs` (850 lines, 11 injected dependencies)
+**Responsibilities**: persistence, auth, configuration, logging, caching, validation
+**Issue**: violates SRP; untestable without the whole container
+**Recommendation**: split into `OrderService`, `AuthService`, `ImportService`, `CacheGateway`
 
-### Circular Dependencies
+### Dependency Cycles
 
-#### Cycle 1: `auth.ts` ↔ `user.ts`
-- `auth.ts` imports `getUserById` from `user.ts`
-- `user.ts` imports `validateToken` from `auth.ts`
-**Issue**: Creates tight coupling, makes testing hard
-**Recommendation**: Extract shared types to separate file
+#### Catch-all shared project: `Acme.Common`
+- 7 of 9 projects reference `Acme.Common`
+- `Acme.Common` holds contracts, helpers, EF entities, and HTTP clients together
+**Issue**: the workaround for a cycle the compiler would reject — every project depends on every concern
+**Recommendation**: split into `Acme.Contracts` (types only) and per-concern projects
+
+#### Type cycle: `AuthService` ↔ `UserService`
+- `AuthService` calls `UserService.GetByIdAsync`
+- `UserService` calls `AuthService.ValidateToken`
+**Recommendation**: extract the shared contract to an interface both depend on
 
 ### Tight Coupling
 
-#### `components/UserForm.tsx` → `services/database.ts`
-**Issue**: UI component directly importing database layer
-**Recommendation**: Use service layer abstraction
+#### `src/Acme.Core/Import/ImportRunner.cs` → `System.Net.Http.HttpClient`
+**Issue**: business logic constructing `new HttpClient()` and reading `DateTime.Now` directly
+**Recommendation**: inject `IHttpClientFactory` and a `TimeProvider`
 
 ### Layer Violations
 
-#### `models/User.ts` imports from `components/`
-**Issue**: Model layer should not know about view layer
-**Recommendation**: Remove dependency, pass data via props
+#### `src/Acme.Api/Controllers/OrdersController.cs` → `AcmeDbContext`
+**Issue**: controller queries and calls `SaveChangesAsync` directly
+**Recommendation**: route through the application service layer
+
+#### `src/Acme.Domain/Acme.Domain.csproj` references `Microsoft.AspNetCore.App`
+**Issue**: domain project depends on the web framework
+**Recommendation**: remove the reference; move the HTTP-aware types out of the domain
+
+### Service Locator / Lifetime Issues
+
+| File | Line | Issue |
+|------|------|-------|
+| `src/Acme.Core/Import/ImportRunner.cs` | 61 | `serviceProvider.GetRequiredService<IOrderRepository>()` inside business logic |
+| `src/Acme.Api/Program.cs` | 34 | `AddSingleton<CacheWarmer>` capturing scoped `AcmeDbContext` (captive dependency) |
+
+### Async Misuse
+
+| File | Line | Issue |
+|------|------|-------|
+| `src/Acme.Api/Services/NotificationService.cs` | 88 | `async void SendAsync(...)` — exceptions cannot be observed |
+| `src/Acme.Import/Runner.cs` | 42 | `GetOrdersAsync().Result` — blocking on async, deadlock risk |
+| `src/Acme.Core/Http/ApiClient.cs` | 27 | I/O method accepts no `CancellationToken` |
+
+### Anemic Domain Model
+- `src/Acme.Domain/Entities/Order.cs` — auto-properties only; all invariants enforced in `OrderService`
 
 ---
 
-## Type Issues
+## Type & Nullability Issues
 
-### `any` Usage (X instances)
+### Null-Forgiving `!` (X instances)
 
 | File | Line | Context | Severity |
 |------|------|---------|----------|
-| `src/api/client.ts` | 45 | `response: any` | HIGH |
-| `src/utils/parse.ts` | 23 | `data: any` | HIGH |
+| `src/Acme.Api/Endpoints/OrderEndpoints.cs` | 45 | `order!.Customer!.Name` | HIGH |
+| `src/Acme.Core/Import/CsvReader.cs` | 23 | `= record!` | HIGH |
 
-**Total `any` usages**: X
-**Recommendation**: Define proper types for all cases
+**Recommendation**: replace each with a real null check or a non-nullable contract
 
-### Type Assertions (Y instances)
+### `dynamic` / `object` Usage (Y instances)
 
-| File | Line | Assertion | Issue |
-|------|------|-----------|-------|
-| `src/lib/api.ts` | 67 | `as User` | Unsafe cast, no validation |
-| `src/utils/parse.ts` | 89 | `as unknown as T` | Double cast to bypass types |
+| File | Line | Context | Severity |
+|------|------|---------|----------|
+| `src/Acme.Core/Http/ApiClient.cs` | 45 | `dynamic response` | HIGH |
+| `src/Acme.Import/Parser.cs` | 23 | `Parse(object data)` | MEDIUM |
 
-**Issue**: Type safety bypassed, runtime errors possible
+### Unsafe Casts (Z instances)
 
-### @ts-ignore Comments (Z instances)
+| File | Line | Cast | Issue |
+|------|------|------|-------|
+| `src/Acme.Core/Http/ApiClient.cs` | 67 | `(User)payload` | No type check before cast |
+| `src/Acme.Import/Parser.cs` | 89 | `row as OrderRow` | Null result never handled |
 
-| File | Line | Reason | Should Fix |
-|------|------|--------|------------|
-| `src/legacy/old.ts` | 34 | "Type error in legacy code" | Refactor or remove file |
+### Suppressions (W instances)
+
+| File | Line | Suppression | Should Fix |
+|------|------|-------------|------------|
+| `src/Acme.Legacy/OldImporter.cs` | 1 | `#nullable disable` (whole file) | Enable and fix, or retire the file |
+| `src/Acme.Api/Services/AuthService.cs` | 34 | `#pragma warning disable CS8618` | Initialize the field or make it nullable |
+
+### Missing Precision
+- `src/Acme.Domain/Entities/Order.cs:12` — `string CustomerId`; a `CustomerId` value object prevents mixing ids
+- `src/Acme.Domain/Entities/Order.cs:18` — `decimal Total` with no currency
+- `src/Acme.Import/Payload.cs:9` — `Dictionary<string, object>` payload instead of a typed record
 
 ---
 
 ## Code Smells
 
-### Long Functions (>50 lines)
+### Long Methods (>50 lines)
 
-| File | Function | Lines | Issue |
-|------|----------|-------|-------|
-| `src/services/processor.ts` | `processData()` | 127 | Does too much, hard to test |
+| File | Method | Lines | Issue |
+|------|--------|-------|-------|
+| `src/Acme.Import/ImportProcessor.cs` | `ProcessAsync()` | 127 | Does too much, hard to test |
 
-**Recommendation**: Extract smaller functions
+**Recommendation**: extract smaller methods
+
+### Long Parameter Lists (4+)
+
+| File | Member | Params | Recommendation |
+|------|--------|--------|----------------|
+| `src/Acme.Core/Orders/OrderFactory.cs` | `Create(...)` | 7 | Group into a `CreateOrderCommand` record |
+| `src/Acme.Api/Services/ApplicationService.cs` | constructor | 11 | Split the type |
 
 ### Complex Conditionals
 
 | File | Line | Issue |
 |------|------|-------|
-| `src/utils/validator.ts` | 45 | Nested 4 levels deep |
-| `src/lib/parser.ts` | 89 | Boolean expression spans 3 lines |
+| `src/Acme.Core/Validation/OrderValidator.cs` | 45 | Nested 4 levels deep |
+| `src/Acme.Import/Parser.cs` | 89 | `switch` over 14 cases; wants polymorphism |
 
-### Magic Numbers
+### Magic Numbers & String Keys
 
 | File | Line | Magic Value | Should Be |
 |------|------|-------------|-----------|
-| `src/config/limits.ts` | 12 | `86400` | `SECONDS_PER_DAY` |
-| `src/utils/format.ts` | 34 | `1000` | `MS_PER_SECOND` |
+| `src/Acme.Core/Limits.cs` | 12 | `86400` | `const int SecondsPerDay` |
+| `src/Acme.Api/Auth/PolicyNames.cs` | 34 | `"Admin"` repeated 9× | A `const` or existing policy constant |
+
+### Swallowed Exceptions
+
+| File | Line | Issue |
+|------|------|-------|
+| `src/Acme.Import/Runner.cs` | 96 | `catch (Exception) { }` — no logging, no rethrow |
+
+### `#region` Blocks
+
+| File | Line | Issue |
+|------|------|-------|
+| `src/Acme.Api/Services/ApplicationService.cs` | 120 | `#region Caching` hides 180 lines that want their own type |
 
 ### Commented-Out Code
 
 **Files with commented code**: X
-- `src/old/legacy.ts` - 45 lines of commented code
-- `src/services/auth.ts` - Old implementation commented out
+- `src/Acme.Legacy/OldImporter.cs` — 45 lines commented out
+- `src/Acme.Api/Services/AuthService.cs` — previous implementation left in place
 
-**Recommendation**: Delete all commented code (use git history)
+**Recommendation**: delete all commented-out code (git history preserves it)
+
+### Naming
+
+| File | Line | Issue | Should Be |
+|------|------|-------|-----------|
+| `src/Acme.Core/Helpers/Utils.cs` | 1 | `Utils` names no responsibility | Split by concern |
+| `src/Acme.Core/Http/ApiClient.cs` | 27 | `GetOrders()` returns `Task` | `GetOrdersAsync()` |
+| `src/Acme.Import/Runner.cs` | 15 | private field `count` | `_count` |
 
 ---
 
@@ -194,7 +270,7 @@
 
 **Dead Code**:
 - Files: X
-- Exports: Y
+- Members: Y
 - Lines: Z (estimated)
 
 **Duplication**:
@@ -204,18 +280,23 @@
 
 **Architectural Issues**:
 - God objects: X
-- Circular dependencies: Y
+- Dependency cycles / catch-all projects: Y
 - Layer violations: Z
+- Service locator + lifetime issues: W
+- Async misuse: V
 
-**Type Issues**:
-- `any` usage: X
-- Type assertions: Y
-- @ts-ignore: Z
+**Type & Nullability**:
+- Projects without `<Nullable>enable</Nullable>`: X
+- Null-forgiving `!`: Y
+- `dynamic` / `object`: Z
+- Unsafe casts: W
+- Suppressions: V
 
 **Code Smells**:
-- Long functions: X
+- Long methods: X
 - Complex conditionals: Y
-- Magic numbers: Z
+- Magic numbers / string keys: Z
+- Swallowed exceptions: W
 
 ---
 
@@ -228,11 +309,12 @@
 
 ### Maintainability Improvement
 - Fewer places to update when fixing bugs
-- Clearer code responsibilities
-- Better type safety
+- Clearer project boundaries and responsibilities
+- Compiler-enforced null safety instead of runtime surprises
 - Reduced cognitive load
 
 ### Risk Areas
-- High coupling in `services/` directory
-- Type safety compromised in `api/` layer
-- Architectural violations in `components/`
+- High coupling in `src/Acme.Api/Services/`
+- Null safety unenforced in `src/Acme.Legacy/`
+- Layer violations between `Acme.Api` and `Acme.Domain`
+- Deadlock risk on the blocking-async paths in `src/Acme.Import/`

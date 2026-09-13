@@ -1,36 +1,43 @@
 # Architectural Analysis Complete
 
+**Solution**: [Solution.sln — N projects, target framework]
+
 ## Dead Code Found
-- **X completely dead files** - Can be deleted immediately
-- **Y unused exports** - Can be removed
+- **X completely dead files** — can be deleted
+- **Y unreferenced members** — can be removed
 - **~Z,ZZZ lines** of dead code identified
 
 ## Top Dead Files
-1. `src/old/legacy-processor.ts` - No imports
-2. `src/temp/temp-service.ts` - Temporary file
-3. `src/utils/unused-helper.ts` - Exported but never used
+1. `src/Acme.Legacy/LegacyOrderProcessor.cs` — no references, not DI-registered
+2. `src/Acme.Api/Services/TempSyncService.cs` — never registered as a hosted service
+3. `src/Acme.Core/Helpers/UnusedStringHelper.cs` — public but never referenced
 
 ## Duplication Found
 - **X duplication groups** identified
-- **Most duplicated**: Email validation (3 copies)
-- **~Y,YYY lines** of duplicated code
+- **Most duplicated**: CPF validation (3 copies)
+- **Y contract duplications** — the same DTO declared per layer
+- **~Z,ZZZ lines** of duplicated code
 
 ## Architectural Issues
-- **Z god objects** doing too much
-- **W circular dependencies** found
-- **V layer violations** detected
+- **X god objects** doing too much
+- **Y layer violations** (controllers touching `DbContext`, domain referencing ASP.NET)
+- **Z dependency cycles / catch-all shared projects**
+- **W service-locator and lifetime issues** (incl. captive dependencies)
+- **V async misuses** (`async void`, `.Result`, missing `CancellationToken`)
 
-## Type Issues
-- **X `any` usages** - Should have proper types
-- **Y type assertions** - Bypassing type safety
-- **Z @ts-ignore comments** - Masking errors
+## Type & Nullability Issues
+- **X projects without `<Nullable>enable</Nullable>`** — no compiler null tracking
+- **Y null-forgiving `!`** — asserting non-null without proof
+- **Z unsafe casts** — no type check before the cast
+- **W suppressions** (`#nullable disable`, `#pragma warning disable`)
 
 ## Code Smells
-- **X long functions** (>50 lines)
+- **X long methods** (>50 lines)
 - **Y complex conditionals** (3+ nesting)
-- **Z magic numbers** - Should be constants
+- **Z magic numbers and repeated string keys**
+- **W swallowed exceptions** (`catch { }`)
 
 ## Cleanup Potential
-Removing dead code and consolidating duplication could eliminate **~X,XXX lines** (Y% of codebase)
+Removing dead code and consolidating duplication could eliminate **~X,XXX lines** (Y% of the codebase)
 
 **Full Report**: `.audits/architectural-analysis-[timestamp].md`
