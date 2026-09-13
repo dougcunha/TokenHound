@@ -28,10 +28,10 @@ The 2026-09-12 architectural analysis (`.audits/architectural-analysis-20260912-
 
 ## Acceptance criteria
 
-- [ ] All `R-NN` items were checked after refactoring.
-- [ ] No new behavior entered the scope silently.
-- [ ] Infrastructure and Core test projects pass with `--minimum-expected-tests 1`.
-- [ ] Reversal is a single `git revert` of the removal commit.
+- [x] All `R-NN` items were checked after refactoring. Evidence: `codereview_1/codereview.md` approved R-01 through R-05.
+- [x] No new behavior entered the scope silently. Evidence: the approved review found no blocking hit or missing obligation.
+- [x] Infrastructure and Core test projects pass with `--minimum-expected-tests 1`. Evidence: the approved review records 673 Infrastructure and 91 Core tests passed.
+- [x] Reversal is a single `git revert` of the removal commit. Evidence: the approved review verified the removal scope and rollback contract.
 
 ## Assumptions and open items
 

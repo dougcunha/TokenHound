@@ -75,3 +75,9 @@
   - CR-02: restore the exact public constructor surface (`(string? filePath, string? baseDirectory = null)`) in all four facades and revise QA-02. QA-02 now measures `SettingsPathResolver.ResolveOverride` (baseline 4, target 1) so it guards shared path resolution without conflicting with the PRD API constraint.
   - CR-03: implement DEC-01 section-name ownership in `SectionStore<T>` rather than approving `T01-ADR-01`.
 - Rework outcome (re-executed T01 then T02 from a clean baseline): `SectionStore<T>` now owns `_sectionName` and exposes an instance `FromJson`; all four facades again expose exactly `()`, `(UserSettingsFile)`, `(string? filePath, string? baseDirectory = null)`; `ProviderSettingsStore.FromJson` restored whole-document case-insensitive root deserialization with the provider converter and gained CR-01 regression tests. Final profile: QA-01 = 2, QA-02 = 1, QA-03 = 1.
+
+### Re-review closure (`codereview_2/codereview.md`, status APPROVED)
+
+- The implementation was bounded to `1deb228..633dd21`; no later source changes affect the reviewed files.
+- CR-01 through CR-04 are resolved, both tasks remain complete, and the PRD acceptance criteria now carry inline evidence.
+- Current validation: build passed with 0 errors and 0 warnings; the Infrastructure project passed 678 tests with `--minimum-expected-tests 1`; QA-01/QA-02/QA-03 remain at 2/1/1 against baselines 8/4/4.

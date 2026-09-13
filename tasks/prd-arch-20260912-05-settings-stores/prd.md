@@ -30,10 +30,10 @@ The 2026-09-12 analysis (AA-09) found four settings stores (`HudPositionStore`, 
 
 ## Acceptance criteria
 
-- [ ] All `R-NN` items were checked after refactoring.
-- [ ] No new behavior entered the scope silently.
-- [ ] Settings + concurrency tests pass with `--minimum-expected-tests 1`.
-- [ ] Duplicated constructor/options/path-resolution blocks collapse to one.
+- [x] All `R-NN` items were checked after refactoring. Evidence: `codereview_2/codereview.md` covers R-01 through R-07 after the four prior findings were corrected.
+- [x] No new behavior entered the scope silently. Evidence: `codereview_2/codereview.md` bounds the implementation by `1deb228..633dd21` and records no new blocking hit.
+- [x] Settings + concurrency tests pass with `--minimum-expected-tests 1`. Evidence: the current Infrastructure test run passed 678 tests with zero failures.
+- [x] Duplicated constructor/options/path-resolution blocks collapse to one. Evidence: `codereview_2/codereview.md` records QA-01/QA-02/QA-03 counts of 2/1/1 against baselines 8/4/4.
 
 ## Assumptions and open items
 

@@ -32,48 +32,54 @@ Phase 2: Parallel Provider Swarms (Independent Git Worktrees)
 └── [PRD 08] tasks/prd-provider-copilot/        # GitHub Copilot (borrowed gh OAuth token + copilot_internal/user + events.jsonl heuristic)
 
 Phase 3: Presentation Polish & Settings
-├── [PRD 09] tasks/prd-settings-01-provider-management/   # [Completed] Per-provider enablement toggles, status badges & engine gating
-├── [PRD 10] tasks/prd-settings-02-cadence-and-retries/     # [Ready] Active/idle polling cadence & safe 429 retry floor configuration
-├── [PRD 11] tasks/prd-system-tray-notifyicon/              # [Planned] System tray NotifyIcon, context menu, show/hide notch & 'Refresh Now'
-├── [PRD 12] tasks/prd-hud-visual-polish/                   # [Planned] Bézier capsule geometry (NotchGeometry), inverse curves & DWM Mica styling
-└── [PRD 13] tasks/prd-hud-placement-multimonitor/          # [Planned] ScreenEdgeDetector, multi-monitor docking & position persistence
+├── [PRD 09] commit ba002f4                               # [Completed] Per-provider enablement toggles, status badges & engine gating
+├── [PRD 10] commit 2ae5620                               # [Completed] Active/idle polling cadence & safe 429 retry floor configuration
+├── [PRD 11] commit e5b3fbd                               # [Completed] System tray NotifyIcon, background lifecycle & commands
+├── [PRD 12] tasks/prd-hud-visual-polish/                  # [Planned after PRD 13] Orientation-aware geometry, hit testing & visual polish
+└── [PRD 13] tasks/prd-hud-placement-multimonitor/         # [Planned next] Multi-monitor docking, DPI handling & position persistence
 ```
 
 ---
 
 ## Phase 3 PRD Track Details
 
-### [PRD 10] Polling Cadence and Rate-Limit Retry Configuration (`tasks/prd-settings-02-cadence-and-retries/`)
-- **Status**: Fully specified (PRD, TechSpec, microtasks T01–T05).
+### [PRD 10] Polling Cadence and Rate-Limit Retry Configuration
+- **Status**: Complete. Implementation landed in commit `2ae5620`; its completed SDD task directory was removed during task-document reorganization.
 - **Scope**:
   - Live reconfiguration of active (default 180s, min 30s) and idle (default 300s, min 30s) polling timers in `UsageStore`.
   - Configurable HTTP 429 retry floor in `RateLimitPolicy` with inviolable 60-second safety clamp.
   - Non-destructive atomic persistence to `appsettings.json` under `"Refresh"` and `"RateLimit"` sections.
   - Inline input validation, reset to defaults, and settings dialog integration.
 
-### [PRD 11] System Tray Integration (`tasks/prd-system-tray-notifyicon/`)
-- **Status**: Complete.
+### [PRD 11] System Tray Integration
+- **Status**: Complete. Implementation landed in commit `e5b3fbd`; its completed SDD task directory was removed during task-document reorganization.
 - **Scope**:
   - Native Windows taskbar notification area (`NotifyIcon`) integration using `Hardcodet.NotifyIcon.Wpf` or Win32 Shell_NotifyIcon.
   - Context menu actions: "Show/Hide Notch", "Refresh Now" (triggers `UsageStore.RefreshNowAsync`), "Settings...", "About...", and "Exit".
   - Double-click or left-click action to toggle HUD Notch visibility.
   - Background lifecycle support: application stays alive in the tray when the Notch window is closed or hidden (`ShutdownMode.OnExplicitShutdown`).
 
-### [PRD 12] HUD Bézier Geometry & Visual Polish (`tasks/prd-hud-visual-polish/`)
-- **Status**: Planned.
+### [PRD 12] HUD Bézier Geometry & Visual Polish (planned target: `tasks/prd-hud-visual-polish/`)
+- **Status**: Planned after PRD 13 defines the docking edge and orientation contract. No PRD, TechSpec, or task manifest exists yet.
 - **Scope**:
   - Smooth Bézier capsule geometry (`NotchGeometry`) with inverse rounded corners anchored to the screen edge (matching `docs/design/2026-08-28-usage-notch-design.md`).
   - Windows 11 DWM backdrop effects (Mica / Acrylic) via `DwmSetWindowAttribute`.
   - Non-rectangular click-through hit-testing (`WM_NCHITTEST` returning `HTTRANSPARENT` outside the capsule outline).
   - Micro-animations for provider consumption rings (smooth arc progress interpolation, pulse on active session execution).
 
-### [PRD 13] Multi-Monitor & Edge Docking (`tasks/prd-hud-placement-multimonitor/`)
-- **Status**: Planned.
+### [PRD 13] Multi-Monitor & Edge Docking (planned target: `tasks/prd-hud-placement-multimonitor/`)
+- **Status**: Planned next. A PRD, TechSpec, and task manifest must be created before implementation.
 - **Scope**:
   - Multi-monitor detection (`ScreenEdgeDetector` / Win32 `EnumDisplayMonitors`).
   - Screen edge docking options (Top Center, Top Right, Screen Right vertical pill).
   - Monitor DPI awareness and multi-monitor coordinate clamping.
   - Position and preferred display persistence in `appsettings.json` via `HudPositionStore`.
+
+### Phase 3 Sequencing Decision
+
+- PRD 13 defines monitor identity, docking edge, orientation, DPI conversion, clamping, and migration of existing coordinates before PRD 12 commits to orientation-specific geometry or hit testing.
+- The PRD 13 specification must resolve the product default explicitly: the current Windows HUD is a top-screen pill, while `docs/design/2026-08-28-usage-notch-design.md` describes a vertical right-edge pill. Existing user placement must remain stable unless the PRD defines a migration.
+- PRD 12 should separate functional geometry and non-rectangular hit testing from cosmetic backdrop and animation work so each result can be validated independently.
 
 ---
 

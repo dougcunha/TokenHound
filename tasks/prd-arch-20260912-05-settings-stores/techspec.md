@@ -10,10 +10,10 @@
 
 | ID | Requirements | Decision | Evidence and reason | Alternatives and trade-offs |
 | --- | --- | --- | --- | --- |
-| DEC-01 | R-01..R-07 | Add an internal generic `SectionStore<T>` holding `UserSettingsFile`, section-name constant, and the shared `JsonDocumentOptions`/`JsonSerializerOptions`; expose `FromJson`/`Load`/`LoadAsync`/`Save`/`SaveAsync`/`FilePath`. | `RefreshSettingsStore.cs:12-148` and `RateLimitSettingsStore.cs:12-67` read: identical structure. | Four independent stores (status quo) — rejected, change amplification. |
+| DEC-01 | R-01..R-07 | Add an internal generic `SectionStore<T>` holding `UserSettingsFile`, the section name, and shared `JsonSerializerOptions`; parse section roots through `JsonElement`, eliminating the separate `JsonDocumentOptions` blocks; expose `FromJson`/`Load`/`LoadAsync`/`Save`/`SaveAsync`/`FilePath`. | `RefreshSettingsStore.cs:12-148` and `RateLimitSettingsStore.cs:12-67` read: identical structure. One serializer-options object preserves trailing-comma, comment, and case-insensitive payload behavior for both parsing steps. | Four independent stores (status quo) — rejected, change amplification. |
 | DEC-02 | R-01..R-04 | Keep the four classes public with identical signatures; each delegates to a `SectionStore<T>` instance (composition), preserving XML docs. | Callers must compile unchanged. | Inheritance from a base — rejected for the provider store's extra converter and differing payloads. |
 | DEC-03 | R-07 | Reuse `SettingsPathResolver.ResolveOverride` with the existing default filename per store. | Each store currently calls it from `CreateSettingsFile`. | Change default filename handling — out of scope. |
-| DEC-04 | R-02 | Allow the provider store to inject its extra converter into the shared serializer options. | `ProviderSettingsStore` differs only by a converter. | Special-case provider store — rejected; parameterize. |
+| DEC-04 | R-02 | Allow the provider store to clone the shared serializer options and add its converter for the whole-document `FromJson` path. Persistence still delegates through `SectionStore<T>` and `UserSettingsFile`. | Whole-document deserialization preserves case-insensitive matching of the `Providers` root while the cloned options avoid mutating the shared instance. | Mutate the shared options or use case-sensitive `JsonElement.TryGetProperty` for this facade — rejected; both would change behavior. |
 
 ## Affected components
 

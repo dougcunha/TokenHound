@@ -28,10 +28,10 @@ The 2026-09-12 analysis (AA-07, AA-14) found that Cursor and Antigravity build i
 
 ## Acceptance criteria
 
-- [ ] All `R-NN` items were checked after refactoring.
-- [ ] No new behavior entered the scope silently.
-- [ ] Infrastructure tests pass with `--minimum-expected-tests 1`.
-- [ ] The pass-through wrapper and both duplicate `CreateException` bodies are gone.
+- [x] All `R-NN` items were checked after refactoring. Evidence: `codereview_1/codereview.md` approved R-01 through R-05.
+- [x] No new behavior entered the scope silently. Evidence: the approved review found no blocking hit or missing obligation.
+- [x] Infrastructure tests pass with `--minimum-expected-tests 1`. Evidence: the approved review records 673 tests passed.
+- [x] The pass-through wrapper and both duplicate `CreateException` bodies are gone. Evidence: the approved review verified QA-01 through QA-03.
 
 ## Assumptions and open items
 
