@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,24 +9,10 @@ namespace TokenHound.Infrastructure.Configuration;
 /// </summary>
 public sealed class RefreshSettingsStore
 {
-    private const string DEFAULT_CONFIG_FILE = "appsettings.json";
-    private const string REFRESH_SECTION_NAME = "Refresh";
+    private static readonly SectionStore<RefreshSettings> PARSER =
+        CreateStore(new UserSettingsFile());
 
-    private static readonly JsonDocumentOptions DOCUMENT_OPTIONS = new()
-    {
-        AllowTrailingCommas = true,
-        CommentHandling = JsonCommentHandling.Skip
-    };
-
-    private static readonly JsonSerializerOptions JSON_OPTIONS = new()
-    {
-        AllowTrailingCommas = true,
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        WriteIndented = true
-    };
-
-    private readonly UserSettingsFile _settingsFile;
+    private readonly SectionStore<RefreshSettings> _store;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RefreshSettingsStore"/> class using default user settings storage.
@@ -47,7 +31,7 @@ public sealed class RefreshSettingsStore
 
         ArgumentNullException.ThrowIfNull(settingsFile);
 
-        _settingsFile = settingsFile;
+        _store = CreateStore(settingsFile);
     }
 
     /// <summary>
@@ -56,7 +40,7 @@ public sealed class RefreshSettingsStore
     /// <param name="filePath">Optional settings file path override.</param>
     /// <param name="baseDirectory">Optional base directory for relative path resolution.</param>
     public RefreshSettingsStore(string? filePath, string? baseDirectory = null)
-        : this(CreateSettingsFile(filePath, baseDirectory))
+        : this(SectionStore<RefreshSettings>.ResolveSettingsFile(filePath, baseDirectory))
     {
     }
 
@@ -64,7 +48,7 @@ public sealed class RefreshSettingsStore
     /// Gets the resolved settings file path backing this store.
     /// </summary>
     public string FilePath
-        => _settingsFile.UserSettingsPath;
+        => _store.FilePath;
 
     /// <summary>
     /// Deserializes the polling cadence from a settings JSON string.
@@ -72,39 +56,22 @@ public sealed class RefreshSettingsStore
     /// <param name="json">The JSON string containing the refresh section.</param>
     /// <returns>The parsed cadence, or an empty instance when the section is absent.</returns>
     public static RefreshSettings FromJson(string json)
-    {
-
-        if (string.IsNullOrWhiteSpace(json))
-            return new RefreshSettings();
-
-        using var document = JsonDocument.Parse(json, DOCUMENT_OPTIONS);
-
-        if (!document.RootElement.TryGetProperty(REFRESH_SECTION_NAME, out var refreshSection))
-            return new RefreshSettings();
-
-        return JsonSerializer.Deserialize<RefreshSettings>(refreshSection.GetRawText(), JSON_OPTIONS)
-               ?? new RefreshSettings();
-    }
+        => PARSER.FromJson(json);
 
     /// <summary>
     /// Loads the configured polling cadence from the settings file.
     /// </summary>
     /// <returns>The stored cadence, or an empty instance when unreadable.</returns>
     public RefreshSettings Load()
-        => _settingsFile.Load().Refresh ?? new RefreshSettings();
+        => _store.Load();
 
     /// <summary>
     /// Asynchronously loads the configured polling cadence from the settings file.
     /// </summary>
     /// <param name="cancellationToken">Token cancelling the read operation.</param>
     /// <returns>The stored cadence, or an empty instance when unreadable.</returns>
-    public async Task<RefreshSettings> LoadAsync(CancellationToken cancellationToken = default)
-    {
-
-        var settings = await _settingsFile.LoadAsync(cancellationToken).ConfigureAwait(false);
-
-        return settings.Refresh ?? new RefreshSettings();
-    }
+    public Task<RefreshSettings> LoadAsync(CancellationToken cancellationToken = default)
+        => _store.LoadAsync(cancellationToken);
 
     /// <summary>
     /// Persists the polling cadence, preserving every other settings section.
@@ -112,12 +79,7 @@ public sealed class RefreshSettingsStore
     /// <param name="settings">The refresh cadence settings to store.</param>
     /// <returns><see langword="true"/> when the settings were saved; otherwise <see langword="false"/>.</returns>
     public bool Save(RefreshSettings settings)
-    {
-
-        ArgumentNullException.ThrowIfNull(settings);
-
-        return _settingsFile.Update(current => current with { Refresh = settings });
-    }
+        => _store.Save(settings);
 
     /// <summary>
     /// Asynchronously persists the polling cadence, preserving every other settings section.
@@ -126,24 +88,13 @@ public sealed class RefreshSettingsStore
     /// <param name="cancellationToken">Token cancelling the save operation.</param>
     /// <returns><see langword="true"/> when the settings were saved; otherwise <see langword="false"/>.</returns>
     public Task<bool> SaveAsync(RefreshSettings settings, CancellationToken cancellationToken = default)
-    {
+        => _store.SaveAsync(settings, cancellationToken);
 
-        ArgumentNullException.ThrowIfNull(settings);
-
-        return _settingsFile.UpdateAsync(
-            current => current with { Refresh = settings },
-            cancellationToken);
-    }
-
-    private static UserSettingsFile CreateSettingsFile(string? filePath, string? baseDirectory)
-    {
-
-        var resolvedPath = SettingsPathResolver.ResolveOverride(
-            filePath,
-            baseDirectory,
-            DEFAULT_CONFIG_FILE
+    private static SectionStore<RefreshSettings> CreateStore(UserSettingsFile settingsFile)
+        => new SectionStore<RefreshSettings>(
+            "Refresh",
+            settingsFile,
+            static settings => settings.Refresh,
+            static (settings, value) => settings with { Refresh = value }
         );
-
-        return new UserSettingsFile(userSettingsPath: resolvedPath);
-    }
 }

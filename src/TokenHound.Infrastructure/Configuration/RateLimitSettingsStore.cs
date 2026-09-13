@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,24 +9,10 @@ namespace TokenHound.Infrastructure.Configuration;
 /// </summary>
 public sealed class RateLimitSettingsStore
 {
-    private const string DEFAULT_CONFIG_FILE = "appsettings.json";
-    private const string RATE_LIMIT_SECTION_NAME = "RateLimit";
+    private static readonly SectionStore<RateLimitSettings> PARSER =
+        CreateStore(new UserSettingsFile());
 
-    private static readonly JsonDocumentOptions DOCUMENT_OPTIONS = new()
-    {
-        AllowTrailingCommas = true,
-        CommentHandling = JsonCommentHandling.Skip
-    };
-
-    private static readonly JsonSerializerOptions JSON_OPTIONS = new()
-    {
-        AllowTrailingCommas = true,
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        WriteIndented = true
-    };
-
-    private readonly UserSettingsFile _settingsFile;
+    private readonly SectionStore<RateLimitSettings> _store;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RateLimitSettingsStore"/> class using default user settings storage.
@@ -47,7 +31,7 @@ public sealed class RateLimitSettingsStore
 
         ArgumentNullException.ThrowIfNull(settingsFile);
 
-        _settingsFile = settingsFile;
+        _store = CreateStore(settingsFile);
     }
 
     /// <summary>
@@ -56,7 +40,7 @@ public sealed class RateLimitSettingsStore
     /// <param name="filePath">Optional settings file path override.</param>
     /// <param name="baseDirectory">Optional base directory for relative path resolution.</param>
     public RateLimitSettingsStore(string? filePath, string? baseDirectory = null)
-        : this(CreateSettingsFile(filePath, baseDirectory))
+        : this(SectionStore<RateLimitSettings>.ResolveSettingsFile(filePath, baseDirectory))
     {
     }
 
@@ -64,7 +48,7 @@ public sealed class RateLimitSettingsStore
     /// Gets the resolved settings file path backing this store.
     /// </summary>
     public string FilePath
-        => _settingsFile.UserSettingsPath;
+        => _store.FilePath;
 
     /// <summary>
     /// Deserializes the rate limit resilience configuration from a settings JSON string.
@@ -73,22 +57,10 @@ public sealed class RateLimitSettingsStore
     /// <returns>The parsed configuration, or a default instance when the section is absent.</returns>
     public static RateLimitSettings FromJson(string json)
     {
-
-        if (string.IsNullOrWhiteSpace(json))
-            return new RateLimitSettings();
-
         try
         {
 
-            using var document = JsonDocument.Parse(json, DOCUMENT_OPTIONS);
-
-            if (!document.RootElement.TryGetProperty(RATE_LIMIT_SECTION_NAME, out var rateLimitSection))
-                return new RateLimitSettings();
-
-            var settings = JsonSerializer.Deserialize<RateLimitSettings>(rateLimitSection.GetRawText(), JSON_OPTIONS)
-                   ?? new RateLimitSettings();
-
-            return Clamp(settings);
+            return Clamp(PARSER.FromJson(json));
         }
         catch (Exception)
         {
@@ -102,20 +74,15 @@ public sealed class RateLimitSettingsStore
     /// </summary>
     /// <returns>The stored configuration, or a default instance clamped to at least 60 seconds.</returns>
     public RateLimitSettings Load()
-        => Clamp(_settingsFile.Load().RateLimit);
+        => _store.Load();
 
     /// <summary>
     /// Asynchronously loads the configured rate limit resilience settings from the settings file.
     /// </summary>
     /// <param name="cancellationToken">Token cancelling the read operation.</param>
     /// <returns>The stored configuration, or a default instance clamped to at least 60 seconds.</returns>
-    public async Task<RateLimitSettings> LoadAsync(CancellationToken cancellationToken = default)
-    {
-
-        var settings = await _settingsFile.LoadAsync(cancellationToken).ConfigureAwait(false);
-
-        return Clamp(settings.RateLimit);
-    }
+    public Task<RateLimitSettings> LoadAsync(CancellationToken cancellationToken = default)
+        => _store.LoadAsync(cancellationToken);
 
     /// <summary>
     /// Persists the rate limit resilience settings, preserving every other settings section.
@@ -123,14 +90,7 @@ public sealed class RateLimitSettingsStore
     /// <param name="settings">The rate limit settings to store.</param>
     /// <returns><see langword="true"/> when the settings were saved; otherwise <see langword="false"/>.</returns>
     public bool Save(RateLimitSettings settings)
-    {
-
-        ArgumentNullException.ThrowIfNull(settings);
-
-        var clamped = Clamp(settings);
-
-        return _settingsFile.Update(current => current with { RateLimit = clamped });
-    }
+        => _store.Save(settings);
 
     /// <summary>
     /// Asynchronously persists the rate limit resilience settings, preserving every other settings section.
@@ -139,16 +99,7 @@ public sealed class RateLimitSettingsStore
     /// <param name="cancellationToken">Token cancelling the save operation.</param>
     /// <returns><see langword="true"/> when the settings were saved; otherwise <see langword="false"/>.</returns>
     public Task<bool> SaveAsync(RateLimitSettings settings, CancellationToken cancellationToken = default)
-    {
-
-        ArgumentNullException.ThrowIfNull(settings);
-
-        var clamped = Clamp(settings);
-
-        return _settingsFile.UpdateAsync(
-            current => current with { RateLimit = clamped },
-            cancellationToken);
-    }
+        => _store.SaveAsync(settings, cancellationToken);
 
     private static RateLimitSettings Clamp(RateLimitSettings? settings)
     {
@@ -162,15 +113,11 @@ public sealed class RateLimitSettingsStore
         return settings;
     }
 
-    private static UserSettingsFile CreateSettingsFile(string? filePath, string? baseDirectory)
-    {
-
-        var resolvedPath = SettingsPathResolver.ResolveOverride(
-            filePath,
-            baseDirectory,
-            DEFAULT_CONFIG_FILE
+    private static SectionStore<RateLimitSettings> CreateStore(UserSettingsFile settingsFile)
+        => new SectionStore<RateLimitSettings>(
+            "RateLimit",
+            settingsFile,
+            static settings => Clamp(settings.RateLimit),
+            static (settings, value) => settings with { RateLimit = Clamp(value) }
         );
-
-        return new UserSettingsFile(userSettingsPath: resolvedPath);
-    }
 }

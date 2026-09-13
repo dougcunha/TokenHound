@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,18 +11,12 @@ namespace TokenHound.Infrastructure.Configuration;
 /// </summary>
 public sealed class ProviderSettingsStore
 {
-    private const string DEFAULT_CONFIG_FILE = "appsettings.json";
-
-    private static readonly JsonSerializerOptions JSON_OPTIONS = new()
+    private static readonly JsonSerializerOptions JSON_OPTIONS = new(SectionStore<ProviderSettings>.SharedOptions)
     {
-        AllowTrailingCommas = true,
-        Converters = { new UserSettings.ProviderSettingsJsonConverter() },
-        PropertyNameCaseInsensitive = true,
-        ReadCommentHandling = JsonCommentHandling.Skip,
-        WriteIndented = true
+        Converters = { new UserSettings.ProviderSettingsJsonConverter() }
     };
 
-    private readonly UserSettingsFile _settingsFile;
+    private readonly SectionStore<ProviderSettings> _store;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ProviderSettingsStore"/> class using default user settings storage.
@@ -42,7 +35,7 @@ public sealed class ProviderSettingsStore
 
         ArgumentNullException.ThrowIfNull(settingsFile);
 
-        _settingsFile = settingsFile;
+        _store = CreateStore(settingsFile);
     }
 
     /// <summary>
@@ -51,7 +44,7 @@ public sealed class ProviderSettingsStore
     /// <param name="filePath">Optional settings file path override.</param>
     /// <param name="baseDirectory">Optional base directory for relative path resolution.</param>
     public ProviderSettingsStore(string? filePath, string? baseDirectory = null)
-        : this(CreateSettingsFile(filePath, baseDirectory))
+        : this(SectionStore<ProviderSettings>.ResolveSettingsFile(filePath, baseDirectory))
     {
     }
 
@@ -59,7 +52,7 @@ public sealed class ProviderSettingsStore
     /// Gets the resolved settings file path backing this store.
     /// </summary>
     public string FilePath
-        => _settingsFile.UserSettingsPath;
+        => _store.FilePath;
 
     /// <summary>
     /// Deserializes provider enablement from a settings JSON string.
@@ -91,20 +84,15 @@ public sealed class ProviderSettingsStore
     /// </summary>
     /// <returns>The stored enablement, or an all-enabled instance when unreadable.</returns>
     public ProviderSettings Load()
-        => _settingsFile.Load().Providers ?? new ProviderSettings();
+        => _store.Load();
 
     /// <summary>
     /// Asynchronously loads the persisted provider enablement from the settings file.
     /// </summary>
     /// <param name="cancellationToken">Token cancelling the read operation.</param>
     /// <returns>The stored enablement, or an all-enabled instance when unreadable.</returns>
-    public async Task<ProviderSettings> LoadAsync(CancellationToken cancellationToken = default)
-    {
-
-        var settings = await _settingsFile.LoadAsync(cancellationToken).ConfigureAwait(false);
-
-        return settings.Providers ?? new ProviderSettings();
-    }
+    public Task<ProviderSettings> LoadAsync(CancellationToken cancellationToken = default)
+        => _store.LoadAsync(cancellationToken);
 
     /// <summary>
     /// Persists provider enablement, preserving every other settings section and unknown provider keys.
@@ -112,18 +100,7 @@ public sealed class ProviderSettingsStore
     /// <param name="settings">The enablement map to store.</param>
     /// <returns><see langword="true"/> when the file was written; otherwise <see langword="false"/>.</returns>
     public bool Save(ProviderSettings settings)
-    {
-
-        ArgumentNullException.ThrowIfNull(settings);
-
-        return _settingsFile.Update(current =>
-        {
-
-            var merged = MergeStates(current.Providers, settings);
-
-            return current with { Providers = new ProviderSettings { EnabledStates = merged } };
-        });
-    }
+        => _store.Save(settings);
 
     /// <summary>
     /// Asynchronously persists provider enablement, preserving every other settings section and unknown provider keys.
@@ -132,19 +109,14 @@ public sealed class ProviderSettingsStore
     /// <param name="cancellationToken">Token cancelling the write operation.</param>
     /// <returns><see langword="true"/> when the file was written; otherwise <see langword="false"/>.</returns>
     public Task<bool> SaveAsync(ProviderSettings settings, CancellationToken cancellationToken = default)
+        => _store.SaveAsync(settings, cancellationToken);
+
+    private static UserSettings MergeProviders(UserSettings current, ProviderSettings settings)
     {
 
-        ArgumentNullException.ThrowIfNull(settings);
+        var merged = MergeStates(current.Providers, settings);
 
-        return _settingsFile.UpdateAsync(
-            current =>
-            {
-
-                var merged = MergeStates(current.Providers, settings);
-
-                return current with { Providers = new ProviderSettings { EnabledStates = merged } };
-            },
-            cancellationToken);
+        return current with { Providers = new ProviderSettings { EnabledStates = merged } };
     }
 
     private static Dictionary<string, bool> MergeStates(
@@ -167,15 +139,11 @@ public sealed class ProviderSettingsStore
         return merged;
     }
 
-    private static UserSettingsFile CreateSettingsFile(string? filePath, string? baseDirectory)
-    {
-
-        var resolvedPath = SettingsPathResolver.ResolveOverride(
-            filePath,
-            baseDirectory,
-            DEFAULT_CONFIG_FILE
+    private static SectionStore<ProviderSettings> CreateStore(UserSettingsFile settingsFile)
+        => new SectionStore<ProviderSettings>(
+            "Providers",
+            settingsFile,
+            static settings => settings.Providers,
+            static (settings, value) => MergeProviders(settings, value)
         );
-
-        return new UserSettingsFile(userSettingsPath: resolvedPath);
-    }
 }

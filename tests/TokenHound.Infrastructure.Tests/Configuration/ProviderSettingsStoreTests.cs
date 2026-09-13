@@ -251,6 +251,26 @@ public sealed class ProviderSettingsStoreTests : IDisposable
         store.Load().IsEnabled("claude").Should().BeFalse();
     }
 
+    [Theory]
+    [InlineData("""{ "Providers": { "claude": { "Enabled": false } } }""")]
+    [InlineData("""{ "providers": { "claude": { "Enabled": false } } }""")]
+    public void FromJson_WhenRootSectionCaseVaries_DisablesProvider(string json)
+    {
+
+        var settings = ProviderSettingsStore.FromJson(json);
+
+        settings.IsEnabled("claude").Should().BeFalse();
+    }
+
+    [Fact]
+    public void FromJson_WhenRootSectionIsAbsent_ReportsEnabled()
+    {
+
+        var settings = ProviderSettingsStore.FromJson("""{ "Log": { "MinimumLevel": "Debug" } }""");
+
+        settings.IsEnabled("claude").Should().BeTrue();
+    }
+
     private static ProviderSettings BuildSettings(params (string ProviderId, bool IsEnabled)[] states)
     {
 
