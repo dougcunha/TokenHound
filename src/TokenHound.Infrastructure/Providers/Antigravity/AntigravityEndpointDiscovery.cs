@@ -16,6 +16,7 @@ public sealed class AntigravityEndpointDiscovery
 
     private readonly Func<IEnumerable<(int Pid, string CommandLine)>> _processEnumerator;
     private readonly Func<int, IReadOnlyList<int>> _portResolver;
+    private readonly Func<int, string?> _csrfTokenResolver;
 
     [StructLayout(LayoutKind.Sequential)]
     private struct MIB_TCPROW_OWNER_PID
@@ -33,12 +34,15 @@ public sealed class AntigravityEndpointDiscovery
     /// </summary>
     /// <param name="processEnumerator">Optional process enumerator for testing.</param>
     /// <param name="portResolver">Optional port resolver for testing.</param>
+    /// <param name="csrfTokenResolver">Optional CSRF token resolver for testing.</param>
     public AntigravityEndpointDiscovery(
         Func<IEnumerable<(int Pid, string CommandLine)>>? processEnumerator = null,
-        Func<int, IReadOnlyList<int>>? portResolver = null)
+        Func<int, IReadOnlyList<int>>? portResolver = null,
+        Func<int, string?>? csrfTokenResolver = null)
     {
         _processEnumerator = processEnumerator ?? EnumerateWindowsProcesses;
         _portResolver = portResolver ?? ResolveListeningPortsForPid;
+        _csrfTokenResolver = csrfTokenResolver ?? ResolveCsrfTokenForPid;
     }
 
     /// <summary>
@@ -65,16 +69,24 @@ public sealed class AntigravityEndpointDiscovery
             if (isAgy && !match.Success && candidatePorts.Count == 0)
                 continue;
 
+            var csrfToken = match.Success
+                ? match.Groups[1].Value
+                : (_csrfTokenResolver(pid) ?? string.Empty);
+
             return new AntigravityEndpoint
             {
                 ProcessId = pid,
-                CsrfToken = match.Success ? match.Groups[1].Value : string.Empty,
+                CsrfToken = csrfToken,
                 CandidatePorts = candidatePorts
             };
         }
 
         return null;
     }
+
+    private static string? ResolveCsrfTokenForPid(int pid)
+        => AntigravityProcessMemoryReader.FindCsrfToken(pid)
+            ?? Environment.GetEnvironmentVariable("ANTIGRAVITY_CSRF_TOKEN");
 
     private static IEnumerable<(int Pid, string CommandLine)> EnumerateWindowsProcesses()
     {

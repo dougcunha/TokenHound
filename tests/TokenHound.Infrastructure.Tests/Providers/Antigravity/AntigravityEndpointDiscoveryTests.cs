@@ -109,7 +109,8 @@ public sealed class AntigravityEndpointDiscoveryTests
 
         var discovery = new AntigravityEndpointDiscovery(
             processEnumerator: () => [(777, CMD_LINE)],
-            portResolver: _ => [57956, 57957]);
+            portResolver: _ => [57956, 57957],
+            csrfTokenResolver: _ => null);
 
         // Act
         var endpoint = discovery.DiscoverEndpoint();
@@ -118,6 +119,30 @@ public sealed class AntigravityEndpointDiscoveryTests
         Assert.NotNull(endpoint);
         Assert.Equal(777, endpoint.ProcessId);
         Assert.Equal(string.Empty, endpoint.CsrfToken);
+        Assert.Equal(2, endpoint.CandidatePorts.Count);
+        Assert.Contains(57956, endpoint.CandidatePorts);
+        Assert.Contains(57957, endpoint.CandidatePorts);
+    }
+
+    [Fact]
+    public void DiscoverEndpoint_WhenAgyProcessRunning_ResolvesCsrfTokenViaResolver()
+    {
+        // Arrange
+        const string CMD_LINE = "\"C:\\Users\\Admin\\AppData\\Local\\agy\\bin\\agy.exe\" --dangerously-skip-permissions";
+        const string EXPECTED_TOKEN = "f52bf079-5284-4ea2-9899-69ec12049102";
+
+        var discovery = new AntigravityEndpointDiscovery(
+            processEnumerator: () => [(777, CMD_LINE)],
+            portResolver: _ => [57956, 57957],
+            csrfTokenResolver: pid => pid == 777 ? EXPECTED_TOKEN : null);
+
+        // Act
+        var endpoint = discovery.DiscoverEndpoint();
+
+        // Assert
+        Assert.NotNull(endpoint);
+        Assert.Equal(777, endpoint.ProcessId);
+        Assert.Equal(EXPECTED_TOKEN, endpoint.CsrfToken);
         Assert.Equal(2, endpoint.CandidatePorts.Count);
         Assert.Contains(57956, endpoint.CandidatePorts);
         Assert.Contains(57957, endpoint.CandidatePorts);

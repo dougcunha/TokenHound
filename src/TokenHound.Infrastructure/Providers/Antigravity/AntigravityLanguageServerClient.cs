@@ -109,13 +109,37 @@ public sealed class AntigravityLanguageServerClient : IDisposable
         string csrfToken,
         CancellationToken cancellationToken = default)
     {
-        var url = $"https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary";
+        var response = await QuerySchemeAsync(
+            "https",
+            port,
+            csrfToken,
+            cancellationToken
+        ).ConfigureAwait(false);
+
+        if (response is not null)
+            return response;
+
+        return await QuerySchemeAsync(
+            "http",
+            port,
+            csrfToken,
+            cancellationToken
+        ).ConfigureAwait(false);
+    }
+
+    private async ValueTask<AntigravityQuotaSummaryResponse?> QuerySchemeAsync(
+        string scheme,
+        int port,
+        string csrfToken,
+        CancellationToken cancellationToken)
+    {
+        var url = $"{scheme}://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary";
 
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
+
         if (!string.IsNullOrWhiteSpace(csrfToken))
-        {
             request.Headers.Add(CSRF_HEADER_NAME, csrfToken);
-        }
+
         request.Content = new StringContent(REQUEST_PAYLOAD, Encoding.UTF8, "application/json");
 
         try
@@ -127,9 +151,7 @@ public sealed class AntigravityLanguageServerClient : IDisposable
             ).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
-            {
                 return null;
-            }
 
             var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
             var envelope = JsonSerializer.Deserialize<AntigravityQuotaEnvelope>(content);
