@@ -14,6 +14,7 @@ using TokenHound.Infrastructure.Engine;
 using TokenHound.Infrastructure.Logging;
 using TokenHound.Infrastructure.Providers.Antigravity;
 using TokenHound.Infrastructure.Providers.Claude;
+using TokenHound.Infrastructure.Providers.Cline;
 using TokenHound.Infrastructure.Providers.Codex;
 using TokenHound.Infrastructure.Providers.Copilot;
 using TokenHound.Infrastructure.Providers.Cursor;
@@ -175,6 +176,7 @@ public partial class App : Application
             disposableResources
         );
         RegisterOpenCode(usageStore, rateLimitPolicy, disposableResources);
+        RegisterCline(usageStore, rateLimitPolicy, disposableResources);
     }
 
     private static void RegisterClaude(UsageStore usageStore, RateLimitPolicy rateLimitPolicy)
@@ -262,6 +264,18 @@ public partial class App : Application
         var provider = new OpenCodeUsageProvider(rateLimitPolicy: rateLimitPolicy);
         usageStore.RegisterProvider(provider);
         usageStore.RegisterActivityMonitor(new OpenCodeActivityMonitor());
+        disposableResources.Add(provider);
+    }
+
+    private static void RegisterCline(
+        UsageStore usageStore,
+        RateLimitPolicy rateLimitPolicy,
+        List<IDisposable> disposableResources)
+    {
+
+        var provider = new ClineUsageProvider(rateLimitPolicy: rateLimitPolicy);
+        usageStore.RegisterProvider(provider);
+        usageStore.RegisterActivityMonitor(new ClineActivityMonitor());
         disposableResources.Add(provider);
     }
 

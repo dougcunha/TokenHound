@@ -38,6 +38,16 @@ public sealed record Snapshot
     public CopilotBillingStatus? CopilotBilling { get; init; }
 
     /// <summary>
+    /// Gets the borrowed Cline account telemetry, when one was attached to the snapshot.
+    /// </summary>
+    public ClineAccountUsage? ClineAccount { get; init; }
+
+    /// <summary>
+    /// Gets the locally aggregated Cline token usage, when one was attached to the snapshot.
+    /// </summary>
+    public ClineLocalUsage? ClineLocal { get; init; }
+
+    /// <summary>
     /// Gets the active blocking condition, or <see langword="null"/> if the provider is unblocked.
     /// </summary>
     public UsageBlock? ActiveBlock { get; init; }

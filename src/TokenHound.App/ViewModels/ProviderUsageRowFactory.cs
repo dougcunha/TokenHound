@@ -32,6 +32,7 @@ public static partial class ProviderUsageRowFactory
 
         AddQuotaRows(rows, snapshot, nowUtc);
         AddCopilotCreditRow(rows, snapshot, nowUtc);
+        AddClineRows(rows, snapshot, nowUtc);
 
         return rows;
     }

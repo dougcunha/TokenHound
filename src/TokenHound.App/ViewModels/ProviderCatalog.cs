@@ -16,6 +16,7 @@ internal static class ProviderCatalog
         {
             "claude" => DEFAULT_CLAUDE_NAME,
             "gemini" or "antigravity" => "Antigravity",
+            "cline" => "Cline",
             "codex" => "Codex",
             "cursor" => "Cursor",
             "copilot" => "Copilot",
@@ -35,6 +36,7 @@ internal static class ProviderCatalog
         {
             "claude" => DEFAULT_CLAUDE_BADGE,
             "gemini" or "antigravity" => "G",
+            "cline" => "Cl",
             "codex" => "X",
             "cursor" => "Cu",
             "copilot" => "Cp",
@@ -54,6 +56,7 @@ internal static class ProviderCatalog
         {
             "claude" => "Glyph.Claude",
             "gemini" or "antigravity" => "Glyph.Antigravity",
+            "cline" => "Glyph.Cline",
             "codex" => "Glyph.Codex",
             "cursor" => "Glyph.Cursor",
             "copilot" => "Glyph.Copilot",
@@ -76,6 +79,7 @@ internal static class ProviderCatalog
         {
             "claude" => 0.9676,
             "gemini" or "antigravity" => 1.0,
+            "cline" => 1.0,
             "codex" => 0.9748,
             "cursor" => 0.9699,
             "copilot" => 1.0,
