@@ -38,6 +38,7 @@ TokenHound is a lightweight, peripheral desktop notch / HUD crafted specifically
 | **Google Antigravity / Gemini** | Language server IPC & Windows Credential Manager (`gemini:antigravity`) | Quota tier, prompt tokens, session transcripts |
 | **GitHub Copilot** | Borrowed `gh` / Copilot CLI OAuth token & internal quota API | Monthly premium interactions, reset windows, billing AI credits, active CLI sessions |
 | **OpenCode Go** | Borrowed `auth.json` API key & official usage API | 5-hour rolling, weekly, and monthly quotas, process and session activity |
+| **Cline** | Borrowed `providers.json` session & account API (`api.cline.bot`) | Credit balance, plan scope, local session token usage, free-model limit, hub/CLI activity |
 | **Z.ai GLM** (soon) | Local config discovery & direct metering API | Coding plan usage, daily quota allocation |
 | **Perplexity** (soon) | Isolated WebView2 session borrowing | Real-time search queries and rate limit quotas |
 
@@ -134,7 +135,7 @@ For in-depth specifications and implementation guides, explore the `docs/` folde
 
 TokenHound was inspired by [codenotch](https://github.com/vinzdg/codenotch), a macOS notch-based monitor for AI coding tools. TokenHound is an independent implementation built from scratch for Windows 11.
 
-The monochrome provider marks in `src/TokenHound.App/Assets/Logos/ProviderGlyphs.xaml` (Claude, Codex, Cursor, Antigravity, GLM and Perplexity) are ported from codenotch's `GlyphOutline`, used under its MIT license; Copilot, Grok, and OpenCode marks are flattened from official vendor SVGs or brand kits.
+The monochrome provider marks in `src/TokenHound.App/Assets/Logos/ProviderGlyphs.xaml` (Claude, Codex, Cursor, Antigravity, GLM and Perplexity) are ported from codenotch's `GlyphOutline`, used under its MIT license; Copilot, Grok, OpenCode, and Cline marks are flattened from official vendor SVGs or brand kits.
 
 ---
 
