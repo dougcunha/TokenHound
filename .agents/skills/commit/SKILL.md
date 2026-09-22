@@ -1,63 +1,63 @@
 ---
 name: commit
-description: 'Create commits using conventional commits (title + bullet description), handling submodules with pending changes first and then the main repository. Use when the user asks to commit, save changes in git, generate a commit message, or use /commit. Push to the remote only when the `push`/`--push` argument is supplied.'
-argument-hint: '[--push|--send] [optional context about what was done]'
-disable-model-invocation: true
+description: 'Create conventional commits with a title and bullet-point description, handling submodules with pending changes before the main repository. Use when the user asks to commit, save changes to Git, generate a commit message, or use /commit. Push to a remote only when the invocation includes `push`, `--push`, `send`, or `--send`.'
 ---
 
 # Commit (submodules first)
 
-Commit pending changes: each dirty submodule first, then the main repository.
+Commit pending changes in dirty submodules first, then commit the main repository.
 
-Enable **push mode** whenever the invoking message contains `push`, `--push`, `send`, or `--send`, whether as a slash-command argument (`/commit --push`) or free text. Text after `/commit` is context attached to the message, so read the user's own message to decide. In push mode, send to the remote after committing (step 7). Without these words, stop after local commits.
+Invocation: `/commit [--push|--send] [optional context about the changes]`.
 
-## Inviolable rules
+Enable **push mode** whenever the message that invoked the skill contains `push`, `--push`, `send`, or `--send`. This applies to slash-command arguments such as `/commit --push` and free-form text such as "commit and push" or "you can send it." Slash-command arguments are not substituted into a variable automatically. Treat the text after `/commit` as context attached to the user's message, and inspect that message directly to decide whether push mode is active. In push mode, push after committing as described in step 6. Without any of these words, stop after creating local commits.
 
-- Network access is allowed only in **push mode**, and only with `git push`, `git fetch`, and `git pull --rebase` (never `git merge` or pull with merge). Outside push mode, use no network.
-- **NEVER** use `--no-verify` or `--no-gpg-sign`. If a hook fails, investigate and report; do not bypass it.
-- Prefer a new commit to `--amend`.
-- Do not create a branch, check out, or alter working-tree state beyond the agreed `git add`.
+## Non-negotiable rules
+
+- Use the network only in **push mode**, and only through `git push`, `git fetch`, and `git pull --rebase`. Never use `git merge` or a pull that creates a merge.
+- **NEVER** use `--no-verify` or `--no-gpg-sign`. If a hook fails, investigate and report the failure instead of bypassing it.
+- Prefer a new commit over `--amend`.
+- Do not create branches, check out another branch, or alter the working tree beyond the agreed `git add` operation.
 
 ## Procedure
 
-### 1. Inspect state
+### 1. Inspect repository state
 
 ```bash
 git submodule status
 git status --porcelain
-git symbolic-ref -q --short HEAD   # empty/error = detached HEAD
+git symbolic-ref -q --short HEAD   # empty/error means detached HEAD
 ```
 
-Without `.gitmodules`/submodules, skip directly to step 4 (main repository).
+If there is no `.gitmodules` file or no submodule, continue with step 5 for the main repository.
 
-### 2. For each submodule with pending changes
+### 2. Process every submodule with pending changes
 
-Detect dirtiness in `<sub>` with `git -C <sub> status --porcelain`. Empty = skip.
+Detect pending changes in `<sub>` with `git -C <sub> status --porcelain`. Skip the submodule when the output is empty.
 
-For each dirty submodule, execute steps 3 and 4 **inside it** (`git -C <sub> ...`) before touching the main repository.
+For every dirty submodule, complete steps 3 and 4 **inside it** by using `git -C <sub> ...` before touching the main repository.
 
-### 3. Decide what enters the stage
+### 3. Decide what to stage
 
-Compare `git status --porcelain` (column 1 = staged, column 2 = working tree):
+Compare the two columns from `git status --porcelain`: column 1 is the index, and column 2 is the working tree.
 
 | Situation | Action |
 |---|---|
-| Nothing staged | Run `git add -A` directly, without asking |
-| Everything already staged | Proceed, without asking |
-| The only unstaged item is the gitlink of a recently committed submodule (everything else staged) | Run `git add <submodule>` directly, without asking |
-| Partially staged | Ask (see below) |
+| Nothing is staged | Run `git add -A` without asking |
+| Everything is already staged | Continue without asking |
+| The only unstaged item is the gitlink of a submodule that was just committed, while everything else is staged | Run `git add <submodule>` without asking |
+| The changes are partially staged | Ask the user as described below |
 
-For a partial state, use the question tool (`AskUserQuestion`) showing what is staged and what is not, with options:
+For partially staged changes, use the question tool (`AskUserQuestion`). Show what is staged and what remains unstaged, then offer these choices:
 
-- **Yes** - run `git add -A` and commit everything
-- **No** - commit only what is already staged
-- **Abort** - stop without committing so the user can restage
+- **Yes**: run `git add -A` and commit everything
+- **No**: commit only what is already staged
+- **Abort**: stop without committing so the user can redo the staging
 
-### 4. Generate the message and commit
+### 4. Write the message and commit
 
-**Use the current session context as the primary source.** If pending changes came from this conversation, you already know *why* - the reported bug, decision, cited ticket, and rejected alternative. This is more valuable than the diff: write the message from that context and use the diff only to check coverage. If the diff contains changes **not** from this session, handle them from the diff normally.
+**Use the current session context as the primary source.** If the pending changes came from work completed in this conversation, the reason is already known: the reported bug, the chosen decision, the referenced ticket, or the rejected alternative. That context is more valuable than the diff. Use the diff to confirm coverage, ensuring that no relevant change is missing and no unrelated change is included. When the diff contains changes that did not originate in this session, interpret them from the diff normally.
 
-Before writing, read what will be committed and the repository style:
+Before writing the message, inspect what will be committed and the repository's existing style:
 
 ```bash
 git diff --staged --stat
@@ -65,22 +65,22 @@ git diff --staged
 git log -8 --format="%s%n%b%n---"
 ```
 
-Message format (GitHub / conventional commits):
+Use this GitHub-style conventional commit format:
 
 ```
-type(scope): imperative, lowercase summary without a period
+type(scope): imperative lowercase summary without a period
 
 - Relevant change 1
 - Relevant change 2
 - Relevant change 3
 ```
 
-- Title <= 72 characters. Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `chore`, `build`, `ci`, `style`.
-- **Language and scope follow the repository's `git log`**; a submodule may differ from the main repository.
-- Bullets describe *what changed and why*, not file by file. A trivial commit may have only the title.
-- No `Co-Authored-By` trailer.
+- Keep the title at 72 characters or fewer. Allowed types are `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `chore`, `build`, `ci`, and `style`.
+- Match the language and scope conventions in the `git log` of the repository being committed. Each repository may use a different convention, and a submodule may differ from the main repository.
+- Describe what changed and why instead of listing files. A trivial commit, such as a submodule reference bump, may contain only the title.
+- Do not add a `Co-Authored-By` trailer.
 
-Commit without prior confirmation. In PowerShell, use a literal here-string (the closing `'@` must be in column 0):
+Commit without requesting confirmation. In PowerShell, use a literal here-string. The closing `'@` must begin in column 0:
 
 ```powershell
 git commit -m @'
@@ -91,43 +91,43 @@ type(scope): summary
 '@
 ```
 
-In Bash, use the equivalent heredoc (`git commit -F - <<'EOF'`).
+In Bash, use the equivalent heredoc form: `git commit -F - <<'EOF'`.
 
-### 5. Main repository
+### 5. Commit the main repository
 
-After submodules, return to the root and repeat steps 3 and 4. The submodule commit leaves the gitlink modified in the main repository, but it appears **unstaged** (second column of `git status --porcelain`), even if everything else was already staged. If the gitlink is the only change outside the stage, run `git add <submodule>` directly and proceed. If the **only** main-repository change is the gitlink, use `chore(lib): update submodule reference <name>`.
+After committing the submodules, return to the repository root and repeat steps 3 and 4. A submodule commit modifies its gitlink in the main repository, but the gitlink appears as **unstaged** in the second column of `git status --porcelain`, even if everything else was already staged. In that case, apply the rule from step 3: if the gitlink is the only unstaged change, run `git add <submodule>` without asking and continue with the commit. If the gitlink is the **only** change in the main repository, use a message such as `chore(lib): update <name> submodule reference`.
 
 ### 6. Push (push mode only)
 
-Send **submodules first, then the main repository**; the main gitlink only makes sense remotely after the submodule commits are there.
+Push **submodules first, then the main repository**. The main repository's gitlink is only valid on the remote after the corresponding submodule commits are available there.
 
-For each repository with commits ahead of the remote:
+For every repository with local commits ahead of its remote:
 
 ```bash
 git -C <repo> push
 ```
 
-- **No upstream** (`no upstream branch`): `git -C <repo> push -u origin <current branch>`.
-- **Rejected as non-fast-forward**: rebase and retry.
+- **No upstream branch** (`no upstream branch`): run `git -C <repo> push -u origin <current-branch>`.
+- **Rejected as non-fast-forward**: integrate with rebase and retry.
 
   ```bash
   git -C <repo> pull --rebase
   git -C <repo> push
   ```
 
-- **Rebase conflict**: resolve file by file while preserving both intentions, `git add` resolved files, and run `git rebase --continue` until the queue is empty; then push. If the correct resolution is ambiguous, run `git -C <repo> rebase --abort`, leave the repository as it was, and report the conflict for the user to decide; never use `--force`, `--skip`, or `-X ours/theirs`.
-- **Push rejected for another reason** (permission, server hook, protected branch): report the output and stop without bypassing it.
+- **Conflict during rebase**: resolve each file while preserving both intentions, the remote commit and the local commit. Stage resolved files and run `git rebase --continue` until the queue is empty, then push. If the correct resolution is ambiguous, such as incompatible changes on the same line, a binary file, or a migration/lockfile conflict, run `git -C <repo> rebase --abort`, leave the repository as it was, and report the conflict so the user can decide. Never use `--force`, `--skip`, `-X ours`, or `-X theirs`.
+- **Push rejected for another reason**, such as permissions, a server-side hook, or a protected branch: report the output and stop without bypassing the restriction.
 
-### 7. Report
+### 7. Report the result
 
-One line per created commit: `<repo>: <short hash> <title>`. Then the destination of each push (`<repo> -> <remote>/<branch>`) or, outside push mode, a line saying that nothing was sent to the remote.
+Write one line for every created commit: `<repo>: <short-hash> <title>`. Then list each push destination as `<repo> -> <remote>/<branch>`. Outside push mode, state that nothing was sent to a remote.
 
 ## Edge cases
 
-- **Nothing to commit anywhere**: report and finish; do not force an empty commit. In push mode, still perform step 6 if local commits are ahead of the remote.
-- **Pre-commit hook failed**: report the output; do not bypass it. If the hook reformatted files, restage and retry once.
-- **Merge/rebase in progress** (`MERGE_HEAD`/`rebase-merge` present): stop and notify; do not commit over it.
-- **Detached HEAD** (submodule or main - `git -C <repo> symbolic-ref -q --short HEAD` empty): **stop before committing**. Explain that the commit would be orphaned and leave the decision to the user. Proceed only if the user provides the target branch; then execute:
+- **Nothing to commit anywhere**: report it and stop. Do not force an empty commit. In push mode, still complete step 6 when local commits are ahead of the remote.
+- **Pre-commit hook failed**: report the output and do not bypass the hook. If the hook reformatted files, restage them and retry the commit once.
+- **Merge or rebase in progress**, indicated by `MERGE_HEAD` or `rebase-merge`: stop and report it. Do not commit over an active operation.
+- **Detached HEAD** in a submodule or the main repository, indicated by an empty result from `git -C <repo> symbolic-ref -q --short HEAD`: **stop before committing**. Explain that the commit would be orphaned and let the user choose. Continue only after the user names the destination branch, then run:
 
   ```bash
   git -C <repo> stash push -u -m "commit-skill"
@@ -135,5 +135,5 @@ One line per created commit: `<repo>: <short hash> <title>`. Then the destinatio
   git -C <repo> stash pop
   ```
 
-  If `stash pop` conflicts, stop and report; do not resolve or commit. Without a branch, finish without committing anything in that repository.
-- **Heterogeneous changes** (several distinct features in one diff): make separate commits by topic using `git add` by path, instead of a generic commit.
+  If `stash pop` produces a conflict, stop and report it. Do not resolve or commit the conflict. Without a user-provided branch, exit without committing in that repository.
+- **Unrelated groups of changes**, such as several distinct features in one diff: create separate commits by subject and stage each group by path instead of creating one generic commit.
