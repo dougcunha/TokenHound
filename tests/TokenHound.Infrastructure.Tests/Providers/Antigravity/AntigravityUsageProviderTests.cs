@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -38,23 +37,6 @@ public sealed partial class AntigravityUsageProviderTests
         using var provider = new AntigravityUsageProvider();
 
         Assert.Equal("gemini", provider.ProviderId);
-    }
-
-    [Fact]
-    public async Task GetSnapshotAsync_LiveIntegration_WhenAgyRunning_ReturnsOfficialMetrics()
-    {
-        using var provider = new AntigravityUsageProvider();
-        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
-
-        Assert.NotNull(snapshot);
-        Assert.Equal("gemini", snapshot.ProviderId);
-
-        if (OperatingSystem.IsWindows() && Process.GetProcessesByName("agy").Length > 0)
-        {
-            Assert.Equal(ProviderStatus.Ok, snapshot.Status);
-            Assert.Equal(Fidelity.Official, snapshot.Fidelity);
-            Assert.NotEmpty(snapshot.LimitWindows);
-        }
     }
 
     [Fact]

@@ -79,7 +79,7 @@ Each task runs in sequence in the coordinator session. No two tasks edit the sam
 - [x] T01 — reconciled after `codereview_1/CR-01` through `codereview_1/done/task_04.md`; see `done/task_01.md` for prior and corrected evidence. Scoped MCP tests passed 20/20 on the integrated state.
 - [x] T02 — complete; see `done/task_02.md` for handoff, 13 integration tests, and workflow `DEC-16`.
 - [x] T03 — complete; see `done/task_03.md`. The manual TC-05/TC-06 script was executed 2026-09-22 (workflow DEC-22).
-- [x] T05 — complete; see `done/task_05.md`. ACC-01 fixed and manual step 2 re-run for Antigravity; independent re-review pending.
+- [x] T05 — complete after validation reconciliation; see `done/task_05.md` and `codereview_3/done/task_06.md`. ACC-01 fixed, manual step 2 re-run for Antigravity, and mandatory scoped Antigravity tests now pass 41/41; independent re-review pending.
 
 ## Problems and solutions
 
@@ -87,4 +87,5 @@ Each task runs in sequence in the coordinator session. No two tasks edit the sam
 - T01: independent review `codereview_1/CR-01` found that a concurrent MCP read can pair a newly published snapshot with the previous or cleared last-success timestamp. T01 was reopened with its original contract and handoff preserved; correction T04 is linked to this obligation. Revalidate T02 and T03 integration evidence after the store/reader correction.
 - T01 was completed again after T04's paired-state correction. The 20 MCP tests revalidated T02's real SSE transport and projection; the App rebuild revalidated T03's compiled lifecycle wiring. TC-06 and the tray-exit half of TC-05 remain manual HIL 3 work.
 - Acceptance: the manual script found ACC-01 (`gemini` used-request count exposed as `remainingUnits`). DEC-23 chose a root fix; the PRD and TechSpec were amended (DEC-24) and T05 was planned.
-- T05 completed: `UsedUnits` carries Antigravity's count; the HUD text is unchanged, and MCP emits `usedUnits`. The pre-existing live Antigravity test still fails in this environment on fidelity (L-03).
+- T05 implementation completed: `UsedUnits` carries Antigravity's count; the HUD text is unchanged, and MCP emits `usedUnits`. At the original T05 handoff, a pre-existing live Antigravity test failed on fidelity (L-03); T06 later corrected that test contract.
+- `codereview_3/CR-01` made T05's validation incomplete because that live test asserted `Official` whenever `agy` ran. T06 corrected the test's source contract, kept it live, and moved it to a separate file. The full `*Antigravity*` filter now passes 41/41; MCP passes 22/22. A new session must re-review the correction before HIL 3.

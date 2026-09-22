@@ -101,6 +101,11 @@
 - Source: user response `Snapshot and end session (Recommended)` to the session pause after T05 on 2026-09-22.
 - Decision: end this session. `codereview_3` runs in a new session that did not author T05. This does not approve T05 or HIL 3.
 
+### DEC-27 — HIL 3: accept delivery and commit
+
+- Source: user responses `Accept and commit` to HIL 3 and `Continue in this session (Recommended)` to the session pause on 2026-09-22, after `codereview_4` returned `APPROVED`.
+- Decision: accept the current delivery of 06-mcp-metrics against `codereview_4`, the DEC-22 manual evidence, and the T05 Antigravity recheck. Accepted open items: pre-T05 archived Antigravity snapshots keep the count in `RemainingUnits` until refresh (DEC-25). Commit the T06 test correction and SDD records; no push or ADR promotion was requested.
+
 ## Manual acceptance evidence (DEC-22)
 
 Executed 2026-09-22 10:26–10:31 local time on the primary monitor with Windows MCP tools, using the Debug build of the current worktree (`src/TokenHound.App/bin/Debug/net10.0-windows`). The user's installed copy (`D:\Apps\TokenHound`, PID 32612) was closed from its tray with confirmation and was not reopened. Raw client output is in `acceptance/`.
@@ -131,9 +136,13 @@ Executed 2026-09-22 10:26–10:31 local time on the primary monitor with Windows
 - `codereview_1/done/task_04.md` records the CR-01 correction. The store now publishes and reads the snapshot and retained-success timestamp under one lock; the scoped MCP suite passed 20/20, and the Infrastructure test project and App built with zero warnings. T01 was reopened with its original handoff preserved, then completed again with a correction link in `done/task_01.md`; T02's SSE tests and T03's App build were revalidated. The next review must run in a session that did not author this correction.
 - `codereview_2/codereview.md` records an independent `APPROVED` re-review on 2026-09-22 by a session that authored none of T01–T04. `codereview_1/CR-01` is resolved; no new findings. Builds passed with 0 warnings, 20 scoped MCP tests passed, and the concurrency test passed 5 repeated runs. TC-06 and the tray-exit half of TC-05 remain open for HIL 3.
 - ACC-01 (manual acceptance, DEC-22) was fixed by T05 under DEC-23/DEC-24/DEC-25; see `done/task_05.md`. The session that ran `codereview_2` authored T05, so the next review (`codereview_3`) must run in a different session. Its scope is T05 plus the amended PRD/TechSpec against base `97f17c7`; the rest remains covered by `codereview_2` unless files changed.
+- `codereview_3/codereview.md` records an independent `REJECTED` re-review on 2026-09-22. T05 behavior, targeted tests, and DEC-24 conformance passed, but CR-01 found that the mandatory `*Antigravity*` class run still fails a pre-existing live test that assumes a running `agy` process always yields official metrics. The provider permits a derived transcript fallback. Route CR-01 to a test-contract correction, then obtain a fresh independent review before HIL 3.
+- `codereview_3/done/task_06.md` records the CR-01 correction. The live test remains active in a separate file and validates either successful official or derived-source semantics. The full Antigravity filter passed 41/41 and MCP passed 22/22 on the corrected state. T05's validation was reconciled in its handoff and manifest; the next review must run in a session that did not author T06.
+- `codereview_4/codereview.md` records an independent `APPROVED` re-review on 2026-09-22 by a session that authored none of T05–T06. `codereview_3/CR-01` is resolved; no new findings. Infrastructure tests built with 0 warnings; `*Antigravity*` passed 41/41 and `*Mcp*` 22/22. HIL 3 is next.
 
 ## Pending gates
 
 ### HIL 3 — Delivery acceptance
 
 - After T01–T03, independent review, and integrated validation, decide acceptance against the current delivery and the manual script.
+- Resolved by DEC-27 on 2026-09-22: accepted.

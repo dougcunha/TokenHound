@@ -4,15 +4,15 @@
 
 ## Header
 
-- status: active
+- status: closed
 - generated: 2026-09-22
-- stage: tasks
-- stage_source: tasks/prd-06-mcp-metrics/tasks.md
-- covers_through: T05 complete (done/task_05.md)
-- authored_code: yes
-- git_head: 97f17c7
-- worktree: uncommitted MCP feature and T05 files in src, tests, docs, README, and this folder (including `acceptance/`); unrelated tracked deletions under tasks/prd-arch-* and tasks/prd-feat-*
-- next_step: sdd-review-code — independent re-review (codereview_3) of T05 and the DEC-24 amendments, `--base 97f17c79a5afeebbd8ff3a534cced7681b382476`
+- stage: acceptance
+- stage_source: tasks/prd-06-mcp-metrics/workflow.md#DEC-27
+- covers_through: HIL 3 accepted (DEC-27); codereview_4 APPROVED
+- authored_code: no
+- git_head: bc4208d
+- worktree: committed feature at HEAD; uncommitted T06 test correction and SDD state in tests/ and tasks/prd-06-mcp-metrics/
+- next_step: — (feature completed)
 - other_eligible: —
 - superseded_by: —
 
@@ -32,11 +32,11 @@ Entry shape: `- [ID] (when: tier: trigger; trigger) gist — src: path#section; 
 
 ## Next step brief
 
-- Why next: `codereview_2` APPROVED the feature, but manual acceptance found ACC-01. T05 fixed it under DEC-23/DEC-24/DEC-25. This session wrote T05 and ran `codereview_2`, so it cannot review T05.
-- Read first: `done/task_05.md` (contract and handoff), `workflow.md` DEC-22..DEC-25 and ACC-01, the amended PRD (NFR-03, out of scope) and TechSpec (DEC-24, CMP-09, TC-07, terrain baseline), then `codereview_2/codereview.md` for prior coverage.
-- Known change points: not listed here on purpose; derive them from the diff against the base.
+- Why next: `codereview_3` REJECTED only because the mandatory Antigravity class run failed an existing live test's unsupported `Official` assumption. T06 corrected that test; this session authored T06 and cannot review it.
+- Read first: `codereview_3/codereview.md` (CR-01), `codereview_3/done/task_06.md` (contract and handoff), T05 reconciliation in `done/task_05.md` and `tasks.md`, then the amended PRD and TechSpec.
+- Known change points: derive from the worktree diff; the only code change after `bc4208d` is in Antigravity test files.
 - Applicable entries: L-03, O-01, O-02, O-03.
-- Watch out: files outside T05 are unchanged since `codereview_2`; after an APPROVED status, go to HIL 3.
+- Watch out: the prior report remains immutable. After an APPROVED independent review, present HIL 3 using DEC-22 and T05 manual evidence.
 
 ## Decisions
 
@@ -44,7 +44,7 @@ Entry shape: `- [ID] (when: tier: trigger; trigger) gist — src: path#section; 
 
 ## Learnings
 
-- [L-03] (when: on-run: dotnet test TokenHound.Infrastructure.Tests without filter) `AntigravityUsageProviderTests.GetSnapshotAsync_LiveIntegration_WhenAgyRunning_ReturnsOfficialMetrics` hits the real provider when `agy` runs locally and can fail with `Derived` fidelity; use class filters for feature evidence — src: tasks/prd-06-mcp-metrics/done/task_02.md#handoff; until: feature acceptance.
+- [L-03] (when: on-run: dotnet test Antigravity; review CR-01) The former live test assumed a running `agy` guarantees `Official`; T06 now checks the returned source and the full `*Antigravity*` filter passed 41/41 — src: tasks/prd-06-mcp-metrics/codereview_3/done/task_06.md#handoff; until: independent re-review.
 - [L-04] (when: on-run: manual script; Windows MCP) The TokenHound tray icon sits in the taskbar overflow; its first right-click often shows only the tooltip, so right-click again. The overflow button toggles, so check its state before clicking. Tooltips are not in the UI tree: capture them with a `System.Drawing` `CopyFromScreen` crop via windows-mcp PowerShell. The scratchpad SSE clients were stdlib Python — src: tasks/prd-06-mcp-metrics/acceptance/; until: feature acceptance.
 
 ## Code map
@@ -54,5 +54,5 @@ Entry shape: `- [ID] (when: tier: trigger; trigger) gist — src: path#section; 
 ## Open threads
 
 - [O-01] (when: now; acceptance) Manual script executed 2026-09-22: all steps passed except ACC-01. T05 re-ran step 2 for Antigravity and it now matches (`acceptance/t05_gemini.txt`) — src: tasks/prd-06-mcp-metrics/workflow.md#manual-acceptance-evidence-dec-22; until: HIL 3.
-- [O-02] (when: now: resume; on-edit: tasks/**) Unrelated tracked deletions under `tasks/prd-arch-20260912-*` and `tasks/prd-feat-20260916-01-cline-provider/` are not this feature's writes; preserve and exclude them — src: tasks/prd-06-mcp-metrics/workflow.md#worktree-observation-at-pause; until: the user confirms ownership.
+- [O-02] (when: now: review scope) Unrelated task-folder deletions are committed in `cd80673` between the feature's Git base and HEAD; exclude them from the feature opinion — src: tasks/prd-06-mcp-metrics/codereview_3/codereview.md#sources-and-scope; until: feature acceptance.
 - [O-03] (when: now) The user's installed TokenHound (`D:\Apps\TokenHound`) was closed for the manual script and not reopened — src: workflow.md#manual-acceptance-evidence-dec-22; until: the user reopens it.

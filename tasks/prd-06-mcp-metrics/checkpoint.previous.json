@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "generation": 25,
+  "generation": 29,
   "feature": "06-mcp-metrics",
   "workspace": "D:\\MyProjects\\TokenHound",
-  "phase": "review",
-  "status": "active",
+  "phase": "acceptance",
+  "status": "awaiting-hil",
   "safe_to_stop": true,
   "owner_session": null,
   "objective": "Expose the current metrics of providers displayed by TokenHound to MCP clients through a local HTTP/SSE server using ModelContextProtocol.AspNetCore.",
@@ -19,7 +19,7 @@
     "prd": "prd.md",
     "techspec": "techspec.md",
     "tasks": "tasks.md",
-    "review": "codereview_2/codereview.md",
+    "review": "codereview_4/codereview.md",
     "snapshot": "context-snapshot.md"
   },
   "review_status": "APPROVED",
@@ -41,43 +41,38 @@
     }
   ],
   "decisions_to_read": [
-    "DEC-13",
     "DEC-23",
     "DEC-24",
-    "DEC-25"
+    "DEC-25",
+    "DEC-26"
   ],
   "git_base": "97f17c79a5afeebbd8ff3a534cced7681b382476",
   "worktree_evidence": "workflow.md#Baseline",
   "active_work": [],
-  "pending_hil": null,
-  "blockers": [
-    {
-      "id": "ACC-01",
-      "summary": "Fixed by T05; independent re-review pending.",
-      "evidence_ref": "done/task_05.md#Handoff"
-    }
-  ],
-  "correction_round": 1,
+  "pending_hil": {
+    "gate": "HIL 3",
+    "question": "Accept the current delivery of 06-mcp-metrics against codereview_4, DEC-22 manual evidence, and the T05 Antigravity recheck?",
+    "affected_ids": [
+      "codereview_4",
+      "DEC-22",
+      "T05",
+      "T06"
+    ]
+  },
+  "blockers": [],
+  "correction_round": 2,
   "rounds_without_progress": 0,
   "next_action": {
-    "kind": "run",
-    "instruction": "Run independent sdd-review-code (codereview_3) of 06-mcp-metrics against base 97f17c79a5afeebbd8ff3a534cced7681b382476, focused on T05 and the DEC-24 amendments, in a session that did not author T05; route the literal status, then HIL 3.",
+    "kind": "await-decision",
+    "instruction": "Record the HIL 3 answer in workflow.md; if accepted, mark checkpoint and snapshot completed/closed. Commit only if requested.",
     "read": [
       {
-        "path": "tasks/prd-06-mcp-metrics/context-snapshot.md",
-        "section": "header, next step brief, open threads, on-run entries (independent stage)"
+        "path": "tasks/prd-06-mcp-metrics/codereview_4/codereview.md",
+        "section": "summary, limitations, conclusion"
       },
       {
         "path": "tasks/prd-06-mcp-metrics/workflow.md",
-        "section": "DEC-22..DEC-25, ACC-01, Review cycle"
-      },
-      {
-        "path": "tasks/prd-06-mcp-metrics/codereview_2/codereview.md",
-        "section": "summary, limitations"
-      },
-      {
-        "path": "tasks/prd-06-mcp-metrics/done/task_05.md",
-        "section": "contract, handoff"
+        "section": "Manual acceptance evidence (DEC-22), Pending gates"
       }
     ]
   }

@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "generation": 26,
+  "generation": 30,
   "feature": "06-mcp-metrics",
   "workspace": "D:\\MyProjects\\TokenHound",
-  "phase": "review",
-  "status": "paused",
+  "phase": "completed",
+  "status": "completed",
   "safe_to_stop": true,
   "owner_session": null,
   "objective": "Expose the current metrics of providers displayed by TokenHound to MCP clients through a local HTTP/SSE server using ModelContextProtocol.AspNetCore.",
@@ -19,7 +19,7 @@
     "prd": "prd.md",
     "techspec": "techspec.md",
     "tasks": "tasks.md",
-    "review": "codereview_2/codereview.md",
+    "review": "codereview_4/codereview.md",
     "snapshot": "context-snapshot.md"
   },
   "review_status": "APPROVED",
@@ -41,43 +41,23 @@
     }
   ],
   "decisions_to_read": [
-    "DEC-23",
-    "DEC-24",
     "DEC-25",
-    "DEC-26"
+    "DEC-27"
   ],
   "git_base": "97f17c79a5afeebbd8ff3a534cced7681b382476",
   "worktree_evidence": "workflow.md#Baseline",
   "active_work": [],
   "pending_hil": null,
-  "blockers": [
-    {
-      "id": "ACC-01",
-      "summary": "Fixed by T05; independent re-review pending.",
-      "evidence_ref": "done/task_05.md#Handoff"
-    }
-  ],
-  "correction_round": 1,
+  "blockers": [],
+  "correction_round": 2,
   "rounds_without_progress": 0,
   "next_action": {
-    "kind": "run",
-    "instruction": "Run independent sdd-review-code (codereview_3) of 06-mcp-metrics against base 97f17c79a5afeebbd8ff3a534cced7681b382476, focused on T05 and the DEC-24 amendments, in a session that did not author T05; route the literal status, then HIL 3.",
+    "kind": "close",
+    "instruction": "Feature accepted (DEC-27); report only.",
     "read": [
       {
-        "path": "tasks/prd-06-mcp-metrics/context-snapshot.md",
-        "section": "header, next step brief, open threads, on-run entries (independent stage)"
-      },
-      {
-        "path": "tasks/prd-06-mcp-metrics/workflow.md",
-        "section": "DEC-22..DEC-25, ACC-01, Review cycle"
-      },
-      {
-        "path": "tasks/prd-06-mcp-metrics/codereview_2/codereview.md",
-        "section": "summary, limitations"
-      },
-      {
-        "path": "tasks/prd-06-mcp-metrics/done/task_05.md",
-        "section": "contract, handoff"
+        "path": "tasks/prd-06-mcp-metrics/codereview_4/codereview.md",
+        "section": "summary"
       }
     ]
   }

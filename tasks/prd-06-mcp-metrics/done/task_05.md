@@ -75,6 +75,7 @@ No provider stores a used-request count in `LimitWindow.RemainingUnits`. Antigra
 - Quality profile: QA-01–QA-05 had no hits in added lines or the new test file. QA-06 matched only the new test's `DateTimeOffset` constructor (lexical false positive). QA-07 reservation: `AntigravityUsageProviderTests.cs` went from 311 to 314 lines, above the 300-line style target before T05 and still below the 500-line profile threshold; every other touched file is at or below 282 lines. `git diff --check` passed.
 - Validated state: current uncommitted worktree on Git base `97f17c7`, Debug, .NET SDK 10.0.401, Windows.
 - Open items: archived pre-T05 Antigravity readings keep the count in `RemainingUnits` until the first refresh after upgrade (TechSpec risk, accepted in DEC-25). This session authored T05, so the re-review must run in another session.
+- Post-review validation reconciliation: `codereview_3/CR-01` found that the mandatory `*Antigravity*` class filter failed on an older live test's unsupported assumption about `agy` fidelity. Correction `codereview_3/done/task_06.md` preserved the live test, validated the source actually returned, and reran the class at 41/41 passed; MCP remained 22/22 passed. T05's scoped validation is now complete, subject to a new independent review.
 
 ### ADR candidates
 
