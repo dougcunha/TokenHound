@@ -1,27 +1,30 @@
 ---
 name: sdd-execute-corrections
-description: SDD execution when tasks from a review need correction; does not create or reclassify findings.
+description: SDD execution when tasks from a code review need correction; implements each correction task in this session with read-only explorers and a pause between tasks; does not create or reclassify findings.
 argument-hint: --prd feature-name --num review-number
 disable-model-invocation: true
 ---
 
 # Execute SDD corrections
 
-If the caller limits execution to a batch, return after step 5 before starting another batch: `batch-completed` with pending IDs if the batch was approved, or `blocked` with evidence if the batch still has a failure or no task is eligible. When all tasks are complete, execute step 6 before returning. A batch does not end the review.
+The session that runs this skill is the only writer: it implements every correction task itself and owns the moves inside the report folder. Subagents are read-only explorers; they never edit files, run builds or tests that write shared resources, or talk to the user. Execution is one task at a time, with a pause after each task. The session that corrects the code does not issue the re-review.
 
-1. Fix one review by argument/context and require `codereview.md`. Inventory root and `done/` tasks by ID, findings, acceptance, dependencies, and files. If ambiguous, request a choice; if the plan is missing, direct to `sdd-plan-corrections`.
-   **Output:** exact review, with no duplicates or missing/circular dependencies. If all are complete, continue to joint validation.
-2. Select eligible tasks. Delegate one task per subagent using this skill, with the exact path and instruction to execute **only step 3**, without delegating, reviewing, or moving files. The coordinator executes steps 1, 2, and 4 through 6. Without subagents, execute sequentially and keep review separate from the author.
-   Parallelize only without collisions in files, contracts, configuration, and test resources.
-   **Output:** batch with exclusive owners and confirmed correction authorization.
-3. In the executor, read the stable report and task once per version; then retrieve relevant PRD/TechSpec sections, code, and skills. Trace the cause and implement within the limits. Apply TechSpec validation; in desktop C#/.NET, omit E2E even in legacy commands. Record unit, integration, required manual checks, and limitations; when available, use `dotnet-efficient-validation`. Run the quality profile's blocking commands over the files the correction touched: fixing one finding without reintroducing another is part of the task's acceptance.
-   Update only the assigned task and its single `## Handoff` with result, files, commands, validated version, and pending items. Preserve the report, other tasks, and global state.
-   **Output:** implementation/evidence or reproducible block; executor returns to coordinator.
-4. Review diff and handoff independently of the author. Reuse proven tests from the same state; run only missing/invalidated checks. Return findings to the same executor; after two attempts without new evidence, record a block and advance independent work. Architecture/scope divergence requires HIL when not covered by existing authorization.
-   **Output:** acceptance of each task proven or a specific pending item; unexecuted essential manual work prevents approval.
-5. Move only approved tasks to `done/`, preserving names and checking absolute paths inside the review. Preserve the immutable report. Recalculate the DAG from remaining files.
-   **Output:** every approved task moved; pending tasks at root. On interruption, check review/handoff before inferring completion from the folder.
-6. Validate the integrated set without repeating already valid commands. Check every actionable finding and its evidence. In the orchestrated flow, return the execution report so the caller can delegate `sdd-review-code`; in standalone use, request independent review by that skill and create a new immutable report.
-   **Output:** tasks complete with integrated evidence and re-review issued or explicitly returned to the caller; persistent/new findings remain open until a decision.
+If the caller limits execution to one task, return after step 6 instead of asking: `task-completed` with the next eligible IDs, or `blocked` with evidence. When all tasks are complete, run step 7 before returning. A task return does not end the review cycle.
 
-If the environment prevents acceptance, keep the affected task pending with command, error, and impact. If there is a collision, stop affected writers, wait for completion confirmation, and reconcile changes before resuming sequentially.
+1. **Resume.** If `tasks/prd-[slug]/context-snapshot.md` exists, read `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md` in full and apply its load protocol, validating `covers_through` against the report folder.
+   **Output:** snapshot applied, partially trusted with the suspect entries named, or absent.
+2. Fix one report folder by argument, snapshot, or context and require its `codereview.md`. Inventory root and `done/` tasks by ID, findings, acceptance, dependencies, and files. If ambiguous, request a choice; if the plan is missing, direct to `sdd-plan-corrections`.
+   **Output:** exact report, with no duplicates or missing or circular dependencies. If all tasks are complete, continue to step 7.
+3. Select one eligible task whose dependencies are complete, preferring the snapshot's `next_step` when it is still eligible. Confirm correction authorization.
+   **Output:** one task with its findings, limits, and matching snapshot entries loaded.
+4. Read the stable report and task once per version; then retrieve relevant PRD and TechSpec sections, code, `AGENTS.md`, and skills. Send a read-only explorer only for sweeps across many files, such as every caller of a symbol a finding names, and verify the lines it cites. Trace the cause and implement within the limits. Apply the TechSpec validation; in desktop C#/.NET, omit E2E even in legacy commands. Record unit, integration, and required manual checks and limitations; when available, use `dotnet-efficient-validation`. Run the quality profile's blocking commands over the files the correction touched: fixing one finding without introducing another is part of the task's acceptance. Serialize builds and test runs that share `bin/`, `obj/`, or `TestResults/`.
+   Update only the task and its single `## Handoff` with result, files, commands, validated version, and pending items. Preserve the report, other tasks, and global state.
+   **Output:** implementation and evidence, or a reproducible block.
+5. Re-read the diff and handoff against the finding, acceptance, and rules as if another author wrote them. Reuse proven tests from the same state; run only missing or invalidated checks. Fix what fails; after two attempts without new evidence, record a block and advance independent work. An architecture or scope divergence requires HIL when not covered by existing authorization.
+   **Output:** acceptance of the task proven, or a specific pending item; unexecuted essential manual work prevents approval.
+6. Move an approved task to `done/`, preserving its name and checking absolute paths inside the report folder. Preserve the immutable report. Recalculate the DAG from the remaining files. Then, with no explorer or process running, ask the session pause from `session-continuity.md` with stage `corrections`, `authored_code: yes`, and the next eligible task as next step. Do not start the next task before the answer.
+   **Output:** approved task moved, pending tasks at the root, and the user's choice applied. On interruption, check report and handoff before inferring completion from the folder.
+7. Validate the integrated set without repeating already valid commands. Check every actionable finding and its evidence. The re-review runs in a session that did not make these corrections: in the orchestrated flow, return the execution report so the caller schedules `sdd-review-code`; in standalone use, ask the session pause with `sdd-review-code` as next step, which recommends ending this session.
+   **Output:** tasks complete with integrated evidence and the re-review left to an independent session or explicitly returned to the caller; persistent or new findings remain open until a decision.
+
+If the environment prevents acceptance, keep the affected task pending with command, error, and impact. Pre-existing or foreign changes that collide with the task's files stop the task until they are reconciled. Standalone, the resume instruction is `Use the sdd-execute-corrections skill to continue <report folder> in this repository.`

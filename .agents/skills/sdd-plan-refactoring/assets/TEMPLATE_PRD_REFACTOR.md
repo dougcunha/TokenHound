@@ -6,7 +6,7 @@
 
 ## Scope
 
-- Target: `[module, class, or flow]`
+- Target: `[module, function, or flow]`
 - Allowed structural change: [boundary]
 - Out of scope: [new behavior or excluded area]
 
@@ -14,11 +14,11 @@
 
 | ID | Observable behavior | Source and evidence | Verification |
 | --- | --- | --- | --- |
-| R-01 | [input, action, and result] | `[test, code, contract, or script]` | [expected evidence] |
+| R-01 | [input, action, and result] | `[test, code, contract, fixture, or script]` | [expected evidence] |
 
 ## Constraints
 
-- [compatibility, performance, security, or operations]
+- [compatibility, performance, security, platform, or operations]
 
 ## Acceptance criteria
 

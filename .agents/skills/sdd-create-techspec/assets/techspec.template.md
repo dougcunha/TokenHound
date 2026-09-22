@@ -3,7 +3,8 @@
 ## Sources and traceability
 
 - PRD: `tasks/prd-[slug]/prd.md`
-- Applicable instructions and skills: [names]
+- Applicable instructions, rules, and skills: [names]
+- Specs and design: [`docs/specs/` and `docs/design/` sections used]
 - Evidence in existing code: [paths and symbols]
 
 ## Solution summary
@@ -14,7 +15,7 @@
 
 | ID | PRD obligations | Decision | Reason and evidence | Alternatives and trade-offs |
 | --- | --- | --- | --- | --- |
-| DEC-01 | RF-01, RNF-01 | [decision] | [evidence] | [alternatives] |
+| DEC-01 | FR-01, NFR-01 | [decision] | [evidence] | [alternatives] |
 
 ## Components and flow
 
@@ -26,16 +27,16 @@
 
 ## Contracts and data
 
-[Include only changed contracts. For each one, document fields, types, requiredness, validation, compatibility, and necessary examples. Remove the section when it does not apply.]
+[Include only changed contracts: configuration JSON, provider API payloads, usage snapshots, and persisted state. For each one, document fields, types, requiredness, validation, schema version, compatibility, and necessary examples. Remove the section when it does not apply.]
 
 ## Integrations and interfaces
 
-[Include only affected endpoints, events, UI, files, database, or services. Document applicable input, output, errors, authentication, timeout, and idempotency.]
+[Include only affected provider APIs, credential stores, local databases and files, processes, and HUD or tray UI. Document applicable input, output, errors, authentication, timeout, rate limits, and idempotency.]
 
 ## Errors, security, and recovery
 
 - Errors and edges: [behavior]
-- Authorization and sensitive data: [control, if applicable]
+- Credentials and sensitive data: [control, if applicable]
 - Concurrency and idempotency: [guarantee, if applicable]
 - Rollback or reversal: [procedure]
 
@@ -47,14 +48,14 @@
 
 ## Test approach
 
-- Profile: [stack per project and evidence, SDK/TFM, runner, and execution route]
-- E2E: [omitted by .NET desktop policy | relevant scenario for another target]
+- Profile: [stack per project and evidence, SDK/TFM, runner, and commands from `AGENTS.md`]
+- E2E: [omitted by .NET desktop policy]
 - Command prerequisites and exclusions: [environment, filters/projects without desktop E2E]
 - Manual acceptance: [script, expected result, and owner, when needed]
 
 | ID | Obligations | Level | Scenario | Expected result | Command or project |
 | --- | --- | --- | --- | --- | --- |
-| TC-01 | RF-01 | [level allowed by profile] | [scenario] | [result] | `[command or script]` |
+| TC-01 | FR-01 | [unit/integration/manual] | [scenario] | [result] | `[command or test project]` |
 
 ## Quality profile
 
@@ -65,7 +66,7 @@ Rules this feature can violate. A blocking hit prevents task completion and reje
 | QA-01 | [rule] | blocking/reservation | `[rg command scoped to the diff]` | `DEC-NN` or — |
 
 - Verification scope: [files in the task diff]
-- Escalation trigger: [8+ reservations, file above 500 lines, or duplication in 3+ places]
+- Escalation trigger: [8+ reservations, a touched file above 500 lines, or duplication in 3+ places]
 
 ### Terrain baseline
 
@@ -79,7 +80,7 @@ Hits that already existed in the target files before implementation. A hit liste
 
 ## Observability and rollout
 
-- Signals: [applicable logs, metrics, or health checks]
+- Signals: [applicable structured logs or diagnostic output]
 - Migration and compatibility: [strategy, if applicable]
 - Rollout and rollback: [steps and gates]
 

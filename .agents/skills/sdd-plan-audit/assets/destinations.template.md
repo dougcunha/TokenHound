@@ -9,13 +9,13 @@
 
 | Order | Slug | Outcome | Findings | Route | Depends on | State |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | [`arch-[YYYYMMDD]-01-[workstream]`](../tasks/prd-arch-[YYYYMMDD]-01-[workstream]/tasks.md) | [reviewable outcome] | AA-01, AA-02 | refactoring / defect / reused | — | proposed / approved / deferred / contracts / planned / blocked |
+| 1 | [`[NN]-arch-[YYYYMMDD]-[workstream]`](../tasks/prd-[NN]-arch-[YYYYMMDD]-[workstream]/tasks.md) | [reviewable outcome] | AA-01, AA-02 | refactoring / defect / reused | — | proposed / approved / deferred / contracts / planned / blocked |
 
 ## Findings
 
 | ID | Dimension | Location | Finding | Class | Current evidence | Destination |
 | --- | --- | --- | --- | --- | --- | --- |
-| AA-01 | [dead code / duplication / anti-pattern / types and nullability / smell] | `[file:line]` | [summary and recommendation from the report] | actionable / resolved / discarded / pending | [command or excerpt checked] | [`slug` T01, T02 / resolved / discarded / pending / deferred] |
+| AA-01 | [dead code / duplication / anti-pattern / type safety / smell] | `[file:line]` | [summary and recommendation from the report] | actionable / resolved / discarded / pending | [command or excerpt checked] | [`slug` T01, T02 / resolved / discarded / pending / deferred] |
 
 ## Pending items
 

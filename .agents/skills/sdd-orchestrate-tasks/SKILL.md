@@ -1,30 +1,39 @@
 ---
 name: sdd-orchestrate-tasks
-description: SDD DAG when PRD, TechSpec, and tasks are already approved and must be executed; for the cycle from PRD, use sdd-orchestrate-flow.
+description: SDD DAG when PRD, TechSpec, and tasks are already approved and must be executed; implements each task in this session with read-only explorers and a pause between tasks. For the cycle from PRD, use sdd-orchestrate-flow.
 argument-hint: --prd feature-name [--budget economical|medium|high]
 disable-model-invocation: true
 ---
 
 # Orchestrate SDD tasks
 
-If the caller limits execution to a batch, return after step 5 before starting another batch: `batch-completed` with pending IDs if the batch was approved, or `blocked` with evidence if the batch still has a failure or no task is eligible. When all tasks are complete, execute step 6 before returning. A batch return does not mean the feature is complete.
+The session that runs this skill is the only writer: it implements every task itself, following `sdd-execute-task`, and owns the manifest and moves. Subagents are read-only explorers; they never edit files, run builds or tests that write `bin/`, `obj/`, or `TestResults/`, or talk to the user. Execution is one task at a time, with a pause after each task. This session does not issue the global review of the code it wrote.
 
-1. Resolve the feature and check `prd.md`, `techspec.md`, `tasks.md`, root, and `done/`. Read sources once per version, then task metadata. Confirm authorization to implement and preserve pre-existing changes.
-   If there is evidence of an incorrect completion, reopen the task through the DAG owner: record reason, review, and previous handoff under `Problems and solutions`, move it from `done/` to root, and update link/state to pending. Preserve contract and IDs; revalidate affected dependents. This does not authorize regenerating completed tasks to change their scope.
+If the caller limits execution to one task, return after step 7 instead of asking: `task-completed` with the next eligible IDs, or `blocked` with evidence. When all tasks are complete, run step 8 before returning. A task return does not mean the feature is complete.
+
+1. **Resume.** Look for `tasks/prd-[slug]/context-snapshot.md`. If it exists, read [references/session-continuity.md](references/session-continuity.md) in full and apply its load protocol before anything else: validate the header against the manifest and Git, load the `now` tier, and keep the other tiers for their triggers. A stale or invalid snapshot is a hint, never an authority.
+   **Output:** snapshot applied, partially trusted with the suspect entries named, or absent.
+2. **Reconcile.** Resolve the feature and check `prd.md`, `techspec.md`, `tasks.md`, the root, and `done/`. Read sources once per version, then task metadata. Confirm authorization to implement and record pre-existing changes so they are preserved.
+   If there is evidence of an incorrect completion, reopen the task: record reason, review, and previous handoff under `Problems and solutions`, move it from `done/` to the root, and update link and state to pending. Preserve contract and IDs; revalidate affected dependents. This does not authorize regenerating completed tasks to change their scope.
    **Output:** IDs, links, states, and dependencies reconciled; divergences have evidence and block the affected unit.
-2. Select pending tasks with completed dependencies. Use one executor subagent per task; parallelize only units without collisions in files, contracts, configuration, or build/test resources. Reserve available slots and keep the orchestrator as the manifest's sole writer.
-   **Output:** batch with exclusive owners and scopes. Without available subagents, report the limitation and execute sequentially if the caller allows it.
-3. Delegate `sdd-execute-task` with skill path, task, sources, authorization, and write limits. Use minimal context without copying history. Require a handoff with evidence and wait for the executor's real handle.
-   **Output:** each task returns a result or block; the executor does not move files or alter the manifest.
-4. Review diff and handoff independently of the author against contract, tests, and the TechSpec quality profile. Reuse validation proven in the same state; rerun only for a change, failure, uncovered risk, or project requirement. In desktop .NET, omit E2E and check replacement evidence; essential manual validation pending prevents completion.
-   Run the profile's blocking commands over the task diff: it is a sweep whose cost is proportional to hits, not an audit. Discount what the Terrain baseline already recorded; charging prior debt to whoever touched the file last produces a finding the executor cannot resolve within the contract. A new or aggravated hit without a `DEC-NN` covering it prevents completion even with conformant acceptance and tests. Accumulate reservation hits per feature for the escalation trigger, without treating them as blocks.
-   Return findings only to the same executor. After two attempts without progress, record a block and continue independent work. Scope/architecture deviations return to the caller's HIL.
-   **Output:** each task approved by evidence or pending with a concrete cause; no task completed with an unjustified blocking hit.
-5. Move only approved tasks to `done/`, checking that resolved source/destination stay inside the feature. Update link and state in the manifest and check both. Record relevant problems/solutions at the end of the manifest. Recalculate the DAG.
-   **Output:** file, link, and state consistent; if interrupted between move and update, reconcile using handoff and review without assuming approval from location.
-6. When none remain eligible, check every obligation and integrated-set validation. Serialize builds/tests to avoid `bin/` and `obj/` contention. Report task completion or blocks to the caller; global review belongs to `sdd-review-code`.
+3. **Select.** Pick one pending task whose dependencies are complete, preferring the snapshot's `next_step` when it is still eligible. Read `.agents/skills/sdd-execute-task/SKILL.md` once per session and follow it as the procedure for this task.
+   **Output:** one task with its contract, write scope, and the snapshot entries that match it loaded.
+4. **Explore.** Before editing, list the questions the change needs answered (callers, affected tests, provider behavior in the relevant `docs/specs/` spec, Terrain baseline hits, similar implementations). Answer small, targeted ones directly. Delegate a question to a read-only explorer subagent only when answering it means sweeping many files or directories and only the conclusion matters; run disjoint questions in parallel. Give each explorer the exact question, the paths to start from, the read-only constraint, and the return format: conclusion, `path:line` evidence, and what it could not confirm. Do not send the conversation, the PRD, or the TechSpec unless the question is about them.
+   **Output:** change points and test targets known with evidence; explorer conclusions that later work relies on are verified at the cited lines before editing.
+5. **Implement.** Apply steps 2 to 5 of `sdd-execute-task` in this session: smallest coherent change, behavior tests proportional to risk, the TechSpec quality profile over the touched files, and the `## Handoff` updated with evidence. Serialize builds and test runs that share `bin/`, `obj/`, or `TestResults/`; when available, use `dotnet-efficient-validation`. Scope and architecture deviations stop the task and go to the user as a decision with alternatives and impact.
+   **Output:** implementation limited to the contract, with checks run on the current state.
+6. **Review.** Re-read the task diff against the contract, acceptance criteria, `AGENTS.md` and the TechSpec quality profile, as if another author wrote it. Reuse validation proven in the same state; rerun only for a change, failure, uncovered risk, or project requirement. Essential manual validation still pending prevents completion.
+   Run the profile's blocking commands over the task diff: it is a sweep whose cost is proportional to hits, not an audit. Discount what the Terrain baseline already recorded. A new or aggravated hit without a `DEC-NN` covering it prevents completion even with conformant acceptance and tests. Accumulate reservation hits per feature for the escalation trigger, without treating them as blocks. With budget `high` or a real risk, add one read-only explorer that checks the diff against the acceptance criteria and returns gaps with evidence; its findings are input, not approval.
+   Fix findings and review again. After two attempts without progress, record a block and move on to independent work.
+   **Output:** the task approved by evidence or pending with a concrete cause; no task completed with an unjustified blocking hit.
+7. **Record and pause.** Move an approved task to `done/`, checking that resolved source and destination stay inside the feature. Update link and state in the manifest and check both. Record relevant problems and solutions at the end of the manifest. Recalculate the DAG. If interrupted between move and update, reconcile using handoff and review without assuming approval from location.
+   Then wait for background processes and explorers to finish and ask the session pause from [references/session-continuity.md](references/session-continuity.md) with stage `tasks`, `authored_code: yes`, and the next eligible task as next step. A blocked task gets the same question, with the block summarized. Do not start the next task before the answer.
+   **Output:** file, link, and state consistent; the user's choice applied.
+8. **Close.** When none remain eligible, check every obligation and integrated-set validation, serializing shared builds and test runs. Report task completion or blocks; global review belongs to `sdd-review-code`, in a session that did not write this code. Ask the session pause with `sdd-review-code` as next step, which recommends ending this session.
    **Output:** all complete with valid integrated evidence, or pending items enumerated; no feature is claimed approved only because tasks moved.
+
+Under `sdd-orchestrate-flow`, the caller asks the session pause and uses its own resume instruction; standalone, the instruction is `Use the sdd-orchestrate-tasks skill to continue feature <slug> in this repository.`
 
 ## Budget
 
-Preserve the inherited model by default. `economical`: minimum sufficient context and concurrency; `medium`: useful independent parallelism; `high`: additional review only for real risk. Change model/capability only when authorized and available. Budget reduces redundant work, never acceptance criteria.
+Preserve the inherited model by default. `economical`: explorers only for sweeps the session cannot answer in a few searches; `medium`: parallel explorers for disjoint questions; `high`: also the read-only diff check in step 6. Change model or capability only when authorized and available. Budget reduces redundant work, never acceptance criteria.

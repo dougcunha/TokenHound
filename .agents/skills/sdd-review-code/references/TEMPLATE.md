@@ -2,7 +2,7 @@
 
 ## Summary
 
-- Status: APPROVED / APPROVED WITH CAVEATS / REJECTED
+- Status: APPROVED / APPROVED WITH RESERVATIONS / REJECTED
 - Git scope: `[base..current state]` or `Not delimited — see limitations`
 - Previous review: `[path or —]`
 
@@ -19,7 +19,7 @@
 
 | Source | Obligation | Implementation | Test | State | Evidence |
 | --- | --- | --- | --- | --- | --- |
-| RF-01 | [requirement] | `[file:symbol]` | `[test]` | conforming/nonconforming/pending/not verifiable | [evidence] |
+| FR-01 | [requirement] | `[file:symbol]` | `[test]` | conformant/non-conformant/pending/not verifiable | [evidence] |
 
 ## Compliance with rules and skills
 
@@ -52,9 +52,9 @@
 
 ## Executed validations
 
-- Profile and exclusions: [stack per target; E2E omitted by .NET desktop policy, when applicable]
-- Validated state: [code/diff, configuration, projects, and environment]
-- Reused evidence: [handoff/report and why it remains valid | none]
+- Profile and exclusions: [stack per project; E2E omitted by .NET desktop policy]
+- Validated state: [code or diff, configuration, projects, and environment]
+- Reused evidence: [handoff or report and why it remains valid | none]
 - Manual acceptance: [evidence or open item, when essential]
 
 | Command | Result | Obligations covered |
@@ -71,7 +71,7 @@
 
 | Review/ID | State | Current evidence |
 | --- | --- | --- |
-| codereview_[previous]/CR-01 | resolved/persistent/not verifiable | [file/test or limitation] |
+| codereview_[previous]/CR-01 | resolved/persistent/not verifiable | [file, test, or limitation] |
 
 ## Limitations and open items
 

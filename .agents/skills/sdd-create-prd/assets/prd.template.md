@@ -20,21 +20,21 @@
 
 | ID | Requirement | Acceptance criterion |
 | --- | --- | --- |
-| RF-01 | [behavior] | [observable condition] |
+| FR-01 | [behavior] | [observable condition] |
 
 ## Non-functional requirements
 
 | ID | Attribute | Limit or criterion |
 | --- | --- | --- |
-| RNF-01 | [security, performance, accessibility, or other] | [value or evidence] |
+| NFR-01 | [security, performance, accessibility, platform, or other] | [value or evidence] |
 
 ## User experience
 
-[Journey, feedback, error states, and accessibility; remove if there is no human interface.]
+[Journey, feedback, error states, and accessibility, including HUD and tray feedback; remove if there is no human interface.]
 
 ## Constraints and dependencies
 
-- [integration, standard, deadline, or non-negotiable technology]
+- [integration, provider, standard, deadline, or non-negotiable technology]
 
 ## Out of scope
 
@@ -49,5 +49,5 @@
 
 - [ ] Every requirement has an ID and an observable criterion.
 - [ ] Metrics, boundaries, and out-of-scope items are explicit.
-- [ ] Internal rules came from the user or an identified organizational source.
+- [ ] Internal rules came from the user or an identified project source.
 - [ ] Implementation details remain in the TechSpec.

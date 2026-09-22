@@ -1,7 +1,7 @@
 ---
 name: sdd-execute-task
-description: Execution of one exact SDD task, standalone or delegated; does not plan or approve its own work.
-argument-hint: --task tasks/prd-name/task_01.md
+description: Execution of one exact SDD task in the current session, standalone or as a step of sdd-orchestrate-tasks; does not plan or approve its own work.
+argument-hint: --task tasks/prd-[NN]-name/task_01.md
 ---
 
 # Execute an SDD task
@@ -21,6 +21,6 @@ argument-hint: --task tasks/prd-name/task_01.md
 
 ## Decisions and failures
 
-- Record an ADR candidate only for a durable decision with alternatives and trade-offs governing contracts, boundaries, or quality attributes. Use `TXX-ADR-NN`, title, context, decision, alternatives, consequences, evidence, and TechSpec relationship; otherwise use `None`. Promotion occurs after QA.
+- Record an ADR candidate only for a durable decision with alternatives and trade-offs governing contracts, boundaries, or quality attributes. Use `TXX-ADR-NN`, title, context, decision, alternatives, consequences, evidence, and TechSpec relationship; otherwise use `None`. Promotion occurs after HIL 3 acceptance.
 - Architectural or scope deviation requires a human decision unless existing authorization covers it. Record the conflict and return it to the caller; do not invent approval.
 - An unavailable environment or pending dependency keeps affected acceptance unmarked; return command/error/impact. Retry fixes only the failure; after two attempts without new evidence, return a block for a decision.

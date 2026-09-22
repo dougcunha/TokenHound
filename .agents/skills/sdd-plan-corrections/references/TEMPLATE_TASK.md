@@ -26,17 +26,17 @@ Use the already loaded report version; recover relevant contracts and code after
 
 | Source | Section | Finding covered |
 | --- | --- | --- |
-| codereview_[num]/CR-01 | `codereview.md#[section]` | [nonconformity] |
+| codereview_[num]/CR-01 | `codereview.md#[section]` | [nonconformity or failure] |
 
 ## Requirements
 
-- [Behavior expected by the review or TechSpec]
+- [Behavior expected by the report, PRD, or TechSpec]
 - [Rule and error or edge condition]
 
 ## Context to recover on demand
 
 - TechSpec: `[section, if applicable]`
-- Rules/skills: [names]
+- Rules and skills: [names]
 - Code: `[file or symbol]` — [relevance]
 
 ## Work
@@ -47,16 +47,16 @@ Use the already loaded report version; recover relevant contracts and code after
 ## Acceptance criteria
 
 - [Observable and measurable condition]
-- [Nonconformity removed without regression]
+- [Nonconformity or failure removed without regression]
 
 ## Verification
 
 - Unit: [scenario and result, if applicable]
 - Integration: [boundary and result, if applicable]
-- E2E: [omitted by .NET desktop policy | relevant flow for another target]
+- E2E: [omitted by .NET desktop policy]
 - Manual: [script, expected result, and owner, if required]
 - Environment dependency: [none | prerequisite, existing authorization, or open item]
-- Commands: `[real command]`
+- Commands: `[command from AGENTS.md]`
 - Expected evidence: [output, test, metric, or artifact]
 
 ## Affected files
@@ -66,7 +66,7 @@ Use the already loaded report version; recover relevant contracts and code after
 
 ## Observability and recovery
 
-- Operational signal: [log, metric, or health check, if applicable]
+- Operational signal: [log or diagnostic output, if applicable]
 - Recovery: [rollback or reversal, if applicable]
 
 ## Handoff
@@ -76,5 +76,5 @@ Use the already loaded report version; recover relevant contracts and code after
 - Produced result: Pending execution.
 - Changed files: Pending execution.
 - Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
+- Validated state: Pending execution (code or diff, configuration, platform, and environment).
 - Open items: Pending execution.

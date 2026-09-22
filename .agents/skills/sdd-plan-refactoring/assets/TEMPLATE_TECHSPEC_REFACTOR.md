@@ -4,7 +4,7 @@
 
 - PRD: `prd.md`
 - Current code and tests: [paths]
-- Applicable instructions and skills: [names]
+- Applicable instructions, rules, and skills: [names]
 
 ## Technical decisions
 
@@ -20,14 +20,14 @@
 
 ## Safety net
 
-- Profile: [stack per project and evidence, SDK/TFM, runner, and existing commands]
-- E2E: [omitted by .NET desktop policy | relevant scenario for another target]
+- Profile: [stack per project and evidence, SDK/TFM, runner, and commands from `AGENTS.md`]
+- E2E: [omitted by .NET desktop policy]
 - Command prerequisites and exclusions: [environment and projects/filters without desktop E2E]
 - Manual acceptance: [script, expected result, and owner, when needed]
 
 | ID | Requirement | Level | Scenario | Expected result | Command or script |
 | --- | --- | --- | --- | --- | --- |
-| TC-01 | R-01 | [level allowed by profile] | [scenario] | [expected result] | `[verification]` |
+| TC-01 | R-01 | [unit/integration/manual] | [scenario] | [expected result] | `[verification]` |
 
 ## Dependency sequencing
 

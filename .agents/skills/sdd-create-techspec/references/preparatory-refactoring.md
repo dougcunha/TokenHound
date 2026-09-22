@@ -1,6 +1,6 @@
 # Preparatory refactoring
 
-Measures the terrain where the feature will land and decides whether it needs preparing first. Fowler: *make the change easy, then make the easy change*. The question is not whether the existing code is bad — in a legacy codebase it almost always is — but whether **this** change becomes more expensive or riskier because of it. Ugly code the feature only reads is not this feature's problem.
+Measures the terrain where the feature will land and decides whether it needs preparing first. Fowler: *make the change easy, then make the easy change*. The question is not whether the existing code is bad, but whether **this** change becomes more expensive or riskier because of it. Code the feature only reads is not this feature's problem.
 
 The measurement also produces the **baseline**: the quality profile hits that already existed in the target files. Without it, every downstream gate blames the task for the debt it found, noise becomes routine, and the whole profile ends up ignored.
 
@@ -48,6 +48,6 @@ The recommendation is presented at the technical HIL and never blocks on its own
 
 ## Recording
 
-Fill in **Terrain baseline** in the template's Quality profile section: one item per target file, with measures, pre-existing hits, and destination. A target file without a row in the baseline is an unmeasured file — the downstream gate will treat every hit in it as new.
+Fill in **Terrain baseline** in the template's Quality profile section: one item per existing target file, with measures, pre-existing hits, and destination. A target file without a row in the baseline is an unmeasured file — the downstream gate will treat every hit in it as new.
 
 The baseline describes a state of the code, so it survives only as long as that state lasts. When a preparatory refactoring is approved and executed, remeasure the target files and rewrite the baseline before replanning the feature's tasks: keeping the old baseline would forgive hits the refactoring already eliminated. An external change to the target between the TechSpec and implementation has the same effect and calls for the same remeasurement.

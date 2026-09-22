@@ -27,14 +27,15 @@ Use the current PRD and TechSpec versions already loaded; recover only missing o
 
 | Source | Section | Obligation covered |
 | --- | --- | --- |
-| RF-01 | `prd.md#functional-requirements` | [requirement] |
+| FR-01 | `prd.md#functional-requirements` | [requirement] |
 | CMP-01 | `techspec.md#components-and-flow` | [technical decision] |
 
 ## Context to recover on demand
 
-- Applicable skills: [names recorded in the TechSpec]
+- Applicable skills and rules: [names recorded in the TechSpec]
 - Existing code: `[file or module]` — [why it matters]
 - Contract or integration: `[TechSpec section]`
+- Provider spec: `[docs/specs/ section, if applicable]`
 
 ## Work
 
@@ -50,9 +51,9 @@ Use the current PRD and TechSpec versions already loaded; recover only missing o
 
 - Unit: [scenario and expected result]
 - Integration: [boundary, environment, and expected result; a double only when it represents the contract]
-- E2E: [omitted by .NET desktop policy | relevant flow for another target]
+- E2E: [omitted by .NET desktop policy]
 - Manual: [script, expected result, and owner, if required]
-- Commands: `[project's standard test command]`
+- Commands: `[command from AGENTS.md]`
 - Environment dependency: [none | prerequisite, existing authorization, or open item]
 - Expected evidence: [output, test, metric, or artifact]
 
@@ -63,7 +64,7 @@ Use the current PRD and TechSpec versions already loaded; recover only missing o
 
 ## Observability and recovery
 
-- Operational signal: [log, metric, or health check, if applicable]
+- Operational signal: [log or diagnostic output, if applicable]
 - Recovery: [rollback or reversal, if applicable]
 
 ## Handoff
@@ -73,7 +74,7 @@ Use the current PRD and TechSpec versions already loaded; recover only missing o
 - Produced result: Pending execution.
 - Changed files: Pending execution.
 - Checks: Pending execution.
-- Validated state: Pending execution (code/diff, configuration, projects, and environment).
+- Validated state: Pending execution (code or diff, configuration, projects, and environment).
 - Open items: Pending execution.
 
 ### ADR candidates

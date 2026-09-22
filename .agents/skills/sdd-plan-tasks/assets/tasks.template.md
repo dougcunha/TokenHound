@@ -5,7 +5,7 @@
 - PRD: `tasks/prd-[slug]/prd.md`
 - TechSpec: `tasks/prd-[slug]/techspec.md`
 
-> Common sources before the task and mutable state; read order does not guarantee a cache hit.
+> Common sources come before the task and mutable state; read order does not guarantee a cache hit.
 
 ## Dependency graph
 
@@ -17,7 +17,7 @@
 
 | Source ID | Source section | Obligation | Tasks | Evidence or test |
 | --- | --- | --- | --- | --- |
-| RF-01 | `prd.md#functional-requirements` | [requirement] | T01 | [verification] |
+| FR-01 | `prd.md#functional-requirements` | [requirement] | T01 | [verification] |
 | TC-01 | `techspec.md#test-approach` | [scenario] | T01 | [test] |
 
 ## Tasks
@@ -38,7 +38,7 @@
 
 - Assumption: [decision needed to interpret the sources]
 - Open item: [blocking question, affected tasks, and decision owner]
-- Required environment: [scenario, source obligation, prerequisite, and authorization/open item] | None.
+- Required environment: [scenario, source obligation, prerequisite, and authorization or open item] | None.
 
 ## State
 
