@@ -126,7 +126,7 @@ public sealed class ProviderUsageRowFactoryTests
                 {
                     Name = "Requests Today",
                     Period = TimeSpan.FromDays(1),
-                    RemainingUnits = 42,
+                    UsedUnits = 42,
                     TotalUnits = null,
                     UsedFraction = null
                 }

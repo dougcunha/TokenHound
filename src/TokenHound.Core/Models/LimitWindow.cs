@@ -34,6 +34,15 @@ public sealed record LimitWindow
     public long? RemainingUnits { get; init; }
 
     /// <summary>
+    /// Gets the number of units consumed in the current window, if the provider reports a usage count.
+    /// </summary>
+    /// <remarks>
+    /// A used count is never a remaining count: providers without a published limit report usage here and leave
+    /// <see cref="RemainingUnits"/> as <see langword="null"/>.
+    /// </remarks>
+    public long? UsedUnits { get; init; }
+
+    /// <summary>
     /// Gets the exact fractional number of remaining units, if the provider reports one.
     /// </summary>
     public double? RemainingValue { get; init; }

@@ -118,6 +118,78 @@ dotnet test TokenHound.slnx --no-build
 
 ---
 
+## MCP Server
+
+While TokenHound is running, it exposes the provider metrics behind the HUD to MCP clients through a local server. Two read-only tools are available: `list_provider_metrics` (every enabled provider) and `get_provider_metrics` (one provider by ID). Calls read TokenHound's current state; they never trigger a provider refresh or touch rate-limit deadlines.
+
+| Transport | URL |
+| --- | --- |
+| SSE | `http://127.0.0.1:37653/mcp/sse` |
+| Streamable HTTP | `http://127.0.0.1:37653/mcp` |
+
+The server listens on loopback only and stops when TokenHound exits. If port 37653 is taken, the HUD keeps working and the log explains why MCP did not start.
+
+### Installing in your harness
+
+**Claude Code**
+
+```powershell
+claude mcp add --transport sse tokenhound http://127.0.0.1:37653/mcp/sse
+```
+
+**Codex CLI** — `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.tokenhound]
+url = "http://127.0.0.1:37653/mcp"
+```
+
+**Cursor** — `~/.cursor/mcp.json` (or `.cursor/mcp.json` in a project):
+
+```json
+{
+  "mcpServers": {
+    "tokenhound": { "url": "http://127.0.0.1:37653/mcp/sse" }
+  }
+}
+```
+
+**VS Code (GitHub Copilot)** — `.vscode/mcp.json`, or **MCP: Add Server** in the Command Palette:
+
+```json
+{
+  "servers": {
+    "tokenhound": { "type": "sse", "url": "http://127.0.0.1:37653/mcp/sse" }
+  }
+}
+```
+
+**Gemini CLI** — `~/.gemini/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "tokenhound": { "url": "http://127.0.0.1:37653/mcp/sse" }
+  }
+}
+```
+
+**OpenCode** — `opencode.json`:
+
+```json
+{
+  "mcp": {
+    "tokenhound": { "type": "remote", "url": "http://127.0.0.1:37653/mcp", "enabled": true }
+  }
+}
+```
+
+**Cline** — open **MCP Servers → Remote Servers**, name it `tokenhound`, and enter `http://127.0.0.1:37653/mcp/sse`.
+
+For response fields, lookup states, null semantics, and the privacy boundary, see [docs/MCP.md](docs/MCP.md).
+
+---
+
 ## Technical Documentation
 
 For in-depth specifications and implementation guides, explore the `docs/` folder:
@@ -128,6 +200,7 @@ For in-depth specifications and implementation guides, explore the `docs/` folde
 - [docs/specs/11-PROVIDER-COPILOT.md](docs/specs/11-PROVIDER-COPILOT.md) - GitHub Copilot lightweight internal quota, billing telemetry, and CLI activity heuristics.
 - [docs/specs/12-PROVIDER-OPENCODE.md](docs/specs/12-PROVIDER-OPENCODE.md) - OpenCode Go credential borrowing, official quota telemetry, and read-only session activity.
 - [docs/specs/](docs/specs/) - Dedicated specifications for each supported AI provider.
+- [docs/MCP.md](docs/MCP.md) - Local MCP server (SSE and Streamable HTTP) exposing the current provider metrics to MCP clients.
 
 ---
 

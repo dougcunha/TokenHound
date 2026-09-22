@@ -1,0 +1,163 @@
+# SSE GET status 200 text/event-stream
+# endpoint event: endpoint -> /mcp/message?sessionId=kEaqwOJgOx0ga8CkRW86ww
+# server: {'name': 'TokenHound.App', 'version': '1.0.0.0'}
+# tools: ['list_provider_metrics', 'get_provider_metrics']
+## list_provider_metrics
+{
+ "observedAtUtc": "2026-09-22T13:27:05.3212357+00:00",
+ "providers": [
+  {
+   "providerId": "claude",
+   "status": "ok",
+   "fidelity": "official",
+   "snapshotFetchedAtUtc": "2026-09-22T13:26:28.5749215+00:00",
+   "lastSuccessfulAtUtc": "2026-09-22T13:26:28.5749215+00:00",
+   "limitWindows": [
+    {
+     "name": "five_hour",
+     "usedFraction": 0.36,
+     "remainingUnits": 64,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-09-22T15:30:00.477045+00:00",
+     "periodSeconds": 18000
+    },
+    {
+     "name": "seven_day",
+     "usedFraction": 0.05,
+     "remainingUnits": 95,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-09-25T20:00:00.477071+00:00",
+     "periodSeconds": 604800
+    }
+   ]
+  },
+  {
+   "providerId": "cline",
+   "status": "needsAuth",
+   "fidelity": "official",
+   "snapshotFetchedAtUtc": "2026-09-22T13:26:21.5418199+00:00",
+   "limitWindows": []
+  },
+  {
+   "providerId": "codex",
+   "status": "ok",
+   "fidelity": "official",
+   "snapshotFetchedAtUtc": "2026-09-22T13:26:28.200074+00:00",
+   "lastSuccessfulAtUtc": "2026-09-22T13:26:28.200074+00:00",
+   "limitWindows": [
+    {
+     "name": "Primary (5h)",
+     "usedFraction": 0.89,
+     "remainingUnits": 11,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-09-22T16:04:20+00:00",
+     "periodSeconds": 18000
+    },
+    {
+     "name": "Secondary (Weekly)",
+     "usedFraction": 0.71,
+     "remainingUnits": 29,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-09-22T15:03:31+00:00",
+     "periodSeconds": 604800
+    }
+   ]
+  },
+  {
+   "providerId": "copilot",
+   "status": "ok",
+   "fidelity": "official",
+   "snapshotFetchedAtUtc": "2026-09-22T13:26:26.0683083+00:00",
+   "lastSuccessfulAtUtc": "2026-09-22T13:26:26.0683083+00:00",
+   "limitWindows": [
+    {
+     "name": "Monthly Premium Interactions",
+     "usedFraction": 0.623,
+     "remainingUnits": 7554,
+     "remainingValue": 7554.3,
+     "totalUnits": 20000,
+     "resetTimeUtc": "2026-10-01T00:00:00+00:00"
+    }
+   ],
+   "copilotBilling": {
+    "state": "available",
+    "reason": "none",
+    "attemptedAtUtc": "2026-09-22T13:26:26.0702149+00:00",
+    "usage": {
+     "coverage": {
+      "startDay": "2026-09-01",
+      "endDay": "2026-09-30",
+      "isComplete": true,
+      "missingDays": [],
+      "hasMissingPartitions": false,
+      "hasInvalidRows": false
+     },
+     "unitType": "ai-credits",
+     "grossUsed": 23358.9466343,
+     "discountedUsed": 5700.0,
+     "netUsed": 17658.9466343,
+     "source": "billingApi",
+     "fetchedAtUtc": "2026-09-22T13:26:26.0702149+00:00",
+     "isEstimated": false,
+     "periodStartUtc": "2026-09-01T00:00:00+00:00",
+     "periodEndExclusiveUtc": "2026-10-01T00:00:00+00:00",
+     "periodIsVerified": true
+    }
+   }
+  },
+  {
+   "providerId": "gemini",
+   "status": "ok",
+   "fidelity": "derived",
+   "snapshotFetchedAtUtc": "2026-09-22T13:26:24.7019538+00:00",
+   "lastSuccessfulAtUtc": "2026-09-22T13:26:24.7019538+00:00",
+   "limitWindows": [
+    {
+     "name": "Requests Today",
+     "remainingUnits": 0
+    }
+   ]
+  },
+  {
+   "providerId": "opencode",
+   "status": "ok",
+   "fidelity": "official",
+   "snapshotFetchedAtUtc": "2026-09-22T13:26:25.4211155+00:00",
+   "lastSuccessfulAtUtc": "2026-09-22T13:26:25.4211155+00:00",
+   "limitWindows": [
+    {
+     "name": "5-Hour Rolling",
+     "groupName": "OpenCode Go",
+     "usedFraction": 0.01,
+     "remainingUnits": 99,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-09-22T15:36:04.675+00:00",
+     "periodSeconds": 18000
+    },
+    {
+     "name": "Weekly",
+     "groupName": "OpenCode Go",
+     "usedFraction": 0.02,
+     "remainingUnits": 98,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-09-28T00:00:00+00:00",
+     "periodSeconds": 604800
+    },
+    {
+     "name": "Monthly",
+     "groupName": "OpenCode Go",
+     "usedFraction": 0.17,
+     "remainingUnits": 83,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-10-10T14:55:11+00:00",
+     "periodSeconds": 2592000
+    }
+   ]
+  }
+ ]
+}
+## get_provider_metrics=nope
+{
+ "lookupState": "unknown",
+ "observedAtUtc": "2026-09-22T13:27:05.3495943+00:00"
+}

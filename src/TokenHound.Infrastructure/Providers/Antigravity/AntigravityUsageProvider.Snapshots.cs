@@ -101,7 +101,8 @@ public sealed partial class AntigravityUsageProvider
                     Name = "Requests Today",
                     TotalUnits = null,
                     UsedFraction = null,
-                    RemainingUnits = requestsToday,
+                    UsedUnits = requestsToday,
+                    RemainingUnits = null,
                     ResetTimeUtc = null
                 }
             ],

@@ -1,0 +1,132 @@
+# SSE GET status 200 text/event-stream
+# endpoint event: endpoint -> /mcp/message?sessionId=X9A9cMN9M9ZSgBmqfjKCgg
+# server: {'name': 'TokenHound.App', 'version': '1.0.0.0'}
+# tools: ['list_provider_metrics', 'get_provider_metrics']
+## list_provider_metrics
+{
+ "observedAtUtc": "2026-09-22T13:30:01.8195057+00:00",
+ "providers": [
+  {
+   "providerId": "claude",
+   "status": "ok",
+   "fidelity": "official",
+   "snapshotFetchedAtUtc": "2026-09-22T13:29:29.4932919+00:00",
+   "lastSuccessfulAtUtc": "2026-09-22T13:29:29.4932919+00:00",
+   "limitWindows": [
+    {
+     "name": "five_hour",
+     "usedFraction": 0.39,
+     "remainingUnits": 61,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-09-22T15:30:00.409063+00:00",
+     "periodSeconds": 18000
+    },
+    {
+     "name": "seven_day",
+     "usedFraction": 0.06,
+     "remainingUnits": 94,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-09-25T20:00:00.409089+00:00",
+     "periodSeconds": 604800
+    }
+   ]
+  },
+  {
+   "providerId": "cline",
+   "status": "needsAuth",
+   "fidelity": "official",
+   "snapshotFetchedAtUtc": "2026-09-22T13:29:19.69172+00:00",
+   "limitWindows": []
+  },
+  {
+   "providerId": "codex",
+   "status": "ok",
+   "fidelity": "official",
+   "snapshotFetchedAtUtc": "2026-09-22T13:29:29.1647967+00:00",
+   "lastSuccessfulAtUtc": "2026-09-22T13:29:29.1647967+00:00",
+   "limitWindows": [
+    {
+     "name": "Primary (5h)",
+     "usedFraction": 0.89,
+     "remainingUnits": 11,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-09-22T16:04:20+00:00",
+     "periodSeconds": 18000
+    },
+    {
+     "name": "Secondary (Weekly)",
+     "usedFraction": 0.71,
+     "remainingUnits": 29,
+     "totalUnits": 100,
+     "resetTimeUtc": "2026-09-22T15:03:32+00:00",
+     "periodSeconds": 604800
+    }
+   ]
+  },
+  {
+   "providerId": "copilot",
+   "status": "ok",
+   "fidelity": "official",
+   "snapshotFetchedAtUtc": "2026-09-22T13:29:23.0722442+00:00",
+   "lastSuccessfulAtUtc": "2026-09-22T13:29:23.0722442+00:00",
+   "limitWindows": [
+    {
+     "name": "Monthly Premium Interactions",
+     "usedFraction": 0.623,
+     "remainingUnits": 7554,
+     "remainingValue": 7554.3,
+     "totalUnits": 20000,
+     "resetTimeUtc": "2026-10-01T00:00:00+00:00"
+    }
+   ],
+   "copilotBilling": {
+    "state": "available",
+    "reason": "none",
+    "attemptedAtUtc": "2026-09-22T13:29:23.0722611+00:00",
+    "usage": {
+     "coverage": {
+      "startDay": "2026-09-01",
+      "endDay": "2026-09-30",
+      "isComplete": true,
+      "missingDays": [],
+      "hasMissingPartitions": false,
+      "hasInvalidRows": false
+     },
+     "unitType": "ai-credits",
+     "grossUsed": 23358.9466343,
+     "discountedUsed": 5700.0,
+     "netUsed": 17658.9466343,
+     "source": "billingApi",
+     "fetchedAtUtc": "2026-09-22T13:29:23.0722611+00:00",
+     "isEstimated": false,
+     "periodStartUtc": "2026-09-01T00:00:00+00:00",
+     "periodEndExclusiveUtc": "2026-10-01T00:00:00+00:00",
+     "periodIsVerified": true
+    }
+   }
+  },
+  {
+   "providerId": "gemini",
+   "status": "ok",
+   "fidelity": "derived",
+   "snapshotFetchedAtUtc": "2026-09-22T13:29:21.7602544+00:00",
+   "lastSuccessfulAtUtc": "2026-09-22T13:29:21.7602544+00:00",
+   "limitWindows": [
+    {
+     "name": "Requests Today",
+     "remainingUnits": 0
+    }
+   ]
+  }
+ ]
+}
+## get_provider_metrics=opencode
+{
+ "lookupState": "disabled",
+ "observedAtUtc": "2026-09-22T13:30:01.8230063+00:00"
+}
+## get_provider_metrics=cursor
+{
+ "lookupState": "disabled",
+ "observedAtUtc": "2026-09-22T13:30:01.82547+00:00"
+}

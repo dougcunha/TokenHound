@@ -65,7 +65,7 @@ public static partial class ProviderUsageRowFactory
     private static string ResolveQuotaPrimaryText(Snapshot snapshot, LimitWindow window)
     {
 
-        if (snapshot.Fidelity == Fidelity.Derived && window.UsedFraction is null && window.RemainingUnits is { } reqCount)
+        if (snapshot.Fidelity == Fidelity.Derived && window.UsedFraction is null && window.UsedUnits is { } reqCount)
             return $"~{reqCount} requests";
 
         if (window.UsedFraction.HasValue)

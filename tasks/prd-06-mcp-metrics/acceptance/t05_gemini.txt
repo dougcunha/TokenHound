@@ -1,0 +1,22 @@
+# SSE GET status 200 text/event-stream
+# endpoint event: endpoint -> /mcp/message?sessionId=98QMyY2qJVGpoLJwP7yEFw
+# server: {'name': 'TokenHound.App', 'version': '1.0.0.0'}
+# tools: ['list_provider_metrics', 'get_provider_metrics']
+## get_provider_metrics=gemini
+{
+ "lookupState": "available",
+ "observedAtUtc": "2026-09-22T13:43:55.8924901+00:00",
+ "provider": {
+  "providerId": "gemini",
+  "status": "ok",
+  "fidelity": "derived",
+  "snapshotFetchedAtUtc": "2026-09-22T13:43:43.8290619+00:00",
+  "lastSuccessfulAtUtc": "2026-09-22T13:43:43.8290619+00:00",
+  "limitWindows": [
+   {
+    "name": "Requests Today",
+    "usedUnits": 0
+   }
+  ]
+ }
+}

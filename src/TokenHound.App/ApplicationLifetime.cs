@@ -19,11 +19,12 @@ public sealed class ApplicationLifetime : IDisposable
     private readonly DialogService _dialogService;
     private readonly NotchViewModel _notchViewModel;
     private readonly IReadOnlyList<IDisposable> _disposableResources;
+    private readonly List<Task> _startupTasks = [];
+    private readonly List<IAsyncDisposable> _asyncResources = [];
     private readonly Action _shutdownAction;
     private readonly CancellationTokenSource _cts = new();
     private readonly object _syncLock = new();
 
-    private Task? _startupTask;
     private Task? _shutdownTask;
     private bool _disposed;
 
@@ -62,14 +63,29 @@ public sealed class ApplicationLifetime : IDisposable
         => _cts.Token;
 
     /// <summary>
-    /// Tracks the asynchronous startup refresh task for graceful drainage on shutdown.
+    /// Tracks an asynchronous startup task for graceful drainage on shutdown.
     /// </summary>
     /// <param name="task">The startup task to track.</param>
     public void TrackStartupTask(Task task)
     {
 
         ArgumentNullException.ThrowIfNull(task);
-        _startupTask = task;
+
+        lock (_syncLock)
+            _startupTasks.Add(task);
+    }
+
+    /// <summary>
+    /// Tracks an asynchronous resource that is disposed after startup tasks drain and before the usage store stops.
+    /// </summary>
+    /// <param name="resource">The resource to dispose on shutdown.</param>
+    public void TrackAsyncResource(IAsyncDisposable resource)
+    {
+
+        ArgumentNullException.ThrowIfNull(resource);
+
+        lock (_syncLock)
+            _asyncResources.Add(resource);
     }
 
     /// <summary>
@@ -113,7 +129,8 @@ public sealed class ApplicationLifetime : IDisposable
         _dialogService.CloseAll();
         _notchViewModel.Dispose();
 
-        await DrainStartupTaskAsync().ConfigureAwait(false);
+        await DrainStartupTasksAsync().ConfigureAwait(false);
+        await DisposeAsyncResourcesAsync().ConfigureAwait(false);
         await DrainUsageStoreAsync().ConfigureAwait(false);
         DisposeResources();
 
@@ -123,24 +140,54 @@ public sealed class ApplicationLifetime : IDisposable
         _shutdownAction();
     }
 
-    private async Task DrainStartupTaskAsync()
+    private async Task DrainStartupTasksAsync()
     {
 
-        if (_startupTask is null)
-            return;
+        Task[] tasks;
 
-        try
+        lock (_syncLock)
+            tasks = [.. _startupTasks];
+
+        foreach (var task in tasks)
         {
 
-            await _startupTask.ConfigureAwait(false);
+            try
+            {
+
+                await task.ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (Exception ex)
+            {
+
+                Log.Warning(ex, "Exception caught while draining startup task");
+            }
         }
-        catch (OperationCanceledException)
-        {
-        }
-        catch (Exception ex)
+    }
+
+    private async Task DisposeAsyncResourcesAsync()
+    {
+
+        IAsyncDisposable[] resources;
+
+        lock (_syncLock)
+            resources = [.. _asyncResources];
+
+        foreach (var resource in resources)
         {
 
-            Log.Warning(ex, "Exception caught while draining startup refresh task");
+            try
+            {
+
+                await resource.DisposeAsync().ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+
+                Log.Warning(ex, "Exception caught while disposing asynchronous application resource");
+            }
         }
     }
 

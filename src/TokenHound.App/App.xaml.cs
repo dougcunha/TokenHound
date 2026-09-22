@@ -67,6 +67,7 @@ public partial class App : Application
         ApplyProviderEnablement(_usageStore);
         InitializeUi(_usageStore, disposableResources);
         ScheduleInitialRefresh();
+        StartMcpServer(_usageStore);
     }
 
     /// <inheritdoc />

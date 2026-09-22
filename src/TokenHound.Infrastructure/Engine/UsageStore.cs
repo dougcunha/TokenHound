@@ -17,6 +17,7 @@ public sealed partial class UsageStore : IDisposable
     private readonly ConcurrentDictionary<string, IUsageProvider> _providers = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, Snapshot> _snapshots = new(StringComparer.OrdinalIgnoreCase);
     private readonly ConcurrentDictionary<string, Snapshot> _lastGoodSnapshots = new(StringComparer.OrdinalIgnoreCase);
+    private readonly object _snapshotStateLock = new();
     private readonly ConcurrentDictionary<string, DateTimeOffset> _backoffDeadlines = new(StringComparer.OrdinalIgnoreCase);
     private readonly List<IActivityMonitor> _monitors = [];
     private readonly object _monitorsLock = new();

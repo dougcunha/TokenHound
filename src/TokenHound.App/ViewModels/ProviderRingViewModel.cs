@@ -200,7 +200,7 @@ public sealed partial class ProviderRingViewModel : INotifyPropertyChanged
         SessionResetText = FormatResetCountdown(sessionReset, nowUtc);
         WeeklyResetText = FormatResetCountdown(weeklyWindow?.ResetTimeUtc, nowUtc);
 
-        if (snapshot.Fidelity == Fidelity.Derived && sessionWindow?.UsedFraction is null && sessionWindow?.RemainingUnits is { } count)
+        if (snapshot.Fidelity == Fidelity.Derived && sessionWindow?.UsedFraction is null && sessionWindow?.UsedUnits is { } count)
         {
             SessionResetText = $"~{count} requests";
         }

@@ -1,0 +1,34 @@
+# SSE GET status 200 text/event-stream
+# endpoint event: endpoint -> /mcp/message?sessionId=kzIjdKliDhNtcYH8OZPqAw
+# server: {'name': 'TokenHound.App', 'version': '1.0.0.0'}
+# tools: ['list_provider_metrics', 'get_provider_metrics']
+## get_provider_metrics=claude
+{
+ "lookupState": "available",
+ "observedAtUtc": "2026-09-22T13:31:06.5796292+00:00",
+ "provider": {
+  "providerId": "claude",
+  "status": "ok",
+  "fidelity": "official",
+  "snapshotFetchedAtUtc": "2026-09-22T13:31:04.2715215+00:00",
+  "lastSuccessfulAtUtc": "2026-09-22T13:31:04.2715215+00:00",
+  "limitWindows": [
+   {
+    "name": "five_hour",
+    "usedFraction": 0.41,
+    "remainingUnits": 59,
+    "totalUnits": 100,
+    "resetTimeUtc": "2026-09-22T15:30:00.16653+00:00",
+    "periodSeconds": 18000
+   },
+   {
+    "name": "seven_day",
+    "usedFraction": 0.06,
+    "remainingUnits": 94,
+    "totalUnits": 100,
+    "resetTimeUtc": "2026-09-25T20:00:00.166553+00:00",
+    "periodSeconds": 604800
+   }
+  ]
+ }
+}

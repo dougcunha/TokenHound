@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "generation": 26,
+  "feature": "06-mcp-metrics",
+  "workspace": "D:\\MyProjects\\TokenHound",
+  "phase": "review",
+  "status": "paused",
+  "safe_to_stop": true,
+  "owner_session": null,
+  "objective": "Expose the current metrics of providers displayed by TokenHound to MCP clients through a local HTTP/SSE server using ModelContextProtocol.AspNetCore.",
+  "constraints": [
+    "Keep TokenHound.Core free of UI and OS dependencies.",
+    "Do not add provider network requests or bypass persisted rate-limit deadlines for MCP reads.",
+    "Never expose credentials or fabricate unavailable quota values.",
+    "TokenHound is a .NET desktop application; omit E2E checks from aggregate validation."
+  ],
+  "sources": {
+    "workflow": "workflow.md",
+    "prd": "prd.md",
+    "techspec": "techspec.md",
+    "tasks": "tasks.md",
+    "review": "codereview_2/codereview.md",
+    "snapshot": "context-snapshot.md"
+  },
+  "review_status": "APPROVED",
+  "approved_sources": [
+    {
+      "path": "prd.md",
+      "sha256": "16d2613843a577edc59c4bec6bb0b5d749660bad467c82846bbae1f663ec91e9",
+      "decision_id": "DEC-25"
+    },
+    {
+      "path": "techspec.md",
+      "sha256": "8bc8cd009597a0ddbeb5df17f107380dd2b395d9514b9a686cc15c97124e7a4c",
+      "decision_id": "DEC-25"
+    },
+    {
+      "path": "task_05.md",
+      "sha256": "62a2ac9130651fe158bbe0b74c20d5ce986d790e02f032607e71ab61bebe1dda",
+      "decision_id": "DEC-25"
+    }
+  ],
+  "decisions_to_read": [
+    "DEC-23",
+    "DEC-24",
+    "DEC-25",
+    "DEC-26"
+  ],
+  "git_base": "97f17c79a5afeebbd8ff3a534cced7681b382476",
+  "worktree_evidence": "workflow.md#Baseline",
+  "active_work": [],
+  "pending_hil": null,
+  "blockers": [
+    {
+      "id": "ACC-01",
+      "summary": "Fixed by T05; independent re-review pending.",
+      "evidence_ref": "done/task_05.md#Handoff"
+    }
+  ],
+  "correction_round": 1,
+  "rounds_without_progress": 0,
+  "next_action": {
+    "kind": "run",
+    "instruction": "Run independent sdd-review-code (codereview_3) of 06-mcp-metrics against base 97f17c79a5afeebbd8ff3a534cced7681b382476, focused on T05 and the DEC-24 amendments, in a session that did not author T05; route the literal status, then HIL 3.",
+    "read": [
+      {
+        "path": "tasks/prd-06-mcp-metrics/context-snapshot.md",
+        "section": "header, next step brief, open threads, on-run entries (independent stage)"
+      },
+      {
+        "path": "tasks/prd-06-mcp-metrics/workflow.md",
+        "section": "DEC-22..DEC-25, ACC-01, Review cycle"
+      },
+      {
+        "path": "tasks/prd-06-mcp-metrics/codereview_2/codereview.md",
+        "section": "summary, limitations"
+      },
+      {
+        "path": "tasks/prd-06-mcp-metrics/done/task_05.md",
+        "section": "contract, handoff"
+      }
+    ]
+  }
+}

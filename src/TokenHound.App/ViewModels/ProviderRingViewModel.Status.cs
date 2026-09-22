@@ -12,9 +12,9 @@ public sealed partial class ProviderRingViewModel
         if (snapshot.Status == ProviderStatus.Ok && snapshot.Fidelity == Fidelity.Derived)
         {
             var requestWindow = snapshot.LimitWindows.FirstOrDefault(static w =>
-                w.RemainingUnits.HasValue && w.TotalUnits == null);
+                w.UsedUnits.HasValue && w.TotalUnits == null);
 
-            if (requestWindow?.RemainingUnits is { } count)
+            if (requestWindow?.UsedUnits is { } count)
             {
                 return $"~{count} requests today · no limit published";
             }

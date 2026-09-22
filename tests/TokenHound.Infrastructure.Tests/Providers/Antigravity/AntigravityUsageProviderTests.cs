@@ -138,7 +138,8 @@ public sealed partial class AntigravityUsageProviderTests
 
             var window = snapshot.LimitWindows[0];
             Assert.Equal("Requests Today", window.Name);
-            Assert.Equal(2, window.RemainingUnits);
+            Assert.Equal(2, window.UsedUnits);
+            Assert.Null(window.RemainingUnits); // A used count is never a remaining count
             Assert.Null(window.TotalUnits); // Zero Fake Data
             Assert.Null(window.UsedFraction); // Zero Fake Data
         }
@@ -227,7 +228,8 @@ public sealed partial class AntigravityUsageProviderTests
             Assert.Equal(ProviderStatus.Ok, snapshot.Status);
             Assert.Equal(Fidelity.Derived, snapshot.Fidelity);
             Assert.Single(snapshot.LimitWindows);
-            Assert.Equal(1, snapshot.LimitWindows[0].RemainingUnits);
+            Assert.Equal(1, snapshot.LimitWindows[0].UsedUnits);
+            Assert.Null(snapshot.LimitWindows[0].RemainingUnits);
         }
         finally
         {
@@ -275,7 +277,8 @@ public sealed partial class AntigravityUsageProviderTests
             Assert.Equal(ProviderStatus.Ok, snapshot.Status);
             Assert.Equal(Fidelity.Derived, snapshot.Fidelity);
             Assert.Single(snapshot.LimitWindows);
-            Assert.Equal(0, snapshot.LimitWindows[0].RemainingUnits);
+            Assert.Equal(0, snapshot.LimitWindows[0].UsedUnits);
+            Assert.Null(snapshot.LimitWindows[0].RemainingUnits);
         }
         finally
         {

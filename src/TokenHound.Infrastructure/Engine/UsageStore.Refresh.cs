@@ -121,22 +121,45 @@ public sealed partial class UsageStore
 
         var decision = SnapshotRetentionPolicy.Apply(snapshot, lastGoodSnapshot);
 
-        _snapshots[snapshot.ProviderId] = decision.CurrentSnapshot;
+        PublishSnapshotState(snapshot, decision);
+        await PersistArchiveDecisionAsync(snapshot, decision, cancellationToken).ConfigureAwait(false);
+
+        SnapshotUpdated?.Invoke(this, decision.CurrentSnapshot);
+    }
+
+    private void PublishSnapshotState(Snapshot snapshot, SnapshotRetentionPolicy.Decision decision)
+    {
+
+        lock (_snapshotStateLock)
+        {
+
+            _snapshots[snapshot.ProviderId] = decision.CurrentSnapshot;
+
+            if (decision.ClearsHistory)
+                _lastGoodSnapshots.TryRemove(snapshot.ProviderId, out _);
+            else if (snapshot.Status == ProviderStatus.Ok && decision.ArchivedSnapshot is not null)
+                _lastGoodSnapshots[snapshot.ProviderId] = decision.ArchivedSnapshot;
+        }
+    }
+
+    private async Task PersistArchiveDecisionAsync(
+        Snapshot snapshot,
+        SnapshotRetentionPolicy.Decision decision,
+        CancellationToken cancellationToken)
+    {
 
         if (decision.ClearsHistory)
         {
-            _lastGoodSnapshots.TryRemove(snapshot.ProviderId, out _);
+
             if (_archive is not null)
                 await _archive.ClearSnapshotAsync(snapshot.ProviderId, cancellationToken).ConfigureAwait(false);
         }
         else if (snapshot.Status == ProviderStatus.Ok && decision.ArchivedSnapshot is not null)
         {
-            _lastGoodSnapshots[snapshot.ProviderId] = decision.ArchivedSnapshot;
+
             if (_archive is not null)
                 await _archive.SaveSnapshotAsync(decision.ArchivedSnapshot, cancellationToken).ConfigureAwait(false);
         }
-
-        SnapshotUpdated?.Invoke(this, decision.CurrentSnapshot);
     }
 
     private async Task PersistRateLimitDeadlineAsync(
@@ -170,8 +193,12 @@ public sealed partial class UsageStore
         foreach (var entry in state.LastReadings)
         {
 
-            _lastGoodSnapshots[entry.Key] = entry.Value;
-            _snapshots[entry.Key] = CreateRestoredStaleSnapshot(entry.Value);
+            lock (_snapshotStateLock)
+            {
+
+                _lastGoodSnapshots[entry.Key] = entry.Value;
+                _snapshots[entry.Key] = CreateRestoredStaleSnapshot(entry.Value);
+            }
         }
 
         foreach (var entry in state.BackoffDeadlines)
