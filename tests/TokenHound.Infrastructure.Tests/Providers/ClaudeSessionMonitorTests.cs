@@ -276,4 +276,22 @@ public sealed class ClaudeSessionMonitorTests
             result!.Pid.Should().Be(expectedPid.Value);
         }
     }
+
+    /// <summary>
+    /// Verifies that ClaudeSessionMonitor with custom providerId and sessionsDirectory returns matching properties.
+    /// </summary>
+    [Fact]
+    public void Constructor_WithCustomProviderIdAndDirectory_InitializesCorrectly()
+    {
+
+        var customDir = @"C:\custom\sessions";
+        var monitor = new ClaudeSessionMonitor(
+            providerId: "claude-work",
+            sessionsDirectory: customDir
+        );
+
+        monitor.ProviderId.Should().Be("claude-work");
+        monitor.SessionsDirectory.Should().Be(customDir);
+    }
+
 }

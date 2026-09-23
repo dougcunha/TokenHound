@@ -30,15 +30,21 @@ public sealed class ClaudeSessionMonitor : IActivityMonitor
 
     private readonly string _baseDirectory;
     private readonly TimeSpan _startTimeTolerance;
+    private readonly string _providerId;
+    private readonly string? _sessionsDirectory;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ClaudeSessionMonitor"/> class.
     /// </summary>
     /// <param name="baseDirectory">The base directory containing the .claude directory, or <see langword="null"/> to use the user profile.</param>
     /// <param name="startTimeTolerance">The tolerance threshold for matching process start time, or <see langword="null"/> to use the default 5 minutes.</param>
+    /// <param name="providerId">The unique provider identifier, or <see langword="null"/> to use default <see cref="PROVIDER_ID"/>.</param>
+    /// <param name="sessionsDirectory">An explicit sessions directory path, or <see langword="null"/> to resolve from baseDirectory.</param>
     public ClaudeSessionMonitor(
         string? baseDirectory = null,
-        TimeSpan? startTimeTolerance = null)
+        TimeSpan? startTimeTolerance = null,
+        string? providerId = null,
+        string? sessionsDirectory = null)
     {
 
         _baseDirectory = string.IsNullOrWhiteSpace(baseDirectory)
@@ -46,11 +52,13 @@ public sealed class ClaudeSessionMonitor : IActivityMonitor
             : baseDirectory;
 
         _startTimeTolerance = startTimeTolerance ?? DEFAULT_START_TIME_TOLERANCE;
+        _providerId = string.IsNullOrWhiteSpace(providerId) ? PROVIDER_ID : providerId;
+        _sessionsDirectory = sessionsDirectory;
     }
 
     /// <inheritdoc />
     public string ProviderId
-        => PROVIDER_ID;
+        => _providerId;
 
     /// <summary>
     /// Gets the base directory containing Claude profiles.
@@ -62,7 +70,7 @@ public sealed class ClaudeSessionMonitor : IActivityMonitor
     /// Gets the resolved path to the Claude sessions directory.
     /// </summary>
     public string SessionsDirectory
-        => Path.Combine(_baseDirectory, ".claude", "sessions");
+        => _sessionsDirectory ?? Path.Combine(_baseDirectory, ".claude", "sessions");
 
     /// <inheritdoc />
     public async ValueTask<AgentSession?> CheckLivenessAsync(CancellationToken cancellationToken = default)

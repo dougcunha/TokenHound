@@ -313,6 +313,57 @@ public sealed class NotchViewModelTests
         viewModel.Rings.Should().ContainSingle(static r => r.ProviderId == "claude");
     }
 
+    /// <summary>
+    /// Verifies that a valid isolated Claude profile prevents mock fallback when the default needs authentication.
+    /// </summary>
+    [Fact]
+    public async Task OnSnapshotUpdated_WhenAnotherClaudeProfileNeedsAuth_KeepsValidProfileWithoutMock()
+    {
+
+        using var store = new UsageStore();
+        RegisterStatusSequence(store, "claude", ProviderStatus.Ok, ProviderStatus.NeedsAuth);
+        RegisterStatusSequence(store, "claude-work", ProviderStatus.Ok, ProviderStatus.Ok);
+        await store.RefreshNowAsync(TestContext.Current.CancellationToken);
+
+        using var viewModel = new NotchViewModel(store, mockProvider: new MockUsageProvider("mock"));
+        await store.RefreshNowAsync(TestContext.Current.CancellationToken);
+
+        viewModel.Rings.Should().ContainSingle(static r => r.ProviderId == "claude-work" && r.Status == ProviderStatus.Ok);
+        viewModel.Rings.Should().ContainSingle(static r => r.ProviderId == "claude" && r.Status == ProviderStatus.NeedsAuth);
+        viewModel.Rings.Should().NotContain(static r => r.ProviderId == "mock");
+        viewModel.IsFallbackActive.Should().BeFalse();
+    }
+
+    /// <summary>Verifies that mock fallback activates when every Claude profile needs authentication.</summary>
+    [Fact]
+    public async Task OnSnapshotUpdated_WhenAllClaudeProfilesNeedAuth_ActivatesConfiguredMock()
+    {
+
+        using var store = new UsageStore();
+        RegisterStatusSequence(store, "claude", ProviderStatus.Ok, ProviderStatus.NeedsAuth);
+        RegisterStatusSequence(store, "claude-work", ProviderStatus.Ok, ProviderStatus.NeedsAuth);
+        await store.RefreshNowAsync(TestContext.Current.CancellationToken);
+
+        using var viewModel = new NotchViewModel(store, mockProvider: new MockUsageProvider("mock"));
+        await store.RefreshNowAsync(TestContext.Current.CancellationToken);
+
+        viewModel.IsFallbackActive.Should().BeTrue();
+        viewModel.Rings.Should().ContainSingle(static r => r.ProviderId == "mock");
+    }
+
+    private static void RegisterStatusSequence(UsageStore store, string providerId, ProviderStatus first, ProviderStatus second)
+    {
+
+        var provider = Substitute.For<IUsageProvider>();
+        provider.ProviderId.Returns(providerId);
+        provider.GetSnapshotAsync(Arg.Any<CancellationToken>()).Returns(
+            ValueTask.FromResult(CreateSnapshot(providerId, first, 0.25)),
+            ValueTask.FromResult(CreateSnapshot(providerId, second, 0.25))
+        );
+
+        store.RegisterProvider(provider);
+    }
+
     private static async Task RegisterAndRefreshAsync(UsageStore store, string providerId)
     {
 

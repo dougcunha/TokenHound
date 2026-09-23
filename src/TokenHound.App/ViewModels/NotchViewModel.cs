@@ -106,7 +106,7 @@ public sealed class NotchViewModel : INotifyPropertyChanged, IDisposable
 
             UpdateOrAddRing(snapshot);
 
-            if (_mockProvider is not null && snapshot.Status == ProviderStatus.NeedsAuth && !_isFallbackActive)
+            if (_mockProvider is not null && snapshot.Status == ProviderStatus.NeedsAuth && !_isFallbackActive && ShouldFallbackToMock())
                 LoadMockFallback();
         });
     }
@@ -210,13 +210,21 @@ public sealed class NotchViewModel : INotifyPropertyChanged, IDisposable
         if (Rings.Any(static r => string.Equals(r.ProviderId, "mock", StringComparison.OrdinalIgnoreCase)))
             return false;
 
-        var claudeRing = Rings.FirstOrDefault(static r =>
-            string.Equals(r.ProviderId, ClaudeOAuthProvider.PROVIDER_ID, StringComparison.OrdinalIgnoreCase));
+        var claudeRings = Rings.Where(static r =>
+            string.Equals(r.ProviderId, ClaudeOAuthProvider.PROVIDER_ID, StringComparison.OrdinalIgnoreCase) ||
+            r.ProviderId.StartsWith("claude-", StringComparison.OrdinalIgnoreCase)
+        ).ToList();
 
-        if (claudeRing is not null && claudeRing.Status == ProviderStatus.NeedsAuth)
+        if (claudeRings.Count > 0)
+        {
+
+            if (claudeRings.Any(static r => r.Status != ProviderStatus.NeedsAuth))
+                return false;
+
             return true;
+        }
 
-        if (claudeRing is null && !HasClaudeCredentials())
+        if (!HasClaudeCredentials())
             return true;
 
         return false;

@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Infrastructure.Storage;
@@ -13,16 +11,12 @@ namespace TokenHound.Infrastructure.Providers.Claude;
 /// <summary>
 /// Discovers and parses Claude Code credentials from default and multi-profile directories.
 /// </summary>
-public sealed class ClaudeProfileDiscovery
+public sealed partial class ClaudeProfileDiscovery
 {
     private const string CREDENTIALS_FILE_NAME = ".credentials.json";
     private const string DEFAULT_PROFILE_DIR = ".claude";
     private const string PROFILE_PATTERN = ".claude-*";
-    private const string OAUTH_PROPERTY_NAME = "claudeAiOauth";
-    private const string ACCESS_TOKEN_PROPERTY_NAME = "accessToken";
-    private const string TOKEN_PROPERTY_NAME = "token";
-    private const string EXPIRES_AT_PROPERTY_NAME = "expiresAt";
-    private const string EXPIRES_AT_SNAKE_PROPERTY_NAME = "expires_at";
+    private const string PROFILE_PREFIX = ".claude-";
 
     private readonly string _baseDirectory;
 
@@ -104,6 +98,48 @@ public sealed class ClaudeProfileDiscovery
     }
 
     /// <summary>
+    /// Discovers all Claude Code profiles present under the base directory.
+    /// </summary>
+    /// <param name="onlyActive">
+    /// <see langword="true"/> to return only profiles with valid credentials; <see langword="false"/> to return all found folders.
+    /// </param>
+    /// <returns>A read-only list of discovered <see cref="ClaudeProfile"/> instances.</returns>
+    public IReadOnlyList<ClaudeProfile> DiscoverProfiles(bool onlyActive = true)
+    {
+
+        var profiles = new List<ClaudeProfile>();
+        var defaultDir = Path.Combine(_baseDirectory, DEFAULT_PROFILE_DIR);
+
+        if (!onlyActive || HasCredentials(defaultDir))
+            profiles.Add(new ClaudeProfile("claude", "Claude Code", defaultDir, null));
+
+        if (!Directory.Exists(_baseDirectory))
+            return profiles;
+
+        var matchingDirs = Directory.GetDirectories(_baseDirectory, PROFILE_PATTERN)
+            .OrderBy(static dir => dir, StringComparer.OrdinalIgnoreCase);
+
+        foreach (var dir in matchingDirs)
+        {
+
+            var dirName = Path.GetFileName(dir);
+
+            if (string.IsNullOrWhiteSpace(dirName) || dirName.Length <= PROFILE_PREFIX.Length)
+                continue;
+
+            var slug = dirName[PROFILE_PREFIX.Length..];
+
+            if (string.IsNullOrWhiteSpace(slug))
+                continue;
+
+            if (!onlyActive || HasCredentials(dir))
+                profiles.Add(new ClaudeProfile($"claude-{slug.ToLowerInvariant()}", $"Claude Code ({slug})", dir, slug));
+        }
+
+        return profiles;
+    }
+
+    /// <summary>
     /// Reads and parses a Claude credential from the specified file path.
     /// </summary>
     /// <param name="filePath">The absolute path to the credentials JSON file.</param>
@@ -138,56 +174,44 @@ public sealed class ClaudeProfileDiscovery
         }
     }
 
-    /// <summary>
-    /// Parses a JSON string containing Claude Code credentials.
-    /// </summary>
-    /// <param name="jsonContent">The raw JSON string to parse.</param>
-    /// <returns>The extracted <see cref="ClaudeCredentialDto"/>, or <see langword="null"/> if parsing fails or no token is found.</returns>
-    public static ClaudeCredentialDto? ParseCredentialJson(string? jsonContent)
+    private static bool HasCredentials(string directoryPath)
     {
 
-        if (string.IsNullOrWhiteSpace(jsonContent))
-            return null;
+        var credPath = Path.Combine(directoryPath, CREDENTIALS_FILE_NAME);
+
+        if (!File.Exists(credPath))
+            return false;
 
         try
         {
 
-            using var document = JsonDocument.Parse(jsonContent);
-            var root = document.RootElement;
+            using var stream = SharedFileReader.OpenRead(credPath);
+            using var reader = new StreamReader(stream);
 
-            if (root.ValueKind != JsonValueKind.Object)
-                return null;
-
-            var token = ExtractToken(root);
-
-            if (string.IsNullOrWhiteSpace(token))
-                return null;
-
-            return new ClaudeCredentialDto { AccessToken = token, ExpiresAt = ExtractExpiresAt(root) };
+            return ParseCredentialJson(reader.ReadToEnd()) is not null;
         }
-        catch (JsonException)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
 
-            return null;
+            return false;
         }
     }
 
     private async Task<IReadOnlyList<ClaudeCredentialDto>> DiscoverMultiProfileCredentialsAsync(CancellationToken cancellationToken)
     {
 
-        if (!Directory.Exists(_baseDirectory))
-            return [];
-
+        var profiles = DiscoverProfiles(onlyActive: true);
         var results = new List<ClaudeCredentialDto>();
-        var matchingDirs = Directory.GetDirectories(_baseDirectory, PROFILE_PATTERN)
-            .OrderBy(static dir => dir, StringComparer.OrdinalIgnoreCase);
 
-        foreach (var dir in matchingDirs)
+        foreach (var profile in profiles)
         {
+
+            if (profile.Slug is null)
+                continue;
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            var credPath = Path.Combine(dir, CREDENTIALS_FILE_NAME);
+            var credPath = Path.Combine(profile.DirectoryPath, CREDENTIALS_FILE_NAME);
             var credential = await LoadCredentialFromFileAsync(credPath, cancellationToken).ConfigureAwait(false);
 
             if (credential is not null)
@@ -196,82 +220,4 @@ public sealed class ClaudeProfileDiscovery
 
         return results;
     }
-
-    private static string? ExtractToken(JsonElement root)
-    {
-
-        if (root.TryGetProperty(OAUTH_PROPERTY_NAME, out var oauthElement) &&
-            oauthElement.ValueKind == JsonValueKind.Object)
-        {
-
-            var oauthToken = TryGetTokenString(oauthElement);
-
-            if (!string.IsNullOrWhiteSpace(oauthToken))
-                return oauthToken;
-        }
-
-        return TryGetTokenString(root);
-    }
-
-    private static string? TryGetTokenString(JsonElement element)
-    {
-
-        if (element.TryGetProperty(ACCESS_TOKEN_PROPERTY_NAME, out var prop) &&
-            prop.ValueKind == JsonValueKind.String)
-            return prop.GetString();
-
-        if (element.TryGetProperty(TOKEN_PROPERTY_NAME, out prop) &&
-            prop.ValueKind == JsonValueKind.String)
-            return prop.GetString();
-
-        return null;
-    }
-
-    private static DateTimeOffset? ExtractExpiresAt(JsonElement root)
-    {
-
-        if (root.TryGetProperty(OAUTH_PROPERTY_NAME, out var oauthElement) &&
-            oauthElement.ValueKind == JsonValueKind.Object)
-        {
-
-            var expiry = TryGetExpiry(oauthElement);
-
-            if (expiry.HasValue)
-                return expiry;
-        }
-
-        return TryGetExpiry(root);
-    }
-
-    private static DateTimeOffset? TryGetExpiry(JsonElement element)
-    {
-
-        if (element.TryGetProperty(EXPIRES_AT_PROPERTY_NAME, out var prop) ||
-            element.TryGetProperty(EXPIRES_AT_SNAKE_PROPERTY_NAME, out prop))
-            return ParseExpiryElement(prop);
-
-        return null;
-    }
-
-    private static DateTimeOffset? ParseExpiryElement(JsonElement element)
-    {
-
-        if (element.ValueKind == JsonValueKind.Number && element.TryGetInt64(out var epochVal))
-            return ClaudeEpochTimestampParser.Parse(epochVal);
-
-        if (element.ValueKind == JsonValueKind.String)
-        {
-
-            var str = element.GetString();
-
-            if (long.TryParse(str, CultureInfo.InvariantCulture, out var parsedEpoch))
-                return ClaudeEpochTimestampParser.Parse(parsedEpoch);
-
-            if (DateTimeOffset.TryParse(str, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var parsedDate))
-                return parsedDate;
-        }
-
-        return null;
-    }
-
 }

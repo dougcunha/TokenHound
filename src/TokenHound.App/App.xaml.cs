@@ -1,6 +1,7 @@
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
@@ -183,9 +184,41 @@ public partial class App : Application
     private static void RegisterClaude(UsageStore usageStore, RateLimitPolicy rateLimitPolicy)
     {
 
-        var provider = new ClaudeOAuthProvider(rateLimitPolicy: rateLimitPolicy);
-        usageStore.RegisterProvider(provider);
-        usageStore.RegisterActivityMonitor(new ClaudeSessionMonitor());
+        var discovery = new ClaudeProfileDiscovery();
+        var profiles = discovery.DiscoverProfiles(onlyActive: true);
+
+        if (profiles.Count == 0)
+        {
+
+            var fallbackProvider = new ClaudeOAuthProvider(rateLimitPolicy: rateLimitPolicy);
+            usageStore.RegisterProvider(fallbackProvider);
+            usageStore.RegisterActivityMonitor(new ClaudeSessionMonitor());
+
+            return;
+        }
+
+        foreach (var profile in profiles)
+        {
+
+            var profileRateLimit = new RateLimitPolicy();
+            var credsPath = Path.Combine(profile.DirectoryPath, ".credentials.json");
+            var sessionsDir = Path.Combine(profile.DirectoryPath, "sessions");
+
+            var provider = new ClaudeOAuthProvider(
+                discovery: discovery,
+                rateLimitPolicy: profileRateLimit,
+                providerId: profile.ProviderId,
+                credentialsFilePath: credsPath
+            );
+
+            var monitor = new ClaudeSessionMonitor(
+                providerId: profile.ProviderId,
+                sessionsDirectory: sessionsDir
+            );
+
+            usageStore.RegisterProvider(provider);
+            usageStore.RegisterActivityMonitor(monitor);
+        }
     }
 
     private static void RegisterAntigravity(

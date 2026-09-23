@@ -41,6 +41,8 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
     /// </summary>
     private const int MAX_CONSECUTIVE_RATE_LIMITS = 10;
 
+    private readonly string _providerId;
+    private readonly string? _credentialsFilePath;
     private readonly ClaudeProfileDiscovery _discovery;
     private readonly ClaudeOAuthClient _client;
     private readonly Random? _backoffJitter;
@@ -55,13 +57,19 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
     /// <param name="client">The OAuth usage API client, or <see langword="null"/> to use default client.</param>
     /// <param name="backoffJitter">The generator producing backoff jitter, or <see langword="null"/> to use <see cref="Random.Shared"/>.</param>
     /// <param name="rateLimitPolicy">The isolated retry policy, or <see langword="null"/> to use the default floor.</param>
+    /// <param name="providerId">The unique provider identifier, or <see langword="null"/> to use default <see cref="PROVIDER_ID"/>.</param>
+    /// <param name="credentialsFilePath">An explicit path to the credentials JSON file, or <see langword="null"/> to use discovery.</param>
     public ClaudeOAuthProvider(
         ClaudeProfileDiscovery? discovery = null,
         ClaudeOAuthClient? client = null,
         Random? backoffJitter = null,
-        RateLimitPolicy? rateLimitPolicy = null)
+        RateLimitPolicy? rateLimitPolicy = null,
+        string? providerId = null,
+        string? credentialsFilePath = null)
     {
 
+        _providerId = string.IsNullOrWhiteSpace(providerId) ? PROVIDER_ID : providerId;
+        _credentialsFilePath = credentialsFilePath;
         _discovery = discovery ?? new ClaudeProfileDiscovery();
         _client = client ?? new ClaudeOAuthClient();
         _backoffJitter = backoffJitter;
@@ -70,7 +78,7 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
 
     /// <inheritdoc />
     public string ProviderId
-        => PROVIDER_ID;
+        => _providerId;
 
     /// <inheritdoc />
     public async ValueTask<Snapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
@@ -78,7 +86,9 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        var credential = await _discovery.DiscoverCredentialAsync(cancellationToken).ConfigureAwait(false);
+        var credential = _credentialsFilePath is not null
+            ? await ClaudeProfileDiscovery.LoadCredentialFromFileAsync(_credentialsFilePath, cancellationToken).ConfigureAwait(false)
+            : await _discovery.DiscoverCredentialAsync(cancellationToken).ConfigureAwait(false);
 
         if (credential is null || string.IsNullOrWhiteSpace(credential.AccessToken) || credential.IsExpired)
             return CreateNeedsAuthSnapshot();
@@ -136,12 +146,12 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
         return CreateDegradedSnapshot(ex);
     }
 
-    private static Snapshot CreateNeedsAuthSnapshot()
+    private Snapshot CreateNeedsAuthSnapshot()
     {
 
         return new Snapshot
         {
-            ProviderId = PROVIDER_ID,
+            ProviderId = _providerId,
             Status = ProviderStatus.NeedsAuth,
             Fidelity = Fidelity.Official,
             FetchedAtUtc = DateTimeOffset.UtcNow,
@@ -151,14 +161,14 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
         };
     }
 
-    private static Snapshot CreateOkSnapshot(ClaudeUsageResponse? usage)
+    private Snapshot CreateOkSnapshot(ClaudeUsageResponse? usage)
     {
 
         var windows = MapLimitWindows(usage);
 
         return new Snapshot
         {
-            ProviderId = PROVIDER_ID,
+            ProviderId = _providerId,
             Status = ProviderStatus.Ok,
             Fidelity = Fidelity.Official,
             FetchedAtUtc = DateTimeOffset.UtcNow,
@@ -233,7 +243,7 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
     {
 
         var (snapshot, consecutiveRateLimits) = RateLimitedSnapshotFactory.Create(
-            PROVIDER_ID,
+            _providerId,
             reason,
             retryAfterSeconds,
             TimeProvider.System,
@@ -254,7 +264,7 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
 
         return new Snapshot
         {
-            ProviderId = PROVIDER_ID,
+            ProviderId = _providerId,
             Status = ProviderStatus.Stale,
             Fidelity = Fidelity.Official,
             FetchedAtUtc = DateTimeOffset.UtcNow,

@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "generation": 23,
+  "feature": "07-claude-multi-profile",
+  "workspace": "D:\\MyProjects\\TokenHound",
+  "phase": "completed",
+  "status": "completed",
+  "safe_to_stop": true,
+  "owner_session": "5175b9df-78ab-4645-af1e-db6e41a07179",
+  "objective": "Support multi-profile discovery and simultaneous HUD display for all Claude Code accounts.",
+  "constraints": [
+    "Keep TokenHound.Core pure: zero UI or OS dependencies.",
+    "Never write or refresh credentials owned by other tools; read-only access.",
+    "Conform to specs/03-PROVIDER-CLAUDE-CODE.md for profile discovery and naming."
+  ],
+  "sources": {
+    "workflow": "workflow.md",
+    "prd": "prd.md",
+    "techspec": "techspec.md",
+    "tasks": "tasks.md",
+    "review": "codereview_02/codereview.md",
+    "snapshot": "context-snapshot.md"
+  },
+  "review_status": "APPROVED",
+  "approved_sources": [
+    {
+      "path": "prd.md",
+      "sha256": "942099278513bbedd1ae9329cd76aeee8e337dc06f88c6878fc6dee4436a6950",
+      "decision_id": "DEC-19"
+    },
+    {
+      "path": "techspec.md",
+      "sha256": "7e217a4e4aa715fd918c2609112e3f7bc4b4c4489b389ebeeded538c0fe7505f",
+      "decision_id": "DEC-11"
+    },
+    {
+      "path": "tasks.md",
+      "sha256": "f96854d93761185a5af4416737a69df8908b7a7aa5e5f237ab40235683e6bb46",
+      "decision_id": "DEC-20"
+    },
+    {
+      "path": "done/task_01.md",
+      "sha256": "51d968d88ba07fc83b9632240bd83089bd7778aff5df0f2188c00b54cb04a6aa",
+      "decision_id": "DEC-20"
+    },
+    {
+      "path": "done/task_02.md",
+      "sha256": "11e7cd84e58b674aa22fd958b0f6379ef7acd20aaf4be6c05221eccae2269f93",
+      "decision_id": "DEC-20"
+    },
+    {
+      "path": "done/task_03.md",
+      "sha256": "4d9ab74cf22310fc7d89f2ca525d9623a3710c1ccefaf87971e2aadd580baa27",
+      "decision_id": "DEC-20"
+    },
+    {
+      "path": "codereview_02/codereview.md",
+      "sha256": "504beab39e32f0a630a9a79bb98a0264f442b93aabdc0100d8f32c3dfe0413a7",
+      "decision_id": "DEC-21"
+    },
+    {
+      "path": "workflow.md",
+      "sha256": "2249d9a4afbdde2c34cd7a08e2ba383ff4c261d05a1cac331e48eb0b322a4d12",
+      "decision_id": "DEC-21"
+    }
+  ],
+  "decisions_to_read": [
+    "DEC-11",
+    "DEC-19",
+    "DEC-20",
+    "DEC-21"
+  ],
+  "git_base": "3dc0c4e0a83a18149e5bba4524cf84606955de18",
+  "worktree_evidence": "workflow.md#REC-07",
+  "active_work": [],
+  "pending_hil": null,
+  "blockers": [],
+  "correction_round": 1,
+  "rounds_without_progress": 0,
+  "next_action": {
+    "kind": "close",
+    "instruction": "Feature delivery complete and accepted at HIL 3.",
+    "read": [
+      {
+        "path": "tasks/prd-07-claude-multi-profile/workflow.md",
+        "section": "DEC-21"
+      }
+    ]
+  }
+}

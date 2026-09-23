@@ -234,4 +234,5 @@ public sealed class ClaudeProfileDiscoveryTests
 
         await act.Should().ThrowAsync<OperationCanceledException>();
     }
+
 }

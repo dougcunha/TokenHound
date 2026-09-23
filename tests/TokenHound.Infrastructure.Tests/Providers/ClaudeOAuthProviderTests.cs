@@ -357,6 +357,37 @@ public sealed class ClaudeOAuthProviderTests
         snapshot.LimitWindows[1].RemainingUnits.Should().Be(36);
     }
 
+    /// <summary>
+    /// Verifies that ClaudeOAuthProvider with custom providerId and credentials file returns matching snapshot.
+    /// </summary>
+    [Fact]
+    public async Task GetSnapshotAsync_WithCustomProviderIdAndCredentials_ReturnsMatchingSnapshot()
+    {
+
+        using var scope = new TempProfileScope(VALID_JSON);
+        var credPath = Path.Combine(scope.DirectoryPath, ".claude", ".credentials.json");
+
+        var handler = new MockHttpMessageHandler(static _ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(USAGE_JSON, Encoding.UTF8, "application/json")
+        });
+
+        using var httpClient = new HttpClient(handler);
+        var client = new ClaudeOAuthClient(httpClient);
+        var provider = new ClaudeOAuthProvider(
+            client: client,
+            providerId: "claude-work",
+            credentialsFilePath: credPath
+        );
+
+        provider.ProviderId.Should().Be("claude-work");
+
+        var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
+
+        snapshot.ProviderId.Should().Be("claude-work");
+        snapshot.Status.Should().Be(ProviderStatus.Ok);
+    }
+
     private static TimeSpan PenaltyOf(Snapshot snapshot)
         => snapshot.ActiveBlock!.ResetTimeUtc!.Value - snapshot.FetchedAtUtc;
 
