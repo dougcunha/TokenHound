@@ -12,6 +12,8 @@ namespace TokenHound.App.ViewModels;
 public static partial class ProviderUsageRowFactory
 {
     private const string COPILOT_PROVIDER_ID = "copilot";
+    private const string SESSION_LABEL = "Current session (5h)";
+    private const string WEEKLY_LABEL = "Weekly limit (7d)";
 
     /// <summary>
     /// Creates a read-only list of usage rows from a telemetry snapshot.
@@ -56,7 +58,7 @@ public static partial class ProviderUsageRowFactory
                 UsedFraction = window.UsedFraction,
                 PrimaryQuantityText = ResolveQuotaPrimaryText(snapshot, window),
                 SecondaryQuantityText = ResolveQuotaSecondaryText(snapshot, window),
-                ScopeText = window.GroupName,
+                ScopeText = IsClaudeProvider(snapshot.ProviderId) ? null : window.GroupName,
                 ResetText = FormatResetCountdown(resetTime, nowUtc)
             });
         }
@@ -96,37 +98,52 @@ public static partial class ProviderUsageRowFactory
     {
 
         if (string.Equals(providerId, COPILOT_PROVIDER_ID, StringComparison.OrdinalIgnoreCase))
-        {
-            if (window.Name.Contains("Premium", StringComparison.OrdinalIgnoreCase))
-                return "Premium interactions";
+            return ResolveCopilotLabel(window.Name);
 
-            return !string.IsNullOrWhiteSpace(window.Name) ? window.Name : "Quota";
-        }
+        if (string.IsNullOrWhiteSpace(window.Name))
+            return ResolvePeriodLabel(window.Period, index);
 
-        if (!string.IsNullOrWhiteSpace(window.Name))
-        {
-            if (window.Period?.TotalHours == 5 ||
-                window.Name.Contains("session", StringComparison.OrdinalIgnoreCase) ||
-                window.Name.Contains("five", StringComparison.OrdinalIgnoreCase))
-                return "Current session (5h)";
+        if (IsClaudeProvider(providerId))
+            return ResolveClaudeLabel(window);
 
-            if (window.Period?.TotalDays == 7 ||
-                window.Name.Contains("week", StringComparison.OrdinalIgnoreCase) ||
-                window.Name.Contains("seven", StringComparison.OrdinalIgnoreCase))
-                return "Weekly limit (7d)";
+        return ResolveNamedLabel(window);
+    }
 
-            return window.Name;
-        }
+    private static string ResolveCopilotLabel(string name)
+    {
 
-        if (window.Period is { } period)
-        {
-            if (period.TotalHours <= 24)
-                return $"Session ({(int)period.TotalHours}h)";
+        if (name.Contains("Premium", StringComparison.OrdinalIgnoreCase))
+            return "Premium interactions";
 
-            return $"Period ({(int)period.TotalDays}d)";
-        }
+        return !string.IsNullOrWhiteSpace(name) ? name : "Quota";
+    }
 
-        return index == 0 ? "Current session (5h)" : "Weekly limit (7d)";
+    private static string ResolveNamedLabel(LimitWindow window)
+    {
+
+        if (window.Period?.TotalHours == 5 ||
+            window.Name.Contains("session", StringComparison.OrdinalIgnoreCase) ||
+            window.Name.Contains("five", StringComparison.OrdinalIgnoreCase))
+            return SESSION_LABEL;
+
+        if (window.Period?.TotalDays == 7 ||
+            window.Name.Contains("week", StringComparison.OrdinalIgnoreCase) ||
+            window.Name.Contains("seven", StringComparison.OrdinalIgnoreCase))
+            return WEEKLY_LABEL;
+
+        return window.Name;
+    }
+
+    private static string ResolvePeriodLabel(TimeSpan? period, int index)
+    {
+
+        if (period is null)
+            return index == 0 ? SESSION_LABEL : WEEKLY_LABEL;
+
+        if (period.Value.TotalHours <= 24)
+            return $"Session ({(int)period.Value.TotalHours}h)";
+
+        return $"Period ({(int)period.Value.TotalDays}d)";
     }
 
     /// <summary>

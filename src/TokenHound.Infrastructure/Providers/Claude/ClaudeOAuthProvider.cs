@@ -164,7 +164,7 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
     private Snapshot CreateOkSnapshot(ClaudeUsageResponse? usage)
     {
 
-        var windows = MapLimitWindows(usage);
+        var windows = ClaudeQuotaWindowMapper.Map(usage);
 
         return new Snapshot
         {
@@ -175,61 +175,6 @@ public sealed class ClaudeOAuthProvider : IUsageProvider
             LimitWindows = windows,
             ActiveBlock = null,
             ErrorDescription = null
-        };
-    }
-
-    private static IReadOnlyList<LimitWindow> MapLimitWindows(ClaudeUsageResponse? usage)
-    {
-
-        if (usage is null)
-            return [];
-
-        var windows = new List<LimitWindow>(2);
-
-        if (usage.FiveHour is not null)
-        {
-
-            windows.Add(CreateLimitWindow(
-                FIVE_HOUR_WINDOW_NAME,
-                usage.FiveHour.Utilization,
-                TimeSpan.FromHours(5),
-                usage.FiveHour.ResetsAt
-            ));
-        }
-
-        if (usage.SevenDay is not null)
-        {
-
-            windows.Add(CreateLimitWindow(
-                SEVEN_DAY_WINDOW_NAME,
-                usage.SevenDay.Utilization,
-                TimeSpan.FromDays(7),
-                usage.SevenDay.ResetsAt
-            ));
-        }
-
-        return windows;
-    }
-
-    private static LimitWindow CreateLimitWindow(
-        string name,
-        double rawUtilization,
-        TimeSpan period,
-        DateTimeOffset? resetsAt)
-    {
-
-        var fraction = Math.Clamp(rawUtilization / 100.0, 0.0, 1.0);
-
-        var remaining = (long)Math.Max(0, Math.Round((1.0 - fraction) * 100));
-
-        return new LimitWindow
-        {
-            Name = name,
-            UsedFraction = fraction,
-            RemainingUnits = remaining,
-            TotalUnits = 100,
-            Period = period,
-            ResetTimeUtc = resetsAt
         };
     }
 

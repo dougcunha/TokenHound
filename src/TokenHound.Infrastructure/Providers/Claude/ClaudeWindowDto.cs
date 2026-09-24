@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace TokenHound.Infrastructure.Providers.Claude;
@@ -9,14 +10,28 @@ namespace TokenHound.Infrastructure.Providers.Claude;
 public sealed record ClaudeWindowDto
 {
     /// <summary>
-    /// Gets the utilization percentage from 0 to 100 for this limit window.
+    /// Gets the raw utilization field, which may be absent or malformed.
     /// </summary>
     [JsonPropertyName("utilization")]
-    public double Utilization { get; init; }
+    public JsonElement UtilizationValue { get; init; }
 
     /// <summary>
-    /// Gets the timestamp when this limit window resets in UTC, if available.
+    /// Gets the raw reset timestamp field, if supplied.
     /// </summary>
     [JsonPropertyName("resets_at")]
-    public DateTimeOffset? ResetsAt { get; init; }
+    public JsonElement ResetValue { get; init; }
+
+    /// <summary>
+    /// Gets a valid reported utilization percentage, or null when absent or invalid.
+    /// </summary>
+    [JsonIgnore]
+    public double? Utilization
+        => ClaudeQuotaWindowMapper.ToPercent(UtilizationValue);
+
+    /// <summary>
+    /// Gets the valid reset timestamp in UTC, if one was supplied.
+    /// </summary>
+    [JsonIgnore]
+    public DateTimeOffset? ResetsAt
+        => ClaudeQuotaWindowMapper.ToReset(ResetValue);
 }

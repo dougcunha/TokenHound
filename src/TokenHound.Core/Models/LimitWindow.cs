@@ -5,8 +5,6 @@ namespace TokenHound.Core.Models;
 /// </summary>
 public sealed record LimitWindow
 {
-    private readonly double? _usedFraction;
-
     /// <summary>
     /// Gets the identifier or human-readable name of the limit window.
     /// </summary>
@@ -18,15 +16,9 @@ public sealed record LimitWindow
     public string? GroupName { get; init; }
 
     /// <summary>
-    /// Gets the fraction of the limit used (0.0 to 1.0), or <see langword="null"/> if the total capacity is unknown or null.
+    /// Gets the explicitly reported fraction of the limit used (0.0 to 1.0), if available.
     /// </summary>
-    public double? UsedFraction
-    {
-        get =>
-            TotalUnits is null ? null : _usedFraction;
-        init =>
-            _usedFraction = value;
-    }
+    public double? UsedFraction { get; init; }
 
     /// <summary>
     /// Gets the number of remaining units in the current window, if known.

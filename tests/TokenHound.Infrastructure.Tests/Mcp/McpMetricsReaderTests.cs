@@ -260,7 +260,7 @@ public sealed class McpMetricsReaderTests
         stale.SnapshotFetchedAtUtc.Should().Be(SAMPLE_TIME);
         stale.LastSuccessfulAtUtc.Should().Be(SAMPLE_TIME);
         stale.LimitWindows[0].RemainingUnits.Should().Be(7);
-        stale.LimitWindows[0].UsedFraction.Should().BeNull();
+        stale.LimitWindows[0].UsedFraction.Should().Be(0.8);
     }
 
     private static Snapshot CreateClineSnapshot()

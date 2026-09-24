@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "generation": 19,
+  "feature": "08-claude-quota-breakdown",
+  "workspace": "D:\\MyProjects\\TokenHound",
+  "phase": "acceptance",
+  "status": "awaiting-hil",
+  "safe_to_stop": true,
+  "owner_session": "01XDQuf2TU3GqApSXLnbnvRy",
+  "objective": "Show all identifiable Claude model and scoped usage quotas reported for each profile while preserving the session and overall weekly readings.",
+  "constraints": [
+    "Keep TokenHound.Core free of UI and OS dependencies.",
+    "Read Claude credentials without writing or refreshing them.",
+    "Do not invent limits, reset times, model identities, or denominators.",
+    "Preserve the existing 429 deadline and stale-window behavior."
+  ],
+  "sources": {
+    "workflow": "workflow.md",
+    "prd": "prd.md",
+    "techspec": "techspec.md",
+    "tasks": "tasks.md",
+    "review": "codereview_2/codereview.md",
+    "snapshot": "context-snapshot.md"
+  },
+  "review_status": "APPROVED WITH RESERVATIONS",
+  "approved_sources": [
+    {
+      "path": "prd.md",
+      "sha256": "dbf3cb45264c921cd227a9ed520afa0e80a8e8e88a9a7e279894d5ddb6a9186d",
+      "decision_id": "DEC-01"
+    },
+    {
+      "path": "techspec.md",
+      "sha256": "a95fa257790b52d2f7e7df18c5565c125d4d9bf2ea1b35c8eb5510692f9e2e2c",
+      "decision_id": "DEC-10"
+    },
+    {
+      "path": "tasks.md",
+      "sha256": "619daa2a43ee600775af90a93638107e7bf80a91d99245b96cdf91a0dcfcc082",
+      "decision_id": "DEC-10"
+    },
+    {
+      "path": "done/task_01.md",
+      "sha256": "22fa56a150a765439bb3d11a71c43f17e5adc37919dacceb35f9c1fd5e61c57f",
+      "decision_id": "DEC-10"
+    },
+    {
+      "path": "done/task_02.md",
+      "sha256": "5ed2ef8051ac091c06ac6b1b3c9a1b27a74f6e6cf531395135398f0daedfa315",
+      "decision_id": "DEC-08"
+    }
+  ],
+  "decisions_to_read": [
+    "DEC-11",
+    "REC-10"
+  ],
+  "git_base": "606426652bdf3a286d44db6eb169e9b426d5d251",
+  "worktree_evidence": "workflow.md#REC-06; codereview_2/codereview.md#Summary",
+  "active_work": [],
+  "pending_hil": {
+    "gate": "HIL 3",
+    "question": "Accept the current delivery with TC-07 manual HUD acceptance pending, or run TC-07 first in a session with Windows MCP tools",
+    "affected": [
+      "TC-07",
+      "OI-02"
+    ]
+  },
+  "blockers": [],
+  "correction_round": 1,
+  "rounds_without_progress": 0,
+  "next_action": {
+    "kind": "await-decision",
+    "instruction": "Record the HIL 3 answer. If accepted, mark completed and close the snapshot. If TC-07 is required first, run it in a session that has the Windows MCP App/Screenshot tools, then close.",
+    "read": [
+      {
+        "path": "tasks/prd-08-claude-quota-breakdown/codereview_2/codereview.md",
+        "section": "Summary, Limitations and open items"
+      },
+      {
+        "path": "tasks/prd-08-claude-quota-breakdown/techspec.md",
+        "section": "Test approach (Manual acceptance)"
+      },
+      {
+        "path": "tasks/prd-08-claude-quota-breakdown/workflow.md",
+        "section": "REC-10"
+      }
+    ]
+  }
+}

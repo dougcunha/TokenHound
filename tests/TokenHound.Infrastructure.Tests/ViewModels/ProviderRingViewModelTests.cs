@@ -217,7 +217,7 @@ public sealed class ProviderRingViewModelTests
             [
                 new LimitWindow
                 {
-                    Name = "Session",
+                    Name = "five_hour",
                     UsedFraction = 0.50
                 }
             ]
@@ -226,7 +226,7 @@ public sealed class ProviderRingViewModelTests
         ring.UpdateFromSnapshot(snapshot);
 
         ring.Rows.Should().ContainSingle();
-        ring.Rows[0].Label.Should().Be("Current session (5h)");
+        ring.Rows[0].Label.Should().Be("Current session");
         changedProperties.Should().Contain(nameof(ring.Rows));
     }
 }

@@ -189,8 +189,8 @@ public sealed partial class ProviderRingViewModel : INotifyPropertyChanged
 
         var provider = timeProvider ?? TimeProvider.System;
         var nowUtc = provider.GetUtcNow();
-        var sessionWindow = FindLimitWindow(snapshot.LimitWindows, isSession: true);
-        var weeklyWindow = FindLimitWindow(snapshot.LimitWindows, isSession: false);
+        var sessionWindow = FindLimitWindow(snapshot, isSession: true);
+        var weeklyWindow = FindLimitWindow(snapshot, isSession: false);
 
         UsedFraction = sessionWindow?.UsedFraction;
         SessionUsedFraction = sessionWindow?.UsedFraction;
@@ -237,8 +237,13 @@ public sealed partial class ProviderRingViewModel : INotifyPropertyChanged
         UpdateActivity(session.State == AgentSessionState.Busy, sessionText);
     }
 
-    private static LimitWindow? FindLimitWindow(IReadOnlyList<LimitWindow> windows, bool isSession)
+    private static LimitWindow? FindLimitWindow(Snapshot snapshot, bool isSession)
     {
+
+        var windows = snapshot.LimitWindows;
+
+        if (ProviderUsageRowFactory.IsClaudeProvider(snapshot.ProviderId))
+            return ProviderUsageRowFactory.FindClaudeBaseWindow(windows, isSession);
 
         if (windows.Count == 0)
             return null;

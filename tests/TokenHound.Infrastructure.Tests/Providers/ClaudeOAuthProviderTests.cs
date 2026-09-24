@@ -352,9 +352,9 @@ public sealed class ClaudeOAuthProviderTests
         var snapshot = await provider.GetSnapshotAsync(TestContext.Current.CancellationToken);
 
         snapshot.LimitWindows[0].UsedFraction.Should().Be(0.01);
-        snapshot.LimitWindows[0].RemainingUnits.Should().Be(99);
+        snapshot.LimitWindows[0].RemainingUnits.Should().BeNull();
         snapshot.LimitWindows[1].UsedFraction.Should().Be(0.64);
-        snapshot.LimitWindows[1].RemainingUnits.Should().Be(36);
+        snapshot.LimitWindows[1].RemainingUnits.Should().BeNull();
     }
 
     /// <summary>

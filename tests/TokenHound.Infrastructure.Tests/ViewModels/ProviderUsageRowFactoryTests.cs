@@ -57,7 +57,7 @@ public sealed class ProviderUsageRowFactoryTests
 
         var sessionRow = rows[0];
         sessionRow.Key.Should().Be("quota:0");
-        sessionRow.Label.Should().Be("Current session (5h)");
+        sessionRow.Label.Should().Be("Current session");
         sessionRow.UsedFraction.Should().Be(0.42);
         sessionRow.ClampedFraction.Should().Be(0.42);
         sessionRow.HasProgress.Should().BeTrue();
@@ -67,7 +67,7 @@ public sealed class ProviderUsageRowFactoryTests
 
         var weeklyRow = rows[1];
         weeklyRow.Key.Should().Be("quota:1");
-        weeklyRow.Label.Should().Be("Weekly limit (7d)");
+        weeklyRow.Label.Should().Be("Current week (all models)");
         weeklyRow.UsedFraction.Should().Be(0.15);
         weeklyRow.PrimaryQuantityText.Should().Be("15% Used");
         weeklyRow.SecondaryQuantityText.Should().Be("850 of 1,000 remaining");
