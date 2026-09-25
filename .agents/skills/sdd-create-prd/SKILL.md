@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # Create SDD PRD
 
-1. Extract the problem, outcome, and feature name from the request. Resolve `tasks/prd-[slug]/prd.md`; a new slug is `[NN]-[name]`, where `[NN]` is the next two-digit number after the existing folders, in implementation order, and `[name]` is kebab-case. If the PRD exists, reuse it without overwriting. Update only when authorized; preserve unchanged IDs. When `tasks/prd-[slug]/context-snapshot.md` exists, apply the load protocol in `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md` before reading sources.
+1. Extract the problem, outcome, and feature name from the request. Resolve `tasks/prd-[slug]/prd.md`; a new slug is `[NN]-[name]`, where `[NN]` is the next two-digit number after the existing folders, in implementation order, and `[name]` is kebab-case. If the PRD exists, reuse it without overwriting. Update only when authorized; preserve unchanged IDs. When `tasks/prd-[slug]/context-snapshot.md` exists, load it through the Load branch of `.agents/skills/sdd-snapshot/SKILL.md` before reading sources.
    **Output:** unambiguous destination and operation; request only missing information that prevents identifying them.
 2. Inventory users, journeys, metrics, FR, NFR, constraints, dependencies, accessibility, and out-of-scope items. Consult local evidence, including `docs/specs/`, before researching public rules or integrations in primary sources; send read-only explorers only when the local evidence spans many files. Record origin and distinguish fact, assumption, and product decision; ask only about gaps that change scope or acceptance.
    **Output:** every obligation has evidence or an explicit assumption; blocking decisions are identified.

@@ -8,7 +8,7 @@ argument-hint: --prd feature-name [--base git-reference]
 
 Run in a session that did not write or change the code under review. This session consolidates the matrix and writes the report; subagents are read-only explorers for disjoint inspections. If this session authored any of that code, stop before step 1 and run the session pause from `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md`, which recommends ending the session; if the user continues anyway, record the missing independence under the report's limitations.
 
-1. Require `prd.md`, `techspec.md`, and `tasks.md` under `tasks/prd-[slug]/`. When `context-snapshot.md` exists, apply its load protocol as an independent stage: header, next step brief, open threads, and `on-run` entries only. Read PRD and TechSpec once per version; then manifest, tasks, and handoffs. Check every link, extra file, ID, state, and dependency.
+1. Require `prd.md`, `techspec.md`, and `tasks.md` under `tasks/prd-[slug]/`. When `context-snapshot.md` exists, load it through the Load branch of `.agents/skills/sdd-snapshot/SKILL.md` as an independent stage. Read PRD and TechSpec once per version; then manifest, tasks, and handoffs. Check every link, extra file, ID, state, and dependency.
    **Output:** every task has proven location and state; a missing source blocks review with the exact path.
 2. Bound the implementation by `--base` resolved to a commit, including relevant committed, staged, unstaged, and new files. Without a base, use handoffs and worktree; state the scope limitation. In a re-review, include correction reports and handoffs without altering history.
    **Output:** reviewable set identified. An invalid base requests correction and never silently changes scope.

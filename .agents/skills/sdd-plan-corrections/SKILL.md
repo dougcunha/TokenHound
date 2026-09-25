@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # Plan SDD corrections
 
-1. Fix one `tasks/prd-[slug]/codereview_[num]/` by argument or context. When `tasks/prd-[slug]/context-snapshot.md` exists, apply the load protocol in `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md` first. Search only for missing values; multiple candidates require a choice. Require and read its `codereview.md` once; preserve it.
+1. Fix one `tasks/prd-[slug]/codereview_[num]/` by argument or context. When `tasks/prd-[slug]/context-snapshot.md` exists, load it through the Load branch of `.agents/skills/sdd-snapshot/SKILL.md` first. Search only for missing values; multiple candidates require a choice. Require and read its `codereview.md` once; preserve it.
    **Output:** exact, readable report, without mixing IDs between reports.
 2. Classify every item as actionable, informational, or pending. In `APPROVED`, plan only what was requested; in `APPROVED WITH RESERVATIONS`, improvements require authorized scope; in `REJECTED`, cover violations, incompleteness, and failures. An unknown status allows only explicitly actionable findings.
    Preserve `CR-NN`; in legacy reports without IDs, assign a local ID by order and section. Inventory root and `done/` metadata to reuse tasks; finding identity is report path + ID.

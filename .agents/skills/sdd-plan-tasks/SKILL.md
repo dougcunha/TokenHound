@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # Plan SDD tasks
 
-1. Resolve `tasks/prd-[slug]/`. When `context-snapshot.md` exists there, apply the load protocol in `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md` first. Require and read `prd.md` and `techspec.md`, in that order, once per version. Then inventory `tasks.md`, `task_*.md`, and `done/task_*.md`. Reuse an existing plan without overwriting; for an authorized update, preserve IDs, handoffs, and completed tasks.
+1. Resolve `tasks/prd-[slug]/`. When `context-snapshot.md` exists there, load it through the Load branch of `.agents/skills/sdd-snapshot/SKILL.md` first. Require and read `prd.md` and `techspec.md`, in that order, once per version. Then inventory `tasks.md`, `task_*.md`, and `done/task_*.md`. Reuse an existing plan without overwriting; for an authorized update, preserve IDs, handoffs, and completed tasks.
    **Output:** sources and state reconciled; broken links or conflicting IDs block only the affected update.
 2. Extract obligations, decisions, components, risks, and tests in one pass. Preserve IDs; for legacy sources, such as PRDs that use `RF`/`CA`, keep their IDs or assign local IDs with the origin section. Map each item to a delivery and evidence, or to a pending item that changes scope or acceptance.
    **Output:** complete, traceable inventory, including out-of-scope limits.

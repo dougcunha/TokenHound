@@ -11,7 +11,7 @@ The session that runs this skill is the only writer: it implements every correct
 
 If the caller limits execution to one task, return after step 6 instead of running the session pause: `task-completed` with the next eligible IDs, or `blocked` with evidence. When all tasks are complete, run step 7 before returning. A task return does not end the review cycle.
 
-1. **Resume.** Read `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md` in full once per session: its context measurement applies to every task. If `tasks/prd-[slug]/context-snapshot.md` exists, apply its load protocol, validating `covers_through` against the report folder.
+1. **Resume.** Read `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md` in full once per session: its context measurement applies to every task. If `tasks/prd-[slug]/context-snapshot.md` exists, load it through the Load branch of `.agents/skills/sdd-snapshot/SKILL.md`, validating `covers_through` against the report folder.
    **Output:** snapshot applied, partially trusted with the suspect entries named, or absent.
 2. Fix one report folder by argument, snapshot, or context and require its `codereview.md`. Inventory root and `done/` tasks by ID, findings, acceptance, dependencies, and files. If ambiguous, request a choice; if the plan is missing, direct to `sdd-plan-corrections`.
    **Output:** exact report, with no duplicates or missing or circular dependencies. If all tasks are complete, continue to step 7.

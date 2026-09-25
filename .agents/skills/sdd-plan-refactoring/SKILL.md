@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # Plan SDD refactoring
 
-1. Fix target, limits, and slug. A new slug is `[NN]-[name]`, numbered after the highest folder under `tasks/`. Resolve `tasks/prd-[slug]/prd.md` and `techspec.md`. When `context-snapshot.md` exists there, apply the load protocol in `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md` first. Preserve both documents when they exist without update authorization; with it, read current versions and keep IDs.
+1. Fix target, limits, and slug. A new slug is `[NN]-[name]`, numbered after the highest folder under `tasks/`. Resolve `tasks/prd-[slug]/prd.md` and `techspec.md`. When `context-snapshot.md` exists there, load it through the Load branch of `.agents/skills/sdd-snapshot/SKILL.md` first. Preserve both documents when they exist without update authorization; with it, read current versions and keep IDs.
    **Output:** unambiguous operation without implicit overwrite.
 2. Trace inputs, outputs, errors, effects, callers, persistence, integrations, and edges of the target. Use code, tests, logs, fixtures, and contracts as evidence. When the target has many callers or integrations, send read-only explorers in parallel with one question each and verify the lines they cite. Number behaviors `R-01`, `R-02`; distinguish intent, apparent defect, and gap.
    **Output:** every in-scope behavior has an origin and verification, or a concrete question that changes acceptance.
