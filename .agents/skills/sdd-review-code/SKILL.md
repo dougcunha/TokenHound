@@ -6,7 +6,7 @@ argument-hint: --prd feature-name [--base git-reference]
 
 # Review SDD code
 
-Run in a session that did not write or change the code under review. This session consolidates the matrix and writes the report; subagents are read-only explorers for disjoint inspections. If this session authored any of that code, stop before step 1 and ask the session pause from `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md`, which recommends ending the session; if the user continues anyway, record the missing independence under the report's limitations.
+Run in a session that did not write or change the code under review. This session consolidates the matrix and writes the report; subagents are read-only explorers for disjoint inspections. If this session authored any of that code, stop before step 1 and run the session pause from `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md`, which recommends ending the session; if the user continues anyway, record the missing independence under the report's limitations.
 
 1. Require `prd.md`, `techspec.md`, and `tasks.md` under `tasks/prd-[slug]/`. When `context-snapshot.md` exists, apply its load protocol as an independent stage: header, next step brief, open threads, and `on-run` entries only. Read PRD and TechSpec once per version; then manifest, tasks, and handoffs. Check every link, extra file, ID, state, and dependency.
    **Output:** every task has proven location and state; a missing source blocks review with the exact path.
@@ -22,7 +22,7 @@ Run in a session that did not write or change the code under review. This sessio
    A blocking profile hit becomes a finding with the `QA-NN` rule as its origin; a reservation hit becomes an optional improvement with the same traceability. Count the feature's reservations and, when a profile trigger fires, record in the escalation section the relevant skill and the number that justifies it — as a suggestion to the HIL, never executed in this review.
    **Output:** actionable findings distinct from optional improvements; all verifiable without conversation history; escalation suggested only with a counted trigger.
 6. Read [references/TEMPLATE.md](references/TEMPLATE.md) in full when issuing the report. Reserve the next free numeric suffix under `codereview_[num]/`, considering all existing folders. Write a new `codereview.md`; preserve code, tasks, and previous reports.
-   In standalone use, ask the session pause; a snapshot written then records stage `review`, the report in `covers_through`, `authored_code: no`, and the status as an open thread. Because this session changed no code, it may continue into `sdd-plan-corrections`.
+   In standalone use, run the session pause; a snapshot written then records stage `review`, the report in `covers_through`, `authored_code: no`, and the status as an open thread. Because this session changed no code, it may continue into `sdd-plan-corrections`.
    **Output:** immutable report with matrix, findings, validations, limitations, and status below; report path and blocks.
 
 ## Status

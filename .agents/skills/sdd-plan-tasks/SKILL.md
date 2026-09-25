@@ -18,7 +18,7 @@ disable-model-invocation: true
    **Output:** real commands from `AGENTS.md` and known prerequisites; no obligation disappeared to make tests cheaper.
 5. When generating contracts, read [assets/tasks.template.md](assets/tasks.template.md) and [assets/task.template.md](assets/task.template.md) in full. Write the reviewable draft before requesting HIL. Use `tasks.md` as the source of DAG, links, and state; copy only short invariants into tasks and reference TechSpec details.
    **Output:** manifest and tasks exist; links resolve; IDs are unique; no placeholder outside the initial handoff.
-6. Check coverage, traceability, DAG, atomicity, commands, environment, and idempotency. Present the plan with risks and pending items. Return to the orchestrator's HIL; in standalone use, obtain approval before implementation only if it is not already authorized, and ask the session pause from that reference with `sdd-orchestrate-tasks` as next step.
+6. Check coverage, traceability, DAG, atomicity, commands, environment, and idempotency. Present the plan with risks and pending items. Return to the orchestrator's HIL; in standalone use, obtain approval before implementation only if it is not already authorized, and run the session pause from that reference with `sdd-orchestrate-tasks` as next step.
    **Output:** plan ready for execution in the approved scope, or blocks associated with concrete IDs.
 
 If a source changes during planning, reconcile the inventory and invalidate only affected derivatives. A missing PRD or TechSpec directs to the corresponding creator skill. Mutable state comes after sources; read only the code needed to resolve paths or commands.

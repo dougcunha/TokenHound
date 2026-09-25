@@ -17,7 +17,7 @@ disable-model-invocation: true
    **Output:** every actionable finding has a new or existing task, acceptance, and verification; no orphan task.
 4. Read [references/TEMPLATE_TASK.md](references/TEMPLATE_TASK.md) in full when writing. Create reviewable `task_[num].md` files with at least two digits in the report folder, without reusing numbers or overwriting existing tasks. Reference sources by ID and section; preserve handoffs. Do not create a correction manifest: dependencies belong in tasks.
    **Output:** contracts on disk, report intact, and no code changes.
-5. Check coverage, traceability, DAG, atomicity, commands, and idempotency. Report files, reuse, pending items, and impact. Return to the caller; request execution approval only where scope is not already authorized. In standalone use, ask the session pause from that reference with `sdd-execute-corrections` as next step.
+5. Check coverage, traceability, DAG, atomicity, commands, and idempotency. Report files, reuse, pending items, and impact. Return to the caller; request execution approval only where scope is not already authorized. In standalone use, run the session pause from that reference with `sdd-execute-corrections` as next step.
    **Output:** concrete plan for HIL or already authorized execution; contradictions linked to affected tasks.
 
 A task in `done/` whose finding persists is an incomplete correction: keep history and return to the caller to create work in the new report. An unreadable report, conflicting numbering, or cause without evidence blocks only the dependent planning.

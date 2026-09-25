@@ -13,7 +13,7 @@ disable-model-invocation: true
    **Output:** every obligation has evidence or an explicit assumption; blocking decisions are identified.
 3. When drafting, read [assets/prd.template.md](assets/prd.template.md) in full. Use stable IDs `OBJ-01`, `US-01`, `FR-01`, and `NFR-01`, each with observable acceptance. Keep architecture and sequencing in the TechSpec. Record supplied stack and platform constraints.
    **Output:** all applicable sections filled; unique IDs; no requirement without acceptance.
-4. Write only the PRD and report path, pending items, and obligations added, changed, or removed. Point out derived artifacts to revalidate without editing them. In the orchestrated flow, return the artifact for product HIL; previous authorization applies to the scope it covers. In standalone use, ask the session pause from that reference with `sdd-create-techspec` as next step.
+4. Write only the PRD and report path, pending items, and obligations added, changed, or removed. Point out derived artifacts to revalidate without editing them. In the orchestrated flow, return the artifact for product HIL; previous authorization applies to the scope it covers. In standalone use, run the session pause from that reference with `sdd-create-techspec` as next step.
    **Output:** reviewable PRD on disk; source divergences and conflicting IDs resolved or explicitly pending.
 
 Read each source once per version; use links for extensive evidence. On updates, preserve unchanged sections to reduce diff and context.

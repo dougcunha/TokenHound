@@ -17,7 +17,7 @@ disable-model-invocation: true
 4. When drafting, read [assets/TEMPLATE_PRD_REFACTOR.md](assets/TEMPLATE_PRD_REFACTOR.md) and [assets/TEMPLATE_TECHSPEC_REFACTOR.md](assets/TEMPLATE_TECHSPEC_REFACTOR.md) in full. Write only the two artifacts: behavior and acceptance in the PRD; decisions, components, tests, and rollback in the TechSpec. Reference IDs without copying requirements.
    Fill in the quality profile with today's measure and the target at the end — in a refactoring the baseline is the target to reduce, and without a number there is no way to prove the structure improved. When this refactoring prepares the terrain for a feature, the target is what makes that change easy, not perfection of the target code.
    **Output:** documents cover every `R-NN`, have no placeholders, include a measured profile and a declared target, and serve `sdd-plan-tasks`.
-5. Report paths, risks, gaps, and impacts on derivatives. In standalone use, point to task planning and ask the session pause from that reference with `sdd-plan-tasks` as next step; in the orchestrated flow, return to behavior HIL before decomposition.
+5. Report paths, risks, gaps, and impacts on derivatives. In standalone use, point to task planning and run the session pause from that reference with `sdd-plan-tasks` as next step; in the orchestrated flow, return to behavior HIL before decomposition.
    **Output:** reviewable contracts, with no code change or silent promotion of decisions.
 
 Read sources once per version and code only in scope. A behavior contradiction or missing critical verification blocks affected items until a human decision; preserve evidence.
