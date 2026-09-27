@@ -48,6 +48,16 @@ TokenHound is a lightweight, peripheral desktop notch / HUD crafted specifically
 
 ![HUD](screenshot.png)
 
+### Provider Status
+
+![Provider status window](ProviderStatus.png)
+
+### Settings
+
+![Settings: Providers](Settings-Providers.png)
+
+![Settings: Cadence & Rate Limits](Settings-CadenceRateLimits.png)
+
 ## Architecture & Solution Structure
 
 TokenHound is architected following Clean Architecture principles on **.NET 10**:
