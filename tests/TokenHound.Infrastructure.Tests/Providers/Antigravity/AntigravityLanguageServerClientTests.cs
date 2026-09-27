@@ -147,4 +147,61 @@ public sealed class AntigravityLanguageServerClientTests
         Assert.NotNull(result);
         Assert.NotNull(result.Groups);
     }
+
+    [Fact]
+    public async Task WarmupSessionAsync_WhenPortRespondsOk_ReturnsTrue()
+    {
+        // Arrange
+        var endpoint = new AntigravityEndpoint
+        {
+            ProcessId = 1234,
+            CsrfToken = "token-csrf",
+            CandidatePorts = [5001, 5002]
+        };
+
+        string? capturedCsrf = null;
+        string? capturedPath = null;
+        var handler = new MockHttpMessageHandler(req =>
+        {
+            capturedPath = req.RequestUri?.AbsolutePath;
+            capturedCsrf = req.Headers.Contains("x-codeium-csrf-token")
+                ? string.Join(",", req.Headers.GetValues("x-codeium-csrf-token"))
+                : null;
+
+            return new HttpResponseMessage(HttpStatusCode.OK);
+        });
+
+        using var httpClient = new HttpClient(handler);
+        using var client = new AntigravityLanguageServerClient(httpClient);
+
+        // Act
+        var result = await client.WarmupSessionAsync(endpoint, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.True(result);
+        Assert.Equal("token-csrf", capturedCsrf);
+        Assert.Equal("/exa.language_server_pb.LanguageServerService/GetUserStatus", capturedPath);
+    }
+
+    [Fact]
+    public async Task WarmupSessionAsync_WhenAllPortsFail_ReturnsFalse()
+    {
+        // Arrange
+        var endpoint = new AntigravityEndpoint
+        {
+            ProcessId = 1234,
+            CsrfToken = "token-csrf",
+            CandidatePorts = [5001, 5002]
+        };
+
+        var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.NotFound));
+        using var httpClient = new HttpClient(handler);
+        using var client = new AntigravityLanguageServerClient(httpClient);
+
+        // Act
+        var result = await client.WarmupSessionAsync(endpoint, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.False(result);
+    }
 }

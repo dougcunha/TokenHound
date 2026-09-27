@@ -16,6 +16,7 @@ public sealed class AntigravityLanguageServerClient : IDisposable
 {
     private const string CSRF_HEADER_NAME = "x-codeium-csrf-token";
     private const string REQUEST_PAYLOAD = "{\"forceRefresh\": true}";
+    private const string EMPTY_PAYLOAD = "{}";
 
     private readonly HttpClient _httpClient;
     private readonly bool _disposeClient;
@@ -98,6 +99,35 @@ public sealed class AntigravityLanguageServerClient : IDisposable
     }
 
     /// <summary>
+    /// Warms up the Antigravity session by querying user status across candidate ports.
+    /// </summary>
+    /// <param name="endpoint">The discovered Language Server endpoint.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>True if any candidate port responded with success; otherwise, false.</returns>
+    public async ValueTask<bool> WarmupSessionAsync(
+        AntigravityEndpoint endpoint,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(endpoint);
+
+        foreach (var port in endpoint.CandidatePorts)
+        {
+            var success = await WarmupPortAsync(
+                port,
+                endpoint.CsrfToken,
+                cancellationToken
+            ).ConfigureAwait(false);
+
+            if (success)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     /// Queries a specific local Language Server port.
     /// </summary>
     /// <param name="port">Listening TCP port.</param>
@@ -161,6 +191,60 @@ public sealed class AntigravityLanguageServerClient : IDisposable
         catch
         {
             return null;
+        }
+    }
+
+    private async ValueTask<bool> WarmupPortAsync(
+        int port,
+        string csrfToken,
+        CancellationToken cancellationToken)
+    {
+        var response = await WarmupSchemeAsync(
+            "https",
+            port,
+            csrfToken,
+            cancellationToken
+        ).ConfigureAwait(false);
+
+        if (response)
+            return true;
+
+        return await WarmupSchemeAsync(
+            "http",
+            port,
+            csrfToken,
+            cancellationToken
+        ).ConfigureAwait(false);
+    }
+
+    private async ValueTask<bool> WarmupSchemeAsync(
+        string scheme,
+        int port,
+        string csrfToken,
+        CancellationToken cancellationToken)
+    {
+        var url = $"{scheme}://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/GetUserStatus";
+
+        using var request = new HttpRequestMessage(HttpMethod.Post, url);
+
+        if (!string.IsNullOrWhiteSpace(csrfToken))
+            request.Headers.Add(CSRF_HEADER_NAME, csrfToken);
+
+        request.Content = new StringContent(EMPTY_PAYLOAD, Encoding.UTF8, "application/json");
+
+        try
+        {
+            using var response = await _httpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken
+            ).ConfigureAwait(false);
+
+            return response.IsSuccessStatusCode;
+        }
+        catch
+        {
+            return false;
         }
     }
 

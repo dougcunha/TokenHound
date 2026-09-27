@@ -138,21 +138,19 @@ public sealed partial class AntigravityUsageProvider : IUsageProvider, IDisposab
         }
     }
 
-    private async ValueTask<(Snapshot? Snapshot, bool IsRunning)> TryGetLanguageServerSnapshotAsync(CancellationToken cancellationToken)
+    private async ValueTask<(Snapshot? Snapshot, bool IsRunning)> TryGetLanguageServerSnapshotAsync(
+        CancellationToken cancellationToken)
     {
+
         var endpoint = _discovery.DiscoverEndpoint();
 
         if (endpoint is null)
-        {
             return (null, false);
-        }
 
-        var quota = await _client.RetrieveUserQuotaSummaryAsync(endpoint, cancellationToken).ConfigureAwait(false);
+        var quota = await GetOrWarmupQuotaSummaryAsync(endpoint, cancellationToken).ConfigureAwait(false);
 
         if (quota?.Groups is null || quota.Groups.Count == 0)
-        {
             return (null, true);
-        }
 
         var windows = MapQuotaGroups(quota.Groups);
 
@@ -162,6 +160,24 @@ public sealed partial class AntigravityUsageProvider : IUsageProvider, IDisposab
         _consecutiveRateLimits = 0;
 
         return (CreateOfficialSnapshot(windows), true);
+    }
+
+    private async ValueTask<AntigravityQuotaSummaryResponse?> GetOrWarmupQuotaSummaryAsync(
+        AntigravityEndpoint endpoint,
+        CancellationToken cancellationToken)
+    {
+
+        var quota = await _client.RetrieveUserQuotaSummaryAsync(endpoint, cancellationToken).ConfigureAwait(false);
+
+        if (quota?.Groups is not null && quota.Groups.Count > 0)
+            return quota;
+
+        var warmedUp = await _client.WarmupSessionAsync(endpoint, cancellationToken).ConfigureAwait(false);
+
+        if (!warmedUp)
+            return null;
+
+        return await _client.RetrieveUserQuotaSummaryAsync(endpoint, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Snapshot?> TryGetCloudCodeSnapshotAsync(CancellationToken cancellationToken)
