@@ -15,6 +15,7 @@ When creating the first checkpoint, read [../assets/checkpoint.template.json](..
 | `objective`, `constraints` | Requested result and short indispensable invariants, including .NET desktop policy when applicable; details by reference |
 | `sources` | Paths relative to the feature folder, or `null`, including `snapshot` for `context-snapshot.md`; no artifact path outside it |
 | `review_status` | Literal status of the latest `codereview.md` (`APPROVED`, `APPROVED WITH RESERVATIONS`, `REJECTED`), or `null` before the first review; `APPROVED` with no later code change requires no new review |
+| `jev` | `off`, `shadow`, or `active`, per the `sdd-jev` skill; changes only by a human decision recorded in `workflow.md` |
 | `approved_sources` | Items `{path, sha256, decision_id}` linking approved content to the human decision in `workflow.md` |
 | `decisions_to_read` | Decision IDs relevant to the next action; each record contains decision, scope, relevant human text, and available provenance |
 | `git_base`, `worktree_evidence` | Resolved commit or `null`; reference to pre-existing or uncommitted changes in workflow or handoff, since HEAD alone does not identify state |
@@ -39,6 +40,7 @@ Keep the index preferably below 8 KiB: move details to referenced sources withou
 
 | Gate | Material already prepared | Decision required |
 | --- | --- | --- |
+| HIL 0 | Signals, rubric, and `sdd-triage` recommendation; precedes the checkpoint, and its record is the line in `tasks/triage-log.jsonl` plus the decision written to `workflow.md` when state opens | Choose `sdd-full`, `sdd-lean`, or `spot` and, with jev tools and no `--jev`, the jev mode |
 | HIL 1 | PRD with scope, acceptance, and assumptions | Approve the product or correct requirements |
 | HIL 2 | TechSpec, DAG, tasks, risks, validations, and manual acceptance script | Approve the solution and execution, including corrections within the contract |
 | Exception | Evidence, impact, and concrete proposal | Resolve a scope or architecture deviation, an indispensable environment, an irreversible risk, or stagnation |
