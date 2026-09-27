@@ -19,6 +19,7 @@
 | `numbers` | In `J3`: `safe_to_apply`, composite, rubric scores, and per-claim confidence; in other points, the confidence of each flagged item |
 | `usage` | Returned `input_tokens` and `output_tokens` |
 | `corrects` | Optional: number of the line this record corrects |
+| `control` | `absent` when the review runs in the authoring session; omitted when it is independent |
 
 ## Summary at acceptance
 
@@ -37,5 +38,7 @@ Write `tasks/prd-[slug]/jev-summary.md` from the log, handoffs, and reports, wit
 4. **Flow.** First review status, rounds until `APPROVED` or decided reservations, and reopened tasks.
 5. **Cost.** Tokens per point and total; duration when the host exposes it. Without duration telemetry, declare it unmeasured.
 6. **Baseline.** From features in the same repository without jev: share with a `REJECTED` first review and average rounds, counted in `codereview_*/codereview.md`. Declare a small sample as a limitation.
+
+With `control: absent`, the feature enters only items 4 (Flow) and 5 (Cost), with the absence declared at the top; hits, alarms, misses, and agreement stay out of the counts.
 
 The summary informs; adopting a point in `active` or removing the mode is a human decision recorded in `workflow.md`.

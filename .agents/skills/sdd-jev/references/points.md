@@ -34,7 +34,7 @@ Each point names stage, moment, call, and destination. Argument names are exact:
   - `request` = the task's literal objective and acceptance criteria.
   - `diff` = literal `git diff` output of the task's scope against the recorded base, including new files: before `git diff`, mark them with `git add -N <files>` (intent to add, with no content staged). A summary, paraphrase, hand-assembled excerpt, or file list is not a diff: without the literal diff, record `operational-failure` and do not count the gate.
   - `claims` (up to 16) = one per acceptance criterion (`Criterion <n> is met: <text>`), then the result lines of `## Handoff`. With more than 16, prioritize criteria.
-  - `evidence` = items `tests` (real output of the commands run, with the name of each test that covers a criterion followed by the criterion or `TC-NN` it proves), `build` (output of a full, non-incremental build, with warnings), and `quality-profile` (output of the profile commands over the touched files, empty included). `## Handoff` supplies claims, never evidence: a claim checked against the author's own statement proves nothing.
+  - `evidence` = items `code` (the same literal diff as the `diff` field, or its parts: the gate judges claims only against `evidence`, and without the code there every claim about code comes back `unsupported`), `tests` (real output of the commands run, with the name of each test that covers a criterion followed by the criterion or `TC-NN` it proves), `build` (output of a full, non-incremental build, with warnings), and `quality-profile` (output of the profile commands over the touched files, empty included). `## Handoff` supplies claims, never evidence: a claim checked against the author's own statement proves nothing.
   - `tests` = the same test output.
 - **Limits:** a `diff` above 50,000 characters is truncated and never returns `auto`. Split by file or group of files until each part fits: `jev_review` per part and one `jev_verify` with the same `claims` and `evidence`, recorded as one unit. Evidence invented to satisfy the gate invalidates the task.
 - **Record:** write `safe_to_apply`, the composite, the rubric scores, and each claim's confidence; without these numbers the thresholds cannot be calibrated.
@@ -49,6 +49,7 @@ Each point names stage, moment, call, and destination. Argument names are exact:
 
 ## J5 — Finding severity
 
+- **When:** only with at least one `CR-NN` in the report; with no findings, `J5` does not run. The tool is `jev_classify`: `jev_review` judges a diff, not severity.
 - **Input:** `items` = one per `CR-NN` (fact, impact, and evidence within 2,000 characters), `id` = `CR-NN`. `classes`:
   - `blocking`: non-conformant obligation, failing mandatory test, missing essential evidence, or blocking profile hit without `DEC-NN`. Takes precedence over `reservation`.
   - `reservation`: maintenance cost without a demonstrated failure, including a profile reservation hit.
