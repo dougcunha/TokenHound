@@ -30,6 +30,7 @@ public static partial class ProviderUsageRowFactory
                 SecondaryQuantityText = FormatCreditSecondaryQuantity(usage),
                 ScopeText = FormatScopeText(usage.Context),
                 ResetText = FormatResetCountdown(usage.Period.ResetUtc, nowUtc),
+                ResetTimeUtc = usage.Period.ResetUtc,
                 ProvenanceText = FormatProvenanceText(usage, billing.State),
                 ErrorText = FormatBillingError(billing.Reason, billing.NextRequestAtUtc, nowUtc)
             });

@@ -227,6 +227,37 @@ public sealed class ProviderUsageRowFactoryTests
         formatted.Should().Be(expected);
     }
 
+    /// <summary>
+    /// Verifies that each quota row exposes the reset instant behind its reset text, including the active-block
+    /// fallback of the first window.
+    /// </summary>
+    [Fact]
+    public void CreateRows_WhenQuotaWindowsHaveResets_ExposesResetInstant()
+    {
+
+        var blockReset = FIXED_NOW.AddMinutes(40);
+        var weeklyReset = FIXED_NOW.AddDays(2);
+        var snapshot = new Snapshot
+        {
+            ProviderId = "codex",
+            Status = ProviderStatus.RateLimited,
+            Fidelity = Fidelity.Official,
+            FetchedAtUtc = FIXED_NOW,
+            ActiveBlock = new UsageBlock { Reason = "Rate limit reached", IsBlocked = true, ResetTimeUtc = blockReset },
+            LimitWindows =
+            [
+                new LimitWindow { Name = "primary", UsedFraction = 1.0 },
+                new LimitWindow { Name = "secondary", UsedFraction = 0.3, ResetTimeUtc = weeklyReset }
+            ]
+        };
+
+        var rows = ProviderUsageRowFactory.CreateRows(snapshot, new FixedTimeProvider(FIXED_NOW));
+
+        rows[0].ResetTimeUtc.Should().Be(blockReset);
+        rows[0].ResetText.Should().Be("Resets in 40m");
+        rows[1].ResetTimeUtc.Should().Be(weeklyReset);
+    }
+
     private sealed class FixedTimeProvider : TimeProvider
     {
         private readonly DateTimeOffset _now;

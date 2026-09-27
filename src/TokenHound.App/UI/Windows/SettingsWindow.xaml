@@ -26,6 +26,8 @@
     <Window.Resources>
         <converters:ResourceKeyConverter x:Key="ResourceKeyConverter" />
 
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource DialogScrollBarStyle}" />
+
         <!-- Settings TabControl Style -->
         <Style x:Key="SettingsTabControlStyle" TargetType="TabControl">
             <Setter Property="Background" Value="Transparent" />

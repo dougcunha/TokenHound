@@ -10,6 +10,8 @@ internal static class ProviderCatalog
     private const string DEFAULT_MOCK_NAME = "Mock Provider";
     private const string DEFAULT_MOCK_BADGE = "M";
     private const string CLAUDE_PREFIX = "claude-";
+    private const string CLAUDE_PROVIDER_ID = "claude";
+    private const string CLAUDE_FAMILY_NAME = "Claude";
     private const string CLAUDE_GLYPH_KEY = "Glyph.Claude";
     private const double CLAUDE_GLYPH_SCALE = 0.9676;
 
@@ -47,6 +49,22 @@ internal static class ProviderCatalog
             _ => providerId
         };
     }
+
+    /// <summary>Resolves the provider family name that groups every account or profile of the same provider.</summary>
+    /// <param name="providerId">The unique identifier of the provider.</param>
+    /// <returns><c>Claude</c> for the default and isolated Claude profiles; otherwise the provider display name.</returns>
+    public static string ResolveFamilyName(string providerId)
+        => IsClaudeFamily(providerId) ? CLAUDE_FAMILY_NAME : ResolveDefaultName(providerId);
+
+    /// <summary>Determines whether a provider identifier is the default Claude profile.</summary>
+    /// <param name="providerId">The unique identifier of the provider.</param>
+    /// <returns><see langword="true"/> for <c>claude</c>; otherwise <see langword="false"/>.</returns>
+    public static bool IsDefaultClaudeProfile(string providerId)
+        => string.Equals(providerId, CLAUDE_PROVIDER_ID, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsClaudeFamily(string providerId)
+        => IsDefaultClaudeProfile(providerId)
+            || providerId.StartsWith(CLAUDE_PREFIX, StringComparison.OrdinalIgnoreCase);
 
     /// <summary>Resolves the short text glyph badge for a given provider identifier.</summary>
     /// <param name="providerId">The unique identifier of the provider.</param>

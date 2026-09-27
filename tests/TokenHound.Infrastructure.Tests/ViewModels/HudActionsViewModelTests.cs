@@ -236,6 +236,50 @@ public sealed class HudActionsViewModelTests
     }
 
     /// <summary>
+    /// Verifies that ShowProviderStatus invokes its delegate once when not closing and never after shutdown starts.
+    /// </summary>
+    [Fact]
+    public void ShowProviderStatus_InvokesDelegateUntilShutdown()
+    {
+
+        var statusCalls = 0;
+
+        var viewModel = new HudActionsViewModel(
+            _ => Task.CompletedTask,
+            () => Task.CompletedTask,
+            () => { },
+            () => { },
+            showProviderStatus: () => statusCalls++
+        );
+
+        viewModel.ShowProviderStatus();
+        statusCalls.Should().Be(1);
+
+        _ = viewModel.ShutdownAsync();
+        viewModel.ShowProviderStatus();
+        statusCalls.Should().Be(1);
+    }
+
+    /// <summary>
+    /// Verifies that ShowProviderStatus is a no-op when no provider status action is configured.
+    /// </summary>
+    [Fact]
+    public void ShowProviderStatus_WhenNotConfigured_DoesNothing()
+    {
+
+        var viewModel = new HudActionsViewModel(
+            _ => Task.CompletedTask,
+            () => Task.CompletedTask,
+            () => { },
+            () => { }
+        );
+
+        var act = viewModel.ShowProviderStatus;
+
+        act.Should().NotThrow();
+    }
+
+    /// <summary>
     /// Verifies that DismissStatus clears status text and updates visibility.
     /// </summary>
     [Fact]

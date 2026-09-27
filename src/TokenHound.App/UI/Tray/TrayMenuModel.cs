@@ -17,6 +17,9 @@ public sealed class TrayMenuModel
     /// <summary>Header for the immediate-refresh entry.</summary>
     public const string REFRESH_HEADER = "Refresh Now";
 
+    /// <summary>Header for the entry that opens the provider status window.</summary>
+    public const string PROVIDER_STATUS_HEADER = "Provider Status…";
+
     /// <summary>Header for the entry that opens the Settings dialog.</summary>
     public const string SETTINGS_HEADER = "Settings\u2026";
 
@@ -41,6 +44,7 @@ public sealed class TrayMenuModel
         [
             new() { Key = TrayMenuItemKey.ToggleNotch, Header = ResolveToggleHeader(notchVisible) },
             new() { Key = TrayMenuItemKey.RefreshNow, Header = REFRESH_HEADER },
+            new() { Key = TrayMenuItemKey.ProviderStatus, Header = PROVIDER_STATUS_HEADER },
             new() { Key = TrayMenuItemKey.Settings, Header = SETTINGS_HEADER },
             new() { Key = TrayMenuItemKey.About, Header = ABOUT_HEADER },
             new() { Key = TrayMenuItemKey.Exit, Header = EXIT_HEADER, PrecededBySeparator = true },

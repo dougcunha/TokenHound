@@ -44,6 +44,9 @@ public sealed record ProviderUsageRow
     /// <summary>Gets the formatted countdown or reset timing text, or null if unmeasured.</summary>
     public string? ResetText { get; init; }
 
+    /// <summary>Gets the instant at which the quota or credit window resets, or null if unmeasured.</summary>
+    public DateTimeOffset? ResetTimeUtc { get; init; }
+
     /// <summary>Gets a value indicating whether reset text is present.</summary>
     public bool HasReset
         => !string.IsNullOrWhiteSpace(ResetText);

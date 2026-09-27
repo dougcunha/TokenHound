@@ -34,6 +34,10 @@
                               Header="Refresh"
                               Style="{StaticResource HudMenuItemStyle}"
                               Click="OnRefreshClick" />
+                    <MenuItem x:Name="ProviderStatusMenuItem"
+                              Header="Provider Status"
+                              Style="{StaticResource HudMenuItemStyle}"
+                              Click="OnProviderStatusClick" />
                     <MenuItem x:Name="SettingsMenuItem"
                               Header="Settings"
                               Style="{StaticResource HudMenuItemStyle}"

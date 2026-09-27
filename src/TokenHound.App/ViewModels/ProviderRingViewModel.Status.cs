@@ -6,7 +6,7 @@ namespace TokenHound.App.ViewModels;
 
 public sealed partial class ProviderRingViewModel
 {
-    private static string? ResolveStatusMessage(Snapshot snapshot)
+    internal static string? ResolveStatusMessage(Snapshot snapshot)
     {
 
         if (snapshot.Status == ProviderStatus.Ok && snapshot.Fidelity == Fidelity.Derived)

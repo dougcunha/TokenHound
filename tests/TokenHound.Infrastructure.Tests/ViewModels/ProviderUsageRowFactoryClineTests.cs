@@ -50,6 +50,7 @@ public sealed class ProviderUsageRowFactoryClineTests
         credits.UsedFraction.Should().BeNull();
         credits.PrimaryQuantityText.Should().Be("12.5 remaining");
         credits.ScopeText.Should().Be("Cline Pass (Monthly)");
+        credits.ResetTimeUtc.Should().BeNull();
 
         var local = rows.Should().ContainSingle(static row => row.Key == "cline:local").Subject;
         local.Label.Should().Be("Local tokens (24h)");
@@ -84,6 +85,7 @@ public sealed class ProviderUsageRowFactoryClineTests
         limit.Label.Should().Be("Free model limit");
         limit.PrimaryQuantityText.Should().Be("Limit reached");
         limit.ResetText.Should().Be("Resets in 1h 30m");
+        limit.ResetTimeUtc.Should().Be(now.AddMinutes(90));
     }
 
     /// <summary>Verifies that rows from other providers are untouched by the Cline path.</summary>

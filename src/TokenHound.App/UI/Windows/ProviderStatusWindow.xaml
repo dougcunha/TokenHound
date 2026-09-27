@@ -1,0 +1,201 @@
+<Window x:Class="TokenHound.App.UI.Windows.ProviderStatusWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:converters="clr-namespace:TokenHound.App.UI.Converters"
+        xmlns:viewModels="clr-namespace:TokenHound.App.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=viewModels:ProviderStatusViewModel}"
+        Title="Provider Status"
+        Icon="../../Assets/logo.ico"
+        Width="1100"
+        Height="640"
+        MinWidth="520"
+        MinHeight="300"
+        WindowStartupLocation="Manual"
+        ShowInTaskbar="False"
+        ResizeMode="CanResizeWithGrip"
+        WindowStyle="SingleBorderWindow"
+        Background="{StaticResource SurfaceBackgroundBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="Segoe UI"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True">
+
+    <Window.Resources>
+        <SolidColorBrush x:Key="StatusAlertBrush" Color="#F2555A" />
+        <SolidColorBrush x:Key="StatusTrackBrush" Color="#2E2E33" />
+        <SolidColorBrush x:Key="GroupAccentBrush" Color="#60A5FA" />
+        <SolidColorBrush x:Key="CountBadgeBrush" Color="#27272A" />
+        <FontFamily x:Key="AccountFontFamily">Cascadia Mono, Consolas</FontFamily>
+
+        <Style TargetType="ScrollBar" BasedOn="{StaticResource DialogScrollBarStyle}" />
+
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <converters:UsageLevelToBrushConverter x:Key="UsageLevelToBrushConverter"
+                                               GreenBrush="#28E07B"
+                                               YellowBrush="#F5E400"
+                                               OrangeBrush="#FF4500"
+                                               NoneBrush="Transparent" />
+
+        <Style x:Key="QuotaBarStyle" TargetType="ProgressBar">
+            <Setter Property="Height" Value="4" />
+            <Setter Property="Minimum" Value="0" />
+            <Setter Property="Maximum" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ProgressBar">
+                        <Grid>
+                            <Border x:Name="PART_Track"
+                                    CornerRadius="2"
+                                    Background="{StaticResource StatusTrackBrush}" />
+                            <Border x:Name="PART_Indicator"
+                                    CornerRadius="2"
+                                    HorizontalAlignment="Left"
+                                    Background="{TemplateBinding Foreground}" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="CountBadgeStyle" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource CountBadgeBrush}" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="MinWidth" Value="22" />
+            <Setter Property="Padding" Value="7,1,7,2" />
+            <Setter Property="Margin" Value="10,0,0,0" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <DataTemplate x:Key="QuotaColumnTemplate" DataType="{x:Type viewModels:ProviderStatusColumn}">
+            <StackPanel Width="220" Margin="0,0,24,10">
+                <Grid>
+                    <TextBlock Text="{Binding Label}"
+                               FontSize="13"
+                               Foreground="{StaticResource TextSecondaryBrush}"
+                               TextTrimming="CharacterEllipsis"
+                               Margin="0,0,48,0" />
+                    <TextBlock Text="{Binding ValueText}"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               HorizontalAlignment="Right" />
+                </Grid>
+                <ProgressBar x:Name="QuotaBar"
+                             Style="{StaticResource QuotaBarStyle}"
+                             Value="{Binding BarFraction, Mode=OneWay}"
+                             Foreground="{Binding Level, Converter={StaticResource UsageLevelToBrushConverter}}"
+                             Margin="0,8,0,8" />
+                <TextBlock x:Name="ResetLine"
+                           Text="{Binding ResetText}"
+                           FontSize="12"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <DataTemplate.Triggers>
+                <DataTrigger Binding="{Binding IsExhausted}" Value="True">
+                    <Setter TargetName="ResetLine" Property="Foreground" Value="{StaticResource StatusAlertBrush}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding HasBar}" Value="False">
+                    <Setter TargetName="QuotaBar" Property="Visibility" Value="Hidden" />
+                </DataTrigger>
+            </DataTemplate.Triggers>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Grid Margin="28,20,20,12">
+        <TextBlock Text="No providers are enabled. Enable providers in Settings."
+                   Foreground="{StaticResource TextSecondaryBrush}"
+                   FontSize="13"
+                   Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <ItemsControl ItemsSource="{Binding Groups}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate DataType="{x:Type viewModels:ProviderStatusGroup}">
+                        <StackPanel Margin="0,0,8,24">
+                            <Border BorderBrush="{StaticResource SurfaceBorderBrush}"
+                                    BorderThickness="0,0,0,1"
+                                    Padding="0,0,0,8">
+                                <StackPanel Orientation="Horizontal">
+                                    <Border Width="3"
+                                            CornerRadius="1.5"
+                                            Background="{StaticResource GroupAccentBrush}"
+                                            Margin="0,2,10,2" />
+                                    <TextBlock Text="{Binding FamilyName}"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               VerticalAlignment="Center" />
+                                    <Border Style="{StaticResource CountBadgeStyle}">
+                                        <TextBlock Text="{Binding Count}"
+                                                   FontSize="11"
+                                                   FontWeight="SemiBold"
+                                                   Foreground="{StaticResource TextSecondaryBrush}"
+                                                   HorizontalAlignment="Center" />
+                                    </Border>
+                                </StackPanel>
+                            </Border>
+                            <ItemsControl ItemsSource="{Binding Accounts}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="{x:Type viewModels:ProviderStatusAccount}">
+                                        <Border BorderBrush="{StaticResource SurfaceBorderSubtleBrush}"
+                                                BorderThickness="0,0,0,1"
+                                                Padding="0,14,0,6">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="240" />
+                                                    <ColumnDefinition Width="*" />
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0" Margin="0,0,20,10">
+                                                    <TextBlock x:Name="AccountName"
+                                                               Text="{Binding DisplayName}"
+                                                               FontFamily="{StaticResource AccountFontFamily}"
+                                                               FontSize="14"
+                                                               FontWeight="SemiBold"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock x:Name="StatusMessage"
+                                                               Text="{Binding StatusMessage}"
+                                                               FontSize="12"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                                               TextWrapping="Wrap"
+                                                               Margin="0,4,0,0"
+                                                               Visibility="{Binding HasStatusMessage, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                    <TextBlock Text="{Binding BackInText}"
+                                                               FontSize="12"
+                                                               Foreground="{StaticResource StatusAlertBrush}"
+                                                               Margin="0,4,0,0"
+                                                               Visibility="{Binding HasBackIn, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                                </StackPanel>
+                                                <ItemsControl x:Name="QuotaColumns"
+                                                              Grid.Column="1"
+                                                              ItemsSource="{Binding Columns}"
+                                                              ItemTemplate="{StaticResource QuotaColumnTemplate}">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <WrapPanel />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                </ItemsControl>
+                                            </Grid>
+                                        </Border>
+                                        <DataTemplate.Triggers>
+                                            <DataTrigger Binding="{Binding IsExhausted}" Value="True">
+                                                <Setter TargetName="AccountName" Property="Foreground" Value="{StaticResource TextMutedBrush}" />
+                                                <Setter TargetName="QuotaColumns" Property="Opacity" Value="0.45" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsBlocked}" Value="True">
+                                                <Setter TargetName="StatusMessage" Property="Foreground" Value="{StaticResource StatusAlertBrush}" />
+                                            </DataTrigger>
+                                        </DataTemplate.Triggers>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+    </Grid>
+</Window>

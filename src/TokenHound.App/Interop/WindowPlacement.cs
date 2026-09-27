@@ -13,6 +13,9 @@ public static class WindowPlacement
 {
     private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
     private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+    private const int DWMWA_BORDER_COLOR = 34;
+    private const int DWMWA_CAPTION_COLOR = 35;
+    private const int DWMWA_TEXT_COLOR = 36;
     private const double DEFAULT_DIALOG_WIDTH = 440.0;
     private const double DEFAULT_DIALOG_HEIGHT = 280.0;
 
@@ -131,6 +134,37 @@ public static class WindowPlacement
             hwnd,
             DWMWA_USE_IMMERSIVE_DARK_MODE,
             ref darkMode,
+            sizeof(int)
+        );
+    }
+
+    /// <summary>
+    /// Paints the native title bar and border with the specified background and caption text colours.
+    /// Systems without these attributes (before Windows 11) ignore the call and keep their title bar.
+    /// </summary>
+    /// <param name="hwnd">The native window handle.</param>
+    /// <param name="background">The caption and border colour, usually the window body colour.</param>
+    /// <param name="foreground">The caption text colour.</param>
+    public static void SetCaptionColors(IntPtr hwnd, Color background, Color foreground)
+    {
+
+        if (!OperatingSystem.IsWindows() || hwnd == IntPtr.Zero)
+            return;
+
+        SetColorAttribute(hwnd, DWMWA_CAPTION_COLOR, background);
+        SetColorAttribute(hwnd, DWMWA_BORDER_COLOR, background);
+        SetColorAttribute(hwnd, DWMWA_TEXT_COLOR, foreground);
+    }
+
+    private static void SetColorAttribute(IntPtr hwnd, int attribute, Color color)
+    {
+
+        var colorRef = color.R | (color.G << 8) | (color.B << 16);
+
+        DwmSetWindowAttribute(
+            hwnd,
+            attribute,
+            ref colorRef,
             sizeof(int)
         );
     }

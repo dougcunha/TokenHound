@@ -25,6 +25,7 @@ public sealed class TrayMenuModelTests
         {
             TrayMenuItemKey.ToggleNotch,
             TrayMenuItemKey.RefreshNow,
+            TrayMenuItemKey.ProviderStatus,
             TrayMenuItemKey.Settings,
             TrayMenuItemKey.About,
             TrayMenuItemKey.Exit,
@@ -32,6 +33,7 @@ public sealed class TrayMenuModelTests
 
         entries.Single(static e => e.Key == TrayMenuItemKey.ToggleNotch).Header.Should().Be("Hide Notch");
         entries.Single(static e => e.Key == TrayMenuItemKey.RefreshNow).Header.Should().Be(TrayMenuModel.REFRESH_HEADER);
+        entries.Single(static e => e.Key == TrayMenuItemKey.ProviderStatus).Header.Should().Be(TrayMenuModel.PROVIDER_STATUS_HEADER);
         entries.Single(static e => e.Key == TrayMenuItemKey.Settings).Header.Should().Be(TrayMenuModel.SETTINGS_HEADER);
         entries.Single(static e => e.Key == TrayMenuItemKey.About).Header.Should().Be(TrayMenuModel.ABOUT_HEADER);
         entries.Single(static e => e.Key == TrayMenuItemKey.Exit).Header.Should().Be(TrayMenuModel.EXIT_HEADER);
@@ -83,6 +85,7 @@ public sealed class TrayMenuModelTests
         TrayMenuModel.HIDE_NOTCH_HEADER.Should().Be("Hide Notch");
         TrayMenuModel.SHOW_NOTCH_HEADER.Should().Be("Show Notch");
         TrayMenuModel.REFRESH_HEADER.Should().Be("Refresh Now");
+        TrayMenuModel.PROVIDER_STATUS_HEADER.Should().Be("Provider Status" + (char)0x2026);
         TrayMenuModel.SETTINGS_HEADER.Should().Be("Settings" + (char)0x2026);
         TrayMenuModel.ABOUT_HEADER.Should().Be("About" + (char)0x2026);
         TrayMenuModel.EXIT_HEADER.Should().Be("Exit");

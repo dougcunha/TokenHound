@@ -90,6 +90,10 @@ public sealed class TrayIconViewModel : INotifyPropertyChanged
                 _ = RefreshNow();
                 break;
 
+            case TrayMenuItemKey.ProviderStatus:
+                ShowProviderStatus();
+                break;
+
             case TrayMenuItemKey.Settings:
                 ShowSettings();
                 break;
@@ -127,6 +131,16 @@ public sealed class TrayIconViewModel : INotifyPropertyChanged
         _logger.Information("Tray action {Action} invoked", nameof(RefreshNow));
 
         return _hudActions.RefreshAsync();
+    }
+
+    /// <summary>
+    /// Displays the modeless provider status window.
+    /// </summary>
+    public void ShowProviderStatus()
+    {
+
+        _logger.Information("Tray action {Action} invoked", nameof(ShowProviderStatus));
+        _hudActions.ShowProviderStatus();
     }
 
     /// <summary>

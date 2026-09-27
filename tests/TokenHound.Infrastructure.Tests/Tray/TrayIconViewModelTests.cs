@@ -180,6 +180,31 @@ public sealed class TrayIconViewModelTests
     }
 
     /// <summary>
+    /// Verifies that the provider status entry routes to the HUD action exactly once per invocation.
+    /// </summary>
+    [Fact]
+    public void Invoke_ProviderStatus_CallsHudActionOnce()
+    {
+
+        var statusCalls = 0;
+
+        var hudActions = new HudActionsViewModel(
+            _ => Task.CompletedTask,
+            () => Task.CompletedTask,
+            () => { },
+            () => { },
+            showProviderStatus: () => statusCalls++
+        );
+
+        var visibility = new NotchVisibilityController(() => { }, () => { });
+        var sut = new TrayIconViewModel(hudActions, visibility, new TrayMenuModel());
+
+        sut.Invoke(TrayMenuItemKey.ProviderStatus);
+
+        statusCalls.Should().Be(1);
+    }
+
+    /// <summary>
     /// Verifies that invoking each menu item emits a structured Serilog entry with its nameof action token (TC-14).
     /// </summary>
     [Fact]

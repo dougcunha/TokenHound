@@ -65,6 +65,7 @@ public sealed class ProviderUsageRowFactoryCopilotTests
         creditRow.SecondaryQuantityText.Should().Be("725 of 5,700 total");
         creditRow.ScopeText.Should().Be("ColibriAgile (Organization)");
         creditRow.ResetText.Should().Be("Resets in 22d 0h");
+        creditRow.ResetTimeUtc.Should().Be(FIXED_NOW.AddDays(22));
         creditRow.ProvenanceText.Should().Be("Direct billing");
         creditRow.HasProgress.Should().BeTrue();
         creditRow.UsedFraction.Should().BeApproximately((double)(725m / 5700m), 0.0001);
@@ -117,6 +118,7 @@ public sealed class ProviderUsageRowFactoryCopilotTests
         creditRow.UsedFraction.Should().BeNull();
         creditRow.HasProgress.Should().BeFalse();
         creditRow.PrimaryQuantityText.Should().Be("725 credits used");
+        creditRow.ResetTimeUtc.Should().BeNull();
         creditRow.SecondaryQuantityText.Should().BeNull();
         creditRow.ResetText.Should().BeNull();
         creditRow.ProvenanceText.Should().Be("Direct billing");

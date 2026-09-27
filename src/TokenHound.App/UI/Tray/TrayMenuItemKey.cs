@@ -11,6 +11,9 @@ public enum TrayMenuItemKey
     /// <summary>The immediate provider-refresh entry ("Refresh Now").</summary>
     RefreshNow,
 
+    /// <summary>The entry that opens the modeless provider status window.</summary>
+    ProviderStatus,
+
     /// <summary>The entry that opens the modeless Settings dialog.</summary>
     Settings,
 

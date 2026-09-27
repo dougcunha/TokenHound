@@ -11,6 +11,7 @@ namespace TokenHound.App.UI.Windows;
 public sealed class DialogService
 {
     private readonly Func<Window?>? _ownerProvider;
+    private readonly ProviderStatusDialog _providerStatus = new();
     private SettingsWindow? _settingsWindow;
     private SettingsViewModel? _settingsViewModel;
     private AboutWindow? _aboutWindow;
@@ -36,6 +37,12 @@ public sealed class DialogService
     /// </summary>
     public bool IsAboutOpen
         => _aboutWindow is not null;
+
+    /// <summary>
+    /// Gets a value indicating whether the provider status window is currently open.
+    /// </summary>
+    public bool IsProviderStatusOpen
+        => _providerStatus.IsOpen;
 
     /// <summary>
     /// Shows the Settings dialog modelessly, or activates and restores the existing instance if already open.
@@ -168,6 +175,47 @@ public sealed class DialogService
     }
 
     /// <summary>
+    /// Shows the provider status window modelessly, or activates and restores the existing instance if already open.
+    /// </summary>
+    /// <param name="owner">Optional owner window overriding the default owner provider.</param>
+    /// <param name="viewModelFactory">
+    /// Optional factory producing the view model bound to the window. The service owns the produced instance and
+    /// disposes it exactly once when the window closes.
+    /// </param>
+    public void ShowProviderStatus(Window? owner = null, Func<ProviderStatusViewModel>? viewModelFactory = null)
+    {
+
+        var app = Application.Current;
+
+        if (app is not null && !app.Dispatcher.CheckAccess())
+        {
+            app.Dispatcher.Invoke(() => ShowProviderStatus(owner, viewModelFactory));
+
+            return;
+        }
+
+        _providerStatus.Show(owner ?? _ownerProvider?.Invoke() ?? app?.MainWindow, viewModelFactory);
+    }
+
+    /// <summary>
+    /// Closes the provider status window if currently open.
+    /// </summary>
+    public void CloseProviderStatus()
+    {
+
+        var app = Application.Current;
+
+        if (app is not null && !app.Dispatcher.CheckAccess())
+        {
+            app.Dispatcher.Invoke(CloseProviderStatus);
+
+            return;
+        }
+
+        _providerStatus.Close();
+    }
+
+    /// <summary>
     /// Closes all active dialog windows managed by this service.
     /// </summary>
     public void CloseAll()
@@ -175,6 +223,7 @@ public sealed class DialogService
 
         CloseSettings();
         CloseAbout();
+        CloseProviderStatus();
     }
 
     private SettingsWindow CreateSettingsWindow(Window? effectiveOwner, Func<SettingsViewModel>? viewModelFactory)

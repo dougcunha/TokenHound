@@ -59,7 +59,8 @@ public static partial class ProviderUsageRowFactory
                 PrimaryQuantityText = ResolveQuotaPrimaryText(snapshot, window),
                 SecondaryQuantityText = ResolveQuotaSecondaryText(snapshot, window),
                 ScopeText = IsClaudeProvider(snapshot.ProviderId) ? null : window.GroupName,
-                ResetText = FormatResetCountdown(resetTime, nowUtc)
+                ResetText = FormatResetCountdown(resetTime, nowUtc),
+                ResetTimeUtc = resetTime
             });
         }
     }

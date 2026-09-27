@@ -370,7 +370,8 @@ public partial class App : Application
             ShutdownAsync,
             () => _dialogService.ShowSettings(_notchWindow, () => CreateSettingsViewModel(usageStore)),
             () => _dialogService.ShowAbout(_notchWindow),
-            () => usageStore.CurrentSnapshots.Values
+            () => usageStore.CurrentSnapshots.Values,
+            () => _dialogService.ShowProviderStatus(_notchWindow, () => new ProviderStatusViewModel(usageStore, DispatchUiAction))
         );
 
         _notchWindow = new NotchWindow

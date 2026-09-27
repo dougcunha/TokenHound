@@ -173,6 +173,12 @@ public sealed partial class NotchWindow : Window
         _ = _actionsViewModel?.RefreshAsync();
     }
 
+    private void OnProviderStatusClick(object sender, RoutedEventArgs e)
+    {
+
+        _actionsViewModel?.ShowProviderStatus();
+    }
+
     private void OnSettingsClick(object sender, RoutedEventArgs e)
     {
 

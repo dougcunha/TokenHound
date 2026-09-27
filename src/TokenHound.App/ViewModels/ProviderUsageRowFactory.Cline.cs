@@ -59,7 +59,8 @@ public static partial class ProviderUsageRowFactory
             Label = "Free model limit",
             UsedFraction = null,
             PrimaryQuantityText = "Limit reached",
-            ResetText = FormatResetCountdown(snapshot.ActiveBlock?.ResetTimeUtc, nowUtc)
+            ResetText = FormatResetCountdown(snapshot.ActiveBlock?.ResetTimeUtc, nowUtc),
+            ResetTimeUtc = snapshot.ActiveBlock?.ResetTimeUtc
         };
 
     private static string FormatDecimal(double value)

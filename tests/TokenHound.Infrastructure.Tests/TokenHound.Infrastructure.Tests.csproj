@@ -58,6 +58,13 @@
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderUsageRowFactory.Cline.cs" Link="ViewModels\ProviderUsageRowFactory.Cline.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderUsageRowFactory.Claude.cs" Link="ViewModels\ProviderUsageRowFactory.Claude.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\SettingsViewModel.cs" Link="ViewModels\SettingsViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\UsageLevel.cs" Link="ViewModels\UsageLevel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderStatusColumn.cs" Link="ViewModels\ProviderStatusColumn.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderStatusAccount.cs" Link="ViewModels\ProviderStatusAccount.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderStatusGroup.cs" Link="ViewModels\ProviderStatusGroup.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderStatusFormatter.cs" Link="ViewModels\ProviderStatusFormatter.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderStatusProjection.cs" Link="ViewModels\ProviderStatusProjection.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderStatusViewModel.cs" Link="ViewModels\ProviderStatusViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Tray\ITrayIcon.cs" Link="Tray\ITrayIcon.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Tray\NotchVisibilityController.cs" Link="Tray\NotchVisibilityController.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Tray\TrayMenuItemKey.cs" Link="Tray\TrayMenuItemKey.cs" />

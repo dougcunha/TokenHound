@@ -26,6 +26,7 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
     private readonly Action _showSettings;
     private readonly Action _showAbout;
     private readonly Func<IEnumerable<Snapshot>>? _snapshotsProvider;
+    private readonly Action? _showProviderStatus;
 
     private readonly object _syncLock = new();
     private Task? _shutdownTask;
@@ -41,12 +42,14 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
     /// <param name="showSettings">Action to show the modeless Settings dialog.</param>
     /// <param name="showAbout">Action to show the modeless About dialog.</param>
     /// <param name="snapshotsProvider">Optional provider to query current snapshots for status formulation.</param>
+    /// <param name="showProviderStatus">Optional action to show the modeless provider status window.</param>
     public HudActionsViewModel(
         Func<CancellationToken, Task> refreshAction,
         Func<Task> shutdownAction,
         Action showSettings,
         Action showAbout,
-        Func<IEnumerable<Snapshot>>? snapshotsProvider = null)
+        Func<IEnumerable<Snapshot>>? snapshotsProvider = null,
+        Action? showProviderStatus = null)
     {
 
         ArgumentNullException.ThrowIfNull(refreshAction);
@@ -59,6 +62,7 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
         _showSettings = showSettings;
         _showAbout = showAbout;
         _snapshotsProvider = snapshotsProvider;
+        _showProviderStatus = showProviderStatus;
     }
 
     /// <inheritdoc />
@@ -190,6 +194,18 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
             return;
 
         _showSettings();
+    }
+
+    /// <summary>
+    /// Shows the provider status window if the application is not closing.
+    /// </summary>
+    public void ShowProviderStatus()
+    {
+
+        if (_isShuttingDown)
+            return;
+
+        _showProviderStatus?.Invoke();
     }
 
     /// <summary>
