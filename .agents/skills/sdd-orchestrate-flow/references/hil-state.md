@@ -45,6 +45,7 @@ Keep the index preferably below 8 KiB: move details to referenced sources withou
 | HIL 2 | TechSpec, DAG, tasks, risks, validations, and manual acceptance script | Approve the solution and execution, including corrections within the contract |
 | Exception | Evidence, impact, and concrete proposal | Resolve a scope or architecture deviation, an indispensable environment, an irreversible risk, or stagnation |
 | Reservations | Summary of items reserved in the review, with impact and effort | Correct the chosen items or finalize the feature |
+| Visual check | Manual acceptance script and the running application, for a feature with a visual interface, before the review | Approve the visuals or request adjustments within the contract |
 | HIL 3 | Final review, tests, open items, and manual acceptance | Accept the current delivery |
 
 Use the available question tool or a textual question, preceded by the resume command of the session pause. Stop only work dependent on the answer; silence, elapsed time, or an explorer's conclusion do not equal consent. Explain which gate is missing and point to the artifacts. Reuse authorization already given for the same scope; do not ask twice to save a draft and then execute it.

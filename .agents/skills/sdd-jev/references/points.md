@@ -20,7 +20,7 @@ Each point names stage, moment, call, and destination. Argument names are exact:
 
 ## J1 — PRD → TechSpec coverage
 
-- **Input:** `claims` = one per PRD `RF`, `RNF`, and `US`: `The TechSpec defines how to satisfy <ID> — <one-line requirement> — and how to verify its acceptance.` `evidence` = one item per TechSpec section, `id` = section title.
+- **Input:** `claims` = one per PRD `RF`, `RNF`, and `US`, and one per PRD obligation without an ID (each user-experience item, constraint, and dependency), identified by section and order, e.g. `UX-3`: `The TechSpec defines how to satisfy <ID> — <one-line requirement> — and how to verify its acceptance.` `evidence` = one item per TechSpec section, `id` = section title.
 - **Active:** `verified` continues. `unsupported` → complete the section or record an explicit open item with the ID. `contradicted` → fix the TechSpec or take the conflict to HIL 2. `action: review` → check the section in `supporting_evidence` before deciding.
 
 ## J2 — TechSpec → tasks coverage
@@ -32,19 +32,19 @@ Each point names stage, moment, call, and destination. Argument names are exact:
 
 - **Input:**
   - `request` = the task's literal objective and acceptance criteria.
-  - `diff` = literal `git diff` output of the task's scope against the recorded base, including new files. A summary, paraphrase, or file list is not a diff: without the literal diff, record `operational-failure` and do not count the gate.
+  - `diff` = literal `git diff` output of the task's scope against the recorded base, including new files: before `git diff`, mark them with `git add -N <files>` (intent to add, with no content staged). A summary, paraphrase, hand-assembled excerpt, or file list is not a diff: without the literal diff, record `operational-failure` and do not count the gate.
   - `claims` (up to 16) = one per acceptance criterion (`Criterion <n> is met: <text>`), then the result lines of `## Handoff`. With more than 16, prioritize criteria.
-  - `evidence` = items `tests` (real output of the commands run, with the name of each test that covers a criterion followed by the criterion or `TC-NN` it proves), `build` (output of a full, non-incremental build, with warnings), `quality-profile` (output of the profile commands over the touched files, empty included), and `handoff` (literal section).
+  - `evidence` = items `tests` (real output of the commands run, with the name of each test that covers a criterion followed by the criterion or `TC-NN` it proves), `build` (output of a full, non-incremental build, with warnings), and `quality-profile` (output of the profile commands over the touched files, empty included). `## Handoff` supplies claims, never evidence: a claim checked against the author's own statement proves nothing.
   - `tests` = the same test output.
 - **Limits:** a `diff` above 50,000 characters is truncated and never returns `auto`. Split by file or group of files until each part fits: `jev_review` per part and one `jev_verify` with the same `claims` and `evidence`, recorded as one unit. Evidence invented to satisfy the gate invalidates the task.
 - **Record:** write `safe_to_apply`, the composite, the rubric scores, and each claim's confidence; without these numbers the thresholds cannot be calibrated.
 - **Shadow:** run after closing `## Handoff` and go straight to recording the task, without opening the result to decide. If the diff changes after the call, record `effect: diff-changed` and a new `J3` line on the new diff.
-- **Active:** `auto` → continue to recording the task. `review` → check each `unsupported` claim and each low rubric against the lines; fix or record a justification in `## Handoff`. `escalate` or a `contradicted` claim → treat as a reread finding: fix and run the gate again on the new diff. Two calls without progress follow the stage skill's block-after-two-attempts rule.
+- **Active:** the destination follows the claims, not the aggregate action. A `contradicted` claim → treat as a reread finding: fix and run the gate again on the new diff. An `unsupported` claim or one below `auto_accept` → check it against the lines; fix or record a justification in `## Handoff`. Every claim `verified` at `auto` confidence → continue to recording the task, even with `review` or `escalate` from the rubric alone, recorded as an unspecific signal. Two calls without progress follow the stage skill's block-after-two-attempts rule.
 
 ## J4 — Review matrix
 
-- **Input:** `claims` = one per matrix row: `<ID> is implemented and verified as: <acceptance>.` `evidence` = one item per task, with `## Handoff` and a diff excerpt of the task's files, `id` = task.
-- **Mapping:** `verified` → candidate `conformant`; `contradicted` → candidate `non-conformant`; `unsupported` → candidate `not verifiable`.
+- **Input:** `claims` = one per matrix row: `<ID> is implemented and verified as: <acceptance>.`; for a row with manual acceptance, `<ID> has manual acceptance executed and recorded: <script>.` `evidence` = one item per task, with a diff excerpt of the task's files, the output of the tests that cover it with names linked to their `TC-NN`, and the recorded manual evidence, when any; `id` = task. `## Handoff` is not evidence, for the same reason as in `J3`.
+- **Mapping:** `verified` → candidate `conformant`; `contradicted` → candidate `non-conformant`; `unsupported` → candidate `not verifiable`. For a row whose manual acceptance was not executed, `contradicted` or `unsupported` → candidate `not verifiable`, never `non-conformant`.
 - **Active:** a matrix state that diverges from the verdict requires re-examining the row with `path:line` evidence before the verdict. The final state belongs to the reviewer.
 
 ## J5 — Finding severity
