@@ -48,6 +48,11 @@ public sealed class TrayIconHost : IDisposable
     }
 
     /// <summary>
+    /// Occurs, on the UI thread, when the user clicks a balloon notification shown through <see cref="ShowNotification"/>.
+    /// </summary>
+    public event EventHandler? NotificationClicked;
+
+    /// <summary>
     /// Gets a value indicating whether the notification-area icon failed to initialize and degraded gracefully.
     /// </summary>
     public bool IsDegraded { get; private set; }
@@ -92,6 +97,31 @@ public sealed class TrayIconHost : IDisposable
         _trayIcon.DoubleClicked += OnDoubleClicked;
         _trayIcon.MenuItemInvoked += OnMenuItemInvoked;
         _trayIcon.MenuOpening += OnMenuOpening;
+        _trayIcon.NotificationClicked += OnNotificationClicked;
+    }
+
+    /// <summary>
+    /// Shows a balloon notification; does nothing when the icon is not initialized or degraded. Failures are logged.
+    /// </summary>
+    /// <param name="title">The notification title.</param>
+    /// <param name="message">The notification text.</param>
+    public void ShowNotification(string title, string message)
+    {
+
+        if (!_initialized || IsDegraded || _disposed)
+            return;
+
+        try
+        {
+
+            _trayIcon.ShowNotification(title, message);
+            _logger.Information("Tray notification shown");
+        }
+        catch (Exception ex)
+        {
+
+            _logger.Warning(ex, "Tray notification failed");
+        }
     }
 
     /// <inheritdoc />
@@ -110,6 +140,7 @@ public sealed class TrayIconHost : IDisposable
             _trayIcon.DoubleClicked -= OnDoubleClicked;
             _trayIcon.MenuItemInvoked -= OnMenuItemInvoked;
             _trayIcon.MenuOpening -= OnMenuOpening;
+            _trayIcon.NotificationClicked -= OnNotificationClicked;
         }
 
         _trayIcon.Dispose();
@@ -139,4 +170,11 @@ public sealed class TrayIconHost : IDisposable
 
     private void OnMenuOpening(object? sender, EventArgs e)
         => _dispatch(() => _trayIcon.UpdateToggleHeader(_viewModel.ToggleHeader));
+
+    private void OnNotificationClicked(object? sender, EventArgs e)
+    {
+
+        _logger.Information("Tray notification clicked");
+        _dispatch(() => NotificationClicked?.Invoke(this, EventArgs.Empty));
+    }
 }

@@ -12,7 +12,7 @@ namespace TokenHound.Infrastructure.Tests.Tray;
 public sealed class TrayMenuModelTests
 {
     /// <summary>
-    /// Verifies that BuildDescriptor(true) yields the five entries in fixed order with the "Hide Notch"
+    /// Verifies that BuildDescriptor(true) yields the seven entries in fixed order with the "Hide Notch"
     /// toggle header, a separator only before Exit, and every header equal to its copy constant (TC-02).
     /// </summary>
     [Fact]
@@ -27,6 +27,7 @@ public sealed class TrayMenuModelTests
             TrayMenuItemKey.RefreshNow,
             TrayMenuItemKey.ProviderStatus,
             TrayMenuItemKey.Settings,
+            TrayMenuItemKey.CheckForUpdates,
             TrayMenuItemKey.About,
             TrayMenuItemKey.Exit,
         });
@@ -35,12 +36,25 @@ public sealed class TrayMenuModelTests
         entries.Single(static e => e.Key == TrayMenuItemKey.RefreshNow).Header.Should().Be(TrayMenuModel.REFRESH_HEADER);
         entries.Single(static e => e.Key == TrayMenuItemKey.ProviderStatus).Header.Should().Be(TrayMenuModel.PROVIDER_STATUS_HEADER);
         entries.Single(static e => e.Key == TrayMenuItemKey.Settings).Header.Should().Be(TrayMenuModel.SETTINGS_HEADER);
+        entries.Single(static e => e.Key == TrayMenuItemKey.CheckForUpdates).Header.Should().Be(TrayMenuModel.CHECK_FOR_UPDATES_HEADER);
         entries.Single(static e => e.Key == TrayMenuItemKey.About).Header.Should().Be(TrayMenuModel.ABOUT_HEADER);
         entries.Single(static e => e.Key == TrayMenuItemKey.Exit).Header.Should().Be(TrayMenuModel.EXIT_HEADER);
 
         entries.Single(static e => e.Key == TrayMenuItemKey.Exit).PrecededBySeparator.Should().BeTrue();
         entries.Where(static e => e.Key != TrayMenuItemKey.Exit)
             .Should().OnlyContain(static e => !e.PrecededBySeparator);
+    }
+
+    /// <summary>
+    /// Verifies that "Check for Updates…" sits immediately before "About…" (TC-20).
+    /// </summary>
+    [Fact]
+    public void BuildDescriptor_PlacesCheckForUpdatesImmediatelyBeforeAbout()
+    {
+
+        var keys = new TrayMenuModel().BuildDescriptor(true).Select(static e => e.Key).ToList();
+
+        keys.IndexOf(TrayMenuItemKey.CheckForUpdates).Should().Be(keys.IndexOf(TrayMenuItemKey.About) - 1);
     }
 
     /// <summary>
@@ -87,6 +101,7 @@ public sealed class TrayMenuModelTests
         TrayMenuModel.REFRESH_HEADER.Should().Be("Refresh Now");
         TrayMenuModel.PROVIDER_STATUS_HEADER.Should().Be("Provider Status" + (char)0x2026);
         TrayMenuModel.SETTINGS_HEADER.Should().Be("Settings" + (char)0x2026);
+        TrayMenuModel.CHECK_FOR_UPDATES_HEADER.Should().Be("Check for Updates" + (char)0x2026);
         TrayMenuModel.ABOUT_HEADER.Should().Be("About" + (char)0x2026);
         TrayMenuModel.EXIT_HEADER.Should().Be("Exit");
     }

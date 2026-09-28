@@ -20,6 +20,18 @@ public interface ITrayIcon : IDisposable
     void UpdateToggleHeader(string header);
 
     /// <summary>
+    /// Shows a balloon notification from the icon without taking focus.
+    /// </summary>
+    /// <param name="title">The notification title.</param>
+    /// <param name="message">The notification text.</param>
+    void ShowNotification(string title, string message);
+
+    /// <summary>
+    /// Occurs when the user clicks the balloon notification.
+    /// </summary>
+    event EventHandler NotificationClicked;
+
+    /// <summary>
     /// Occurs when the user performs a single left-click on the icon.
     /// </summary>
     event EventHandler LeftClicked;

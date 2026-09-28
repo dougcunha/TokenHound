@@ -61,6 +61,12 @@ public sealed class TrayIconViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     /// <summary>
+    /// Gets the action that opens the update dialog and starts a manual check, or <see langword="null"/> when
+    /// updates are not wired; the tray entry then only logs.
+    /// </summary>
+    public Action? CheckForUpdatesAction { get; init; }
+
+    /// <summary>
     /// Gets the current display header for the visibility-toggle menu item.
     /// </summary>
     public string ToggleHeader
@@ -96,6 +102,10 @@ public sealed class TrayIconViewModel : INotifyPropertyChanged
 
             case TrayMenuItemKey.Settings:
                 ShowSettings();
+                break;
+
+            case TrayMenuItemKey.CheckForUpdates:
+                CheckForUpdates();
                 break;
 
             case TrayMenuItemKey.About:
@@ -151,6 +161,16 @@ public sealed class TrayIconViewModel : INotifyPropertyChanged
 
         _logger.Information("Tray action {Action} invoked", nameof(ShowSettings));
         _hudActions.ShowSettings();
+    }
+
+    /// <summary>
+    /// Opens the update dialog and starts a manual update check.
+    /// </summary>
+    public void CheckForUpdates()
+    {
+
+        _logger.Information("Tray action {Action} invoked", nameof(CheckForUpdates));
+        CheckForUpdatesAction?.Invoke();
     }
 
     /// <summary>

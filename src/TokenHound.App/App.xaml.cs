@@ -50,6 +50,7 @@ public partial class App : Application
 
         InitializeLogging();
         ConfigureExceptionHandling();
+        AcquireInstanceMutex(e.Args);
 
         var disposableResources = new List<IDisposable>();
         var archive = new UsageArchive();
@@ -66,9 +67,11 @@ public partial class App : Application
             disposableResources
         );
         ApplyProviderEnablement(_usageStore);
+        InitializeUpdates(disposableResources);
         InitializeUi(_usageStore, disposableResources);
         ScheduleInitialRefresh();
         StartMcpServer(_usageStore);
+        StartUpdateScheduler();
     }
 
     /// <inheritdoc />
@@ -354,7 +357,10 @@ public partial class App : Application
                 new RateLimitSettingsStore(),
                 _rateLimitPolicy ?? throw new InvalidOperationException("Rate-limit policy is not initialized.")
             )
-        );
+        )
+        {
+            Updates = CreateUpdateSettingsViewModel()
+        };
 
     private void InitializeUi(UsageStore usageStore, List<IDisposable> disposableResources)
     {
@@ -372,7 +378,10 @@ public partial class App : Application
             () => _dialogService.ShowAbout(_notchWindow),
             () => usageStore.CurrentSnapshots.Values,
             () => _dialogService.ShowProviderStatus(_notchWindow, () => new ProviderStatusViewModel(usageStore, DispatchUiAction))
-        );
+        )
+        {
+            CheckForUpdatesAction = ShowUpdateDialog
+        };
 
         _notchWindow = new NotchWindow
         {
@@ -401,7 +410,10 @@ public partial class App : Application
             _actionsViewModel!,
             _visibility,
             new TrayMenuModel()
-        );
+        )
+        {
+            CheckForUpdatesAction = ShowUpdateDialog
+        };
 
         _trayHost = new TrayIconHost(
             new TaskbarIconAdapter(),

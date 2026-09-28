@@ -1,0 +1,195 @@
+<Window x:Class="TokenHound.App.UI.Windows.UpdateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:TokenHound.App.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=viewModels:UpdateViewModel}"
+        Title="TokenHound Updates"
+        Icon="../../Assets/logo.ico"
+        Width="460"
+        SizeToContent="Height"
+        MinWidth="400"
+        WindowStartupLocation="Manual"
+        ShowInTaskbar="False"
+        ResizeMode="NoResize"
+        WindowStyle="SingleBorderWindow"
+        Background="{StaticResource SurfaceBackgroundBrush}"
+        Foreground="{StaticResource TextPrimaryBrush}"
+        FontFamily="Segoe UI"
+        SnapsToDevicePixels="True"
+        UseLayoutRounding="True">
+
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    </Window.Resources>
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- Title Header -->
+        <StackPanel Grid.Row="0"
+                    Orientation="Horizontal"
+                    VerticalAlignment="Center"
+                    Margin="0,0,0,12">
+            <Image Source="../../Assets/logo.png"
+                   Width="40"
+                   Height="40"
+                   Margin="0,0,12,0"
+                   VerticalAlignment="Center"
+                   RenderOptions.BitmapScalingMode="HighQuality"
+                   AutomationProperties.Name="TokenHound logo" />
+            <TextBlock Text="Software Update"
+                       FontSize="16"
+                       FontWeight="SemiBold"
+                       Foreground="{StaticResource TextPrimaryBrush}"
+                       VerticalAlignment="Center" />
+        </StackPanel>
+
+        <!-- Status Message -->
+        <StackPanel Grid.Row="1">
+            <TextBlock Text="{Binding Message}"
+                       FontSize="13"
+                       LineHeight="19"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource TextPrimaryBrush}"
+                       AutomationProperties.LiveSetting="Polite" />
+            <TextBlock Text="{Binding Detail}"
+                       FontSize="12"
+                       Margin="0,6,0,0"
+                       TextWrapping="Wrap"
+                       Foreground="{StaticResource TextMutedBrush}"
+                       Visibility="{Binding HasDetail, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <ProgressBar IsIndeterminate="True"
+                         Height="4"
+                         Margin="0,12,0,0"
+                         AutomationProperties.Name="Checking for updates"
+                         Visibility="{Binding IsChecking, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <ProgressBar Minimum="0"
+                         Maximum="100"
+                         Value="{Binding ProgressPercent, Mode=OneWay}"
+                         Height="4"
+                         Margin="0,12,0,0"
+                         AutomationProperties.Name="Download progress"
+                         Visibility="{Binding IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <ProgressBar IsIndeterminate="True"
+                         Height="4"
+                         Margin="0,12,0,0"
+                         AutomationProperties.Name="Installing the update"
+                         Visibility="{Binding IsApplying, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            <TextBlock Margin="0,8,0,0"
+                       FontSize="12"
+                       Visibility="{Binding ReleaseLinkVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Hyperlink Click="OnReleaseNotesClick"
+                           Foreground="{StaticResource FocusIndicatorBrush}"
+                           AutomationProperties.Name="Open the release page">Open the release page</Hyperlink>
+            </TextBlock>
+        </StackPanel>
+
+        <!-- Version Card -->
+        <Border Grid.Row="2"
+                Margin="0,16,0,0"
+                Background="{StaticResource SurfaceCardBackgroundBrush}"
+                BorderBrush="{StaticResource SurfaceBorderSubtleBrush}"
+                BorderThickness="1"
+                CornerRadius="6"
+                Padding="12,10"
+                Visibility="{Binding IsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0"
+                           Grid.Column="0"
+                           Text="Current version"
+                           FontSize="12"
+                           FontWeight="Medium"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           Margin="0,0,12,4" />
+                <TextBlock Grid.Row="0"
+                           Grid.Column="1"
+                           Text="{Binding CurrentVersionText}"
+                           FontSize="12" />
+                <TextBlock Grid.Row="1"
+                           Grid.Column="0"
+                           Text="New version"
+                           FontSize="12"
+                           FontWeight="Medium"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           Margin="0,0,12,0" />
+                <TextBlock Grid.Row="1"
+                           Grid.Column="1"
+                           Text="{Binding LatestVersionText}"
+                           FontSize="12" />
+                <TextBlock Grid.Row="2"
+                           Grid.Column="0"
+                           Grid.ColumnSpan="2"
+                           Margin="0,8,0,0"
+                           FontSize="12"
+                           Visibility="{Binding HasReleaseNotes, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Hyperlink Click="OnReleaseNotesClick"
+                               Foreground="{StaticResource FocusIndicatorBrush}"
+                               AutomationProperties.Name="Open release notes">View release notes</Hyperlink>
+                </TextBlock>
+            </Grid>
+        </Border>
+
+        <!-- Actions -->
+        <Grid Grid.Row="3" Margin="0,16,0,0">
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Visibility="{Binding IsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Button Content="Skip this version"
+                        Style="{StaticResource DialogButtonStyle}"
+                        Margin="0,0,8,0"
+                        Click="OnSkipButtonClick"
+                        AutomationProperties.Name="Skip this version" />
+                <Button Content="Later"
+                        Style="{StaticResource DialogButtonStyle}"
+                        Margin="0,0,8,0"
+                        Click="OnLaterButtonClick"
+                        AutomationProperties.Name="Later" />
+                <Button Content="Update now"
+                        Style="{StaticResource DialogButtonStyle}"
+                        IsDefault="True"
+                        Click="OnUpdateNowButtonClick"
+                        AutomationProperties.Name="Update now" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Visibility="{Binding IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Button Content="Cancel"
+                        Style="{StaticResource DialogButtonStyle}"
+                        Click="OnCancelDownloadButtonClick"
+                        AutomationProperties.Name="Cancel download" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Right"
+                        Visibility="{Binding IsResult, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Button Content="Check again"
+                        Style="{StaticResource DialogButtonStyle}"
+                        Margin="0,0,8,0"
+                        Click="OnCheckAgainButtonClick"
+                        AutomationProperties.Name="Check again"
+                        Visibility="{Binding CanRetry, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                <Button Content="Close"
+                        Style="{StaticResource DialogButtonStyle}"
+                        Click="OnLaterButtonClick"
+                        AutomationProperties.Name="Close" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+
+</Window>

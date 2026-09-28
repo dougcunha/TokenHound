@@ -205,6 +205,34 @@ public sealed class TrayIconViewModelTests
     }
 
     /// <summary>
+    /// Verifies that Invoke(CheckForUpdates) logs and calls the wired action once per invocation, and only logs
+    /// when no action is wired (TC-20).
+    /// </summary>
+    [Fact]
+    public void Invoke_CheckForUpdates_LogsAndCallsWiredActionOncePerInvocation()
+    {
+
+        var sink = new TestLogSink();
+        var logger = new LoggerConfiguration().MinimumLevel.Verbose().WriteTo.Sink(sink).CreateLogger();
+        var checkCalls = 0;
+        var visibility = new NotchVisibilityController(() => { }, () => { });
+        var wired = new TrayIconViewModel(CreateHudActions(), visibility, new TrayMenuModel(), logger)
+        {
+            CheckForUpdatesAction = () => checkCalls++
+        };
+        var unwired = new TrayIconViewModel(CreateHudActions(), visibility, new TrayMenuModel(), logger);
+
+        wired.Invoke(TrayMenuItemKey.CheckForUpdates);
+        wired.Invoke(TrayMenuItemKey.CheckForUpdates);
+        var act = () => unwired.Invoke(TrayMenuItemKey.CheckForUpdates);
+
+        act.Should().NotThrow();
+        checkCalls.Should().Be(2);
+        sink.Events.Should().HaveCount(3).And.OnlyContain(static e =>
+            e.Properties["Action"].ToString().Contains(nameof(TrayIconViewModel.CheckForUpdates)));
+    }
+
+    /// <summary>
     /// Verifies that invoking each menu item emits a structured Serilog entry with its nameof action token (TC-14).
     /// </summary>
     [Fact]

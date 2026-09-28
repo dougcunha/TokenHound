@@ -42,6 +42,10 @@
                               Header="Settings"
                               Style="{StaticResource HudMenuItemStyle}"
                               Click="OnSettingsClick" />
+                    <MenuItem x:Name="CheckForUpdatesMenuItem"
+                              Header="Check for Updates…"
+                              Style="{StaticResource HudMenuItemStyle}"
+                              Click="OnCheckForUpdatesClick" />
                     <MenuItem x:Name="AboutMenuItem"
                               Header="About"
                               Style="{StaticResource HudMenuItemStyle}"

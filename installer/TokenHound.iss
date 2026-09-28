@@ -82,6 +82,8 @@ Name: "startupicon"; Description: "Start automatically with Windows"; GroupDescr
 
 [Files]
 Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs; Excludes: "*.pdb"
+; Installer-only marker: the app updates itself through a newer installer when this file is present.
+Source: "TokenHound.installed"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -90,3 +92,30 @@ Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: st
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
+; Relaunch after a silent self-update started by the app with /RELAUNCH=1.
+Filename: "{app}\{#MyAppExeName}"; Flags: nowait; Check: ShouldRelaunch
+
+[Code]
+const
+  AppInstanceMutex = 'TokenHound.App.Instance';
+  AppExitTimeoutMs = 30000;
+  AppExitPollMs = 500;
+
+function ShouldRelaunch: Boolean;
+begin
+  Result := ExpandConstant('{param:RELAUNCH|0}') = '1';
+end;
+
+function InitializeSetup: Boolean;
+var
+  Waited: Integer;
+begin
+  { A self-update starts this installer and then exits; wait for its instance mutex before copying files. }
+  Waited := 0;
+  while ShouldRelaunch and CheckForMutexes(AppInstanceMutex) and (Waited < AppExitTimeoutMs) do
+  begin
+    Sleep(AppExitPollMs);
+    Waited := Waited + AppExitPollMs;
+  end;
+  Result := True;
+end;

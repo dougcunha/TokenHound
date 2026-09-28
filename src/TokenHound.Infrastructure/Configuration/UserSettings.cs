@@ -32,6 +32,11 @@ public sealed record UserSettings
     public RateLimitSettings? RateLimit { get; init; }
 
     /// <summary>
+    /// Gets the automatic update settings.
+    /// </summary>
+    public UpdateSettings? Update { get; init; }
+
+    /// <summary>
     /// Gets extension data for unmapped JSON properties, preserving unknown sections during serialization.
     /// </summary>
     [JsonExtensionData]

@@ -182,6 +182,7 @@ public sealed partial class UserSettingsFile
             Providers = user?.Providers ?? defaults?.Providers ?? new ProviderSettings(),
             Refresh = user?.Refresh ?? defaults?.Refresh ?? new RefreshSettings(),
             RateLimit = user?.RateLimit ?? defaults?.RateLimit ?? new RateLimitSettings(),
+            Update = user?.Update ?? defaults?.Update ?? new UpdateSettings(),
             ExtensionData = user?.ExtensionData ?? defaults?.ExtensionData
         };
 

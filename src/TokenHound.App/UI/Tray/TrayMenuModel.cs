@@ -23,6 +23,9 @@ public sealed class TrayMenuModel
     /// <summary>Header for the entry that opens the Settings dialog.</summary>
     public const string SETTINGS_HEADER = "Settings\u2026";
 
+    /// <summary>Header for the entry that opens the update dialog and starts a manual check.</summary>
+    public const string CHECK_FOR_UPDATES_HEADER = "Check for Updates…";
+
     /// <summary>Header for the entry that opens the About dialog.</summary>
     public const string ABOUT_HEADER = "About\u2026";
 
@@ -34,8 +37,8 @@ public sealed class TrayMenuModel
     /// </summary>
     /// <param name="notchVisible"><see langword="true"/> when the Notch is currently visible.</param>
     /// <returns>
-    /// Exactly five entries in the fixed order ToggleNotch, RefreshNow, Settings, About, Exit, with a
-    /// separator preceding <see cref="TrayMenuItemKey.Exit"/> and no separator before any other entry.
+    /// Exactly seven entries in the fixed order ToggleNotch, RefreshNow, ProviderStatus, Settings, CheckForUpdates,
+    /// About, Exit, with a separator preceding <see cref="TrayMenuItemKey.Exit"/> and no separator before any other entry.
     /// </returns>
     public IReadOnlyList<TrayMenuEntry> BuildDescriptor(bool notchVisible)
     {
@@ -46,6 +49,7 @@ public sealed class TrayMenuModel
             new() { Key = TrayMenuItemKey.RefreshNow, Header = REFRESH_HEADER },
             new() { Key = TrayMenuItemKey.ProviderStatus, Header = PROVIDER_STATUS_HEADER },
             new() { Key = TrayMenuItemKey.Settings, Header = SETTINGS_HEADER },
+            new() { Key = TrayMenuItemKey.CheckForUpdates, Header = CHECK_FOR_UPDATES_HEADER },
             new() { Key = TrayMenuItemKey.About, Header = ABOUT_HEADER },
             new() { Key = TrayMenuItemKey.Exit, Header = EXIT_HEADER, PrecededBySeparator = true },
         ];
@@ -76,7 +80,8 @@ public sealed record TrayMenuEntry
 }
 
 /// <summary>
-/// The complete ordered set of tray context-menu entries: ToggleNotch, RefreshNow, Settings, About, then a separator and Exit.
+/// The complete ordered set of tray context-menu entries: ToggleNotch, RefreshNow, ProviderStatus, Settings, CheckForUpdates,
+/// About, then a separator and Exit.
 /// </summary>
 public sealed record TrayMenuDescriptor
 {

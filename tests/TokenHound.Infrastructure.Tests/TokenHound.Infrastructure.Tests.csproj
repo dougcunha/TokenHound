@@ -65,6 +65,12 @@
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderStatusFormatter.cs" Link="ViewModels\ProviderStatusFormatter.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderStatusProjection.cs" Link="ViewModels\ProviderStatusProjection.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderStatusViewModel.cs" Link="ViewModels\ProviderStatusViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateDialogDependencies.cs" Link="ViewModels\UpdateDialogDependencies.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateDialogState.cs" Link="ViewModels\UpdateDialogState.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateMessages.cs" Link="ViewModels\UpdateMessages.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateSettingsViewModel.cs" Link="ViewModels\UpdateSettingsViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateViewModel.cs" Link="ViewModels\UpdateViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateViewModel.Apply.cs" Link="ViewModels\UpdateViewModel.Apply.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Tray\ITrayIcon.cs" Link="Tray\ITrayIcon.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Tray\NotchVisibilityController.cs" Link="Tray\NotchVisibilityController.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Tray\TrayMenuItemKey.cs" Link="Tray\TrayMenuItemKey.cs" />

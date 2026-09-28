@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "generation": 15,
+  "feature": "prd-11-auto-update",
+  "workspace": "D:/MyProjects/TokenHound",
+  "phase": "completed",
+  "status": "completed",
+  "safe_to_stop": true,
+  "owner_session": null,
+  "objective": "Auto-update from GitHub releases: periodic (configurable hours) and tray-menu check, notify, prompt, download zip (portable) or installer (installed, via installer-only marker file), close/swap/restart.",
+  "constraints": [
+    "sdd-lean: HIL 1 and HIL 2 merged; independent review kept",
+    ".NET desktop: no E2E; unit/integration + scripted manual acceptance",
+    "Core stays pure; respect persisted 429 deadlines (GitHub 60/h unauthenticated)",
+    "Config as JSON via System.Text.Json"
+  ],
+  "sources": {
+    "workflow": "workflow.md",
+    "prd": "prd.md",
+    "techspec": "techspec.md",
+    "tasks": "tasks.md",
+    "review": null,
+    "snapshot": "context-snapshot.md"
+  },
+  "review_status": null,
+  "jev": "shadow",
+  "approved_sources": [
+    {
+      "path": "prd.md",
+      "sha256": "613b3be497da378b10ec437b51c776f752b1f0c8e7bed6dab0c53434c89e02e0",
+      "decision_id": "DEC-02"
+    },
+    {
+      "path": "techspec.md",
+      "sha256": "9668fefa9251d1dc96d97a25894a4be5905d9457e16c3249ca43deb89c6ac213",
+      "decision_id": "DEC-02"
+    },
+    {
+      "path": "tasks.md",
+      "sha256": "1ca1e1c5f702b13fbf07f317c9e46de3c9e4e9fc9bae11befe0dbf7069a34a2f",
+      "decision_id": "DEC-02"
+    }
+  ],
+  "decisions_to_read": [
+    "DEC-01",
+    "DEC-02"
+  ],
+  "git_base": "a8bd1bf3361a2dec392ee0b429a450d2ea3bec9d",
+  "worktree_evidence": "workflow.md#Feature Context",
+  "active_work": [],
+  "pending_hil": null,
+  "blockers": [],
+  "correction_round": 0,
+  "rounds_without_progress": 0,
+  "next_action": {
+    "kind": "close",
+    "instruction": "Feature closed; human accepted (workflow.md DEC-03). No independent review ran (recorded).",
+    "read": []
+  }
+}

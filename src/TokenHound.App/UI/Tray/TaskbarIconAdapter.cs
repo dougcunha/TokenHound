@@ -26,6 +26,7 @@ public sealed class TaskbarIconAdapter : ITrayIcon
         _taskbarIcon.TrayLeftMouseUp += OnTrayLeftMouseUp;
         _taskbarIcon.TrayMouseDoubleClick += OnTrayMouseDoubleClick;
         _taskbarIcon.TrayContextMenuOpen += OnTrayContextMenuOpen;
+        _taskbarIcon.TrayBalloonTipClicked += OnTrayBalloonTipClicked;
     }
 
     /// <inheritdoc />
@@ -39,6 +40,9 @@ public sealed class TaskbarIconAdapter : ITrayIcon
 
     /// <inheritdoc />
     public event EventHandler<TrayMenuItemKey>? MenuItemInvoked;
+
+    /// <inheritdoc />
+    public event EventHandler? NotificationClicked;
 
     /// <inheritdoc />
     public void Show(Uri iconSource, string tooltip, TrayMenuDescriptor menu)
@@ -68,6 +72,16 @@ public sealed class TaskbarIconAdapter : ITrayIcon
     }
 
     /// <inheritdoc />
+    public void ShowNotification(string title, string message)
+    {
+
+        ArgumentNullException.ThrowIfNull(title);
+        ArgumentNullException.ThrowIfNull(message);
+
+        _taskbarIcon.ShowBalloonTip(title, message, BalloonIcon.Info);
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
 
@@ -79,6 +93,7 @@ public sealed class TaskbarIconAdapter : ITrayIcon
         _taskbarIcon.TrayLeftMouseUp -= OnTrayLeftMouseUp;
         _taskbarIcon.TrayMouseDoubleClick -= OnTrayMouseDoubleClick;
         _taskbarIcon.TrayContextMenuOpen -= OnTrayContextMenuOpen;
+        _taskbarIcon.TrayBalloonTipClicked -= OnTrayBalloonTipClicked;
 
         _taskbarIcon.Dispose();
     }
@@ -134,4 +149,7 @@ public sealed class TaskbarIconAdapter : ITrayIcon
 
     private void OnTrayContextMenuOpen(object sender, RoutedEventArgs e)
         => MenuOpening?.Invoke(this, EventArgs.Empty);
+
+    private void OnTrayBalloonTipClicked(object sender, RoutedEventArgs e)
+        => NotificationClicked?.Invoke(this, EventArgs.Empty);
 }

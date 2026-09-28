@@ -35,6 +35,11 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
     private string? _refreshStatusText;
 
     /// <summary>
+    /// Gets the action that opens the update dialog and starts a manual check, or <see langword="null"/> when updates are not wired.
+    /// </summary>
+    public Action? CheckForUpdatesAction { get; init; }
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="HudActionsViewModel"/> class.
     /// </summary>
     /// <param name="refreshAction">The asynchronous refresh operation.</param>
@@ -206,6 +211,19 @@ public sealed class HudActionsViewModel : INotifyPropertyChanged
             return;
 
         _showProviderStatus?.Invoke();
+    }
+
+    /// <summary>
+    /// Opens the update dialog and starts a manual check if the application is not closing; does nothing when
+    /// updates are not wired.
+    /// </summary>
+    public void CheckForUpdates()
+    {
+
+        if (_isShuttingDown)
+            return;
+
+        CheckForUpdatesAction?.Invoke();
     }
 
     /// <summary>

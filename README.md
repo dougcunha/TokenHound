@@ -24,6 +24,7 @@ TokenHound is a lightweight, peripheral desktop notch / HUD crafted specifically
 - **"Borrow, Don't Own" Principle**: Never initiates competing logins or asks for raw passwords. TokenHound safely reads existing local sessions (Windows Credential Manager, DPAPI, SQLite WAL databases) in read-only mode (`FileShare.ReadWrite | FileShare.Delete`).
 - **Zero Fake Data**: Strictly reports honest telemetry. If an API provider only exposes remaining quota without a total limit, TokenHound will never invent percentages or artificial denominators.
 - **HTTP 429 Resilience & Persistence**: Backoff deadlines and rate-limit states are persisted to `%LOCALAPPDATA%\TokenHound\`, guaranteeing that restart cycles will never hammer provider endpoints under active penalty windows.
+- **Self-Updating from GitHub Releases**: Checks the latest stable release periodically (every 24 h by default) and from the tray or HUD menu ("Check for Updates…"), asks before installing, verifies the download (size and SHA-256 when published), and restarts on the new version. See [Updates](#updates).
 - **Ultra-Lean Resource Usage**: Operates continuously at approximately ~30–45 MB RAM in idle desktop state.
 
 ---
@@ -94,6 +95,19 @@ TokenHound/
     ├── specs/                              # 12 deep technical specifications
     └── design/                             # Visual design assets, layout coordinates, and mockups
 ```
+
+---
+
+## Updates
+
+TokenHound updates itself from [GitHub Releases](https://github.com/dougcunha/TokenHound/releases):
+
+- **When**: a check runs shortly after startup and then whenever the interval has elapsed; a balloon notification (no focus stealing) announces a new stable release. Choose **Check for Updates…** in the tray menu or the HUD right-click menu to check right away. Prereleases are ignored.
+- **Your choice**: the update dialog offers **Update now**, **Later** (asks again at the next due check), and **Skip this version**.
+- **Portable copies** (the `-fxdependent.zip`): the update is downloaded, verified, swapped in place with rollback on failure, and the app restarts. A read-only folder is detected up front and the release page is offered instead.
+- **Installed copies** (the setup): the installer runs silently for the current user (no elevation prompt) and the app restarts. Installed copies are recognized by the `TokenHound.installed` marker next to the executable.
+- **Settings**: **Settings > Updates** turns automatic checks on or off and sets the interval in hours (`0` turns periodic checks off), stored in the `Update` section of `settings.json`.
+- **Rate limits**: GitHub's unauthenticated limit (60 requests per hour) is respected; a `429` deadline is persisted in `%LOCALAPPDATA%\TokenHound\update-state.json` and honored across restarts.
 
 ---
 

@@ -17,6 +17,9 @@ public enum TrayMenuItemKey
     /// <summary>The entry that opens the modeless Settings dialog.</summary>
     Settings,
 
+    /// <summary>The entry that opens the update dialog and starts a manual update check.</summary>
+    CheckForUpdates,
+
     /// <summary>The entry that opens the modeless About dialog.</summary>
     About,
 

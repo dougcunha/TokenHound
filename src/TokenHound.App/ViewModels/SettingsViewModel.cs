@@ -58,6 +58,9 @@ public sealed class SettingsViewModel : IDisposable
     /// <summary>Gets the presentation model coordinating polling cadence and rate-limit retry settings.</summary>
     public CadenceSettingsViewModel Cadence { get; }
 
+    /// <summary>Gets the presentation model of the "Updates" tab, or <see langword="null"/> when updates are not wired.</summary>
+    public UpdateSettingsViewModel? Updates { get; init; }
+
     /// <summary>Gets the provider rows, ordered by display name so the dialog is stable across launches.</summary>
     public ObservableCollection<ProviderToggleViewModel> Providers { get; } = [];
 

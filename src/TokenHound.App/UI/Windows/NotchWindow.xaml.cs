@@ -185,6 +185,12 @@ public sealed partial class NotchWindow : Window
         _actionsViewModel?.ShowSettings();
     }
 
+    private void OnCheckForUpdatesClick(object sender, RoutedEventArgs e)
+    {
+
+        _actionsViewModel?.CheckForUpdates();
+    }
+
     private void OnAboutClick(object sender, RoutedEventArgs e)
     {
 
