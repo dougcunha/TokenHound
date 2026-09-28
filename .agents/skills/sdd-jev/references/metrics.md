@@ -19,7 +19,7 @@
 | `numbers` | In `J3`: `safe_to_apply`, composite, rubric scores, and per-claim confidence; in other points, the confidence of each flagged item |
 | `usage` | Returned `input_tokens` and `output_tokens` |
 | `corrects` | Optional: number of the line this record corrects |
-| `control` | `absent` when the review runs in the authoring session; omitted when it is independent |
+| `control` | `absent` when the review runs in the authoring session; `delegated` when it runs in a fresh-context delegated reviewer; omitted when it runs in a new session |
 
 ## Summary at acceptance
 

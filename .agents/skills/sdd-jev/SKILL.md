@@ -36,8 +36,8 @@ The mode comes from `--jev` on the first invocation of `sdd-orchestrate-flow`, f
 
 ## Independence and authority
 
-- `auto` means thresholds were met, not that the task is approved or the review waived. `sdd-review-code` still runs in a non-authoring session and issues its verdict by its own rules.
-- In `shadow`, the review session does not open `jev-log.jsonl` and runs its points only after writing `codereview.md`: the review is the pilot's control group.
+- `auto` means thresholds were met, not that the task is approved or the review waived. `sdd-review-code` still runs in a non-authoring context, delegated reviewer or new session, and issues its verdict by its own rules.
+- In `shadow`, the review session does not open `jev-log.jsonl` and runs its points only after writing `codereview.md`: the review is the pilot's control group. The coordinator sends no log or verdicts to the delegated reviewer.
 - In `active`, the review applies its own points but does not use task gate verdicts as conformance evidence.
-- A review done in the authoring session is not a control group: record `control: absent` on every line of that review and at the top of the summary.
+- A review done in the authoring session is not a control group: record `control: absent` on every line of that review and at the top of the summary. A fresh-context delegated reviewer is a reviewing session with `control: delegated`, also declared at the top of the summary, so the metrics separate it from new sessions.
 - No verdict grants authorization, changes scope, approves a HIL, or changes the mode; that remains data from the human conversation.

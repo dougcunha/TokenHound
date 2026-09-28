@@ -1,12 +1,12 @@
 ---
 name: sdd-review-code
-description: SDD review when implementation must be audited against PRD, TechSpec, and tasks, in a session that did not write that code; does not correct findings.
+description: SDD review when implementation must be audited against PRD, TechSpec, and tasks, in a session or fresh-context subagent that did not write that code; does not correct findings.
 argument-hint: --prd feature-name [--base git-reference]
 ---
 
 # Review SDD code
 
-Run in a session that did not write or change the code under review. This session consolidates the matrix and writes the report; subagents are read-only explorers for disjoint inspections. If this session authored any of that code, stop before step 1 and run the session pause from `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md`, which recommends ending the session; if the user continues anyway, record the missing independence under the report's limitations.
+Run in a session that did not write or change the code under review, or as a delegated reviewer: a fresh-context subagent the authoring session launches under the protocol in [references/delegated-review.md](references/delegated-review.md), whose contract applies together with this skill. This session consolidates the matrix and writes the report; its subagents are read-only explorers for disjoint inspections. If this session authored any of that code, stop before step 1 and apply the independence rule from `.agents/skills/sdd-orchestrate-tasks/references/session-continuity.md`, which delegates the review or recommends ending the session; if the user continues in the authoring session anyway, record the missing independence under the report's limitations.
 
 1. Require `prd.md`, `techspec.md`, and `tasks.md` under `tasks/prd-[slug]/`. When `context-snapshot.md` exists, load it through the Load branch of `.agents/skills/sdd-snapshot/SKILL.md` as an independent stage. Read PRD and TechSpec once per version; then manifest, tasks, and handoffs. Check every link, extra file, ID, state, and dependency.
    **Output:** every task has proven location and state; a missing source blocks review with the exact path.
@@ -24,7 +24,7 @@ Run in a session that did not write or change the code under review. This sessio
    With the `sdd-jev` skill in `active`, apply point `J5` here; in `shadow`, only after writing the report in step 6.
    **Output:** actionable findings distinct from optional improvements; all verifiable without conversation history; escalation suggested only with a counted trigger.
 6. Read [references/TEMPLATE.md](references/TEMPLATE.md) in full when issuing the report. Reserve the next free numeric suffix under `codereview_[num]/`, considering all existing folders. Write a new `codereview.md`; preserve code, tasks, and previous reports.
-   In standalone use, run the session pause; a snapshot written then records stage `review`, the report in `covers_through`, `authored_code: no`, and the status as an open thread. Because this session changed no code, it may continue into `sdd-plan-corrections`.
+   As a delegated reviewer, write into the folder the caller reserved instead of reserving another, record the execution as `delegated reviewer`, and return under the contract, without a session pause. In standalone use, run the session pause; a snapshot written then records stage `review`, the report in `covers_through`, `authored_code: no`, and the status as an open thread. Because this session changed no code, it may continue into `sdd-plan-corrections`.
    **Output:** immutable report with matrix, findings, validations, limitations, and status below; report path and blocks.
 
 ## Status

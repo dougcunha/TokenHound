@@ -3,6 +3,7 @@
 ## Summary
 
 - Status: APPROVED / APPROVED WITH RESERVATIONS / REJECTED
+- Execution: independent session / delegated reviewer / authoring session — see limitations
 - Git scope: `[base..current state]` or `Not delimited — see limitations`
 - Previous review: `[path or —]`
 

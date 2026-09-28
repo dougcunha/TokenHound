@@ -2,7 +2,7 @@
 
 ## Explorer contract
 
-Subagents are read-only explorers. They never edit files, run commands that write `bin/`, `obj/`, `TestResults/`, or repository state, execute a stage skill, or ask the user questions. The coordinator session writes every artifact and all code.
+Subagents are read-only explorers. They never edit files, run commands that write `bin/`, `obj/`, `TestResults/`, or repository state, execute a stage skill, or ask the user questions. The coordinator session writes every artifact and all code. The only exception is the delegated reviewer, which runs `sdd-review-code` and writes only the report, under the contract in `.agents/skills/sdd-review-code/references/delegated-review.md`; the rules below apply to explorers.
 
 Send an explorer only when answering means sweeping many files, directories, or conventions and only the conclusion matters; answer targeted questions with direct searches. Send each explorer the exact question, the paths or symbols to start from, the read-only constraint, the sources it may read, and the return format: conclusion, `path:line` evidence, and what it could not confirm. Verify cited lines before code or an artifact relies on them.
 
@@ -16,7 +16,7 @@ Only the coordinator asks the user questions and records approvals. An explorer 
 - Prefer the inherited model and stable configuration; a larger budget does not authorize changing the model. Reuse an explorer for a follow-up on the same question; open a new one for an independent question or a stale context.
 - In a shared worktree, the diff includes pre-existing and foreign changes: compare only the unit's scope against the recorded baseline. Builds and test runs that share `bin/`, `obj/`, `TestResults/`, or other common resources remain serialized.
 - Wait for or inspect the real handle of an explorer or process in progress. An observation timeout is not completion; do not pause the session or start dependent work until its terminal state or handle absence is confirmed.
-- The review runs in a session that authored none of the code it judges. That session may send explorers for disjoint inspections, but it consolidates a complete matrix; no findings in one slice do not approve the whole feature.
+- The review runs in a context that authored none of the code it judges: a delegated reviewer or a new session. That context may send explorers for disjoint inspections, when the host allows it, but it consolidates a complete matrix; no findings in one slice do not approve the whole feature.
 
 ## Tokens and cache
 

@@ -1,19 +1,19 @@
 ---
 name: sdd-orchestrate-tasks
-description: SDD DAG when PRD, TechSpec, and tasks are already approved and must be executed; implements each task in this session with read-only explorers and moves on between tasks until the context threshold. For the cycle from PRD, use sdd-orchestrate-flow.
+description: SDD DAG when PRD, TechSpec, and tasks are already approved and must be executed; implements each task in this session with read-only explorers, moves on between tasks until the context threshold, and delegates the final review to a fresh-context subagent. For the cycle from PRD, use sdd-orchestrate-flow.
 argument-hint: --prd feature-name [--budget economical|medium|high]
 disable-model-invocation: true
 ---
 
 # Orchestrate SDD tasks
 
-The session that runs this skill is the only writer: it implements every task itself, following `sdd-execute-task`, and owns the manifest and moves. Subagents are read-only explorers; they never edit files, run builds or tests that write `bin/`, `obj/`, or `TestResults/`, or talk to the user. Execution is one task at a time; between tasks the session moves on by itself until the session pause says stop. This session does not issue the global review of the code it wrote.
+The session that runs this skill is the only writer: it implements every task itself, following `sdd-execute-task`, and owns the manifest and moves. Subagents are read-only explorers; they never edit files, run builds or tests that write `bin/`, `obj/`, or `TestResults/`, or talk to the user. The exception is the delegated reviewer of step 8, with its own contract. Execution is one task at a time; between tasks the session moves on by itself until the session pause says stop. This session does not issue the global review of the code it wrote: it delegates it.
 
 If the caller limits execution to one task, return after step 7 instead of running the session pause: `task-completed` with the next eligible IDs, or `blocked` with evidence. When all tasks are complete, run step 8 before returning. A task return does not mean the feature is complete.
 
 1. **Resume.** Read [references/session-continuity.md](references/session-continuity.md) in full once per session: its context measurement applies to every task. Look for `tasks/prd-[slug]/context-snapshot.md`; if it exists, load it through the Load branch of `.agents/skills/sdd-snapshot/SKILL.md` before anything else.
    **Output:** snapshot applied, partially trusted with the suspect entries named, or absent.
-2. **Reconcile.** Resolve the feature and check `prd.md`, `techspec.md`, `tasks.md`, the root, and `done/`. Read sources once per version, then task metadata. Confirm authorization to implement and record pre-existing changes so they are preserved.
+2. **Reconcile.** Resolve the feature and check `prd.md`, `techspec.md`, `tasks.md`, the root, and `done/`. Read sources once per version, then task metadata. Confirm authorization to implement and record the base commit and pre-existing changes so they are preserved; the delegated review uses that commit as `--base`.
    If there is evidence of an incorrect completion, reopen the task: record reason, review, and previous handoff under `Problems and solutions`, move it from `done/` to the root, and update link and state to pending. Preserve contract and IDs; revalidate affected dependents. This does not authorize regenerating completed tasks to change their scope.
    **Output:** IDs, links, states, and dependencies reconciled; divergences have evidence and block the affected unit.
 3. **Select.** Pick one pending task whose dependencies are complete, preferring the snapshot's `next_step` when it is still eligible. Read `.agents/skills/sdd-execute-task/SKILL.md` once per session and follow it as the procedure for this task.
@@ -30,8 +30,8 @@ If the caller limits execution to one task, return after step 7 instead of runni
 7. **Record and move on.** Move an approved task to `done/`, checking that resolved source and destination stay inside the feature. Update link and state in the manifest and check both. Record relevant problems and solutions at the end of the manifest. Recalculate the DAG. If interrupted between move and update, reconcile using handoff and review without assuming approval from location.
    Then wait for background processes and explorers to finish and run the session pause from [references/session-continuity.md](references/session-continuity.md) with stage `tasks`, `authored_code: yes`, and the next eligible task as next step; on the `Move on` destination, return to step 3. A blocked task stays recorded and execution moves on to the next eligible one; with none eligible, go to step 8.
    **Output:** file, link, and state consistent; the next task started, or the snapshot written before the question and the user's choice applied.
-8. **Close.** When none remain eligible, check every obligation and integrated-set validation, serializing shared builds and test runs. Report task completion or blocks; global review belongs to `sdd-review-code`, in a session that did not write this code. Run the session pause with `sdd-review-code` as next step, which recommends ending this session.
-   **Output:** all complete with valid integrated evidence, or pending items enumerated; no feature is claimed approved only because tasks moved.
+8. **Close.** When none remain eligible, check every obligation and integrated-set validation, serializing shared builds and test runs. Report task completion or blocks; global review belongs to `sdd-review-code`, in a context that did not write this code. Under `sdd-orchestrate-flow`, return to the caller, which delegates it. In standalone use, with every task complete, apply the independence rule of the session pause: delegate the review under the protocol in `.agents/skills/sdd-review-code/references/delegated-review.md`, read the status in the report, and run the end-of-standalone-use session pause with the next step the status points to (`sdd-plan-corrections` for `REJECTED`, the user's decision on the reservations, or acceptance). Without an eligible reviewer, the pause names `sdd-review-code` and recommends ending this session.
+   **Output:** all complete with valid integrated evidence, or pending items enumerated; delegated review received or a pause for it; no feature is claimed approved only because tasks moved.
 
 Under `sdd-orchestrate-flow`, the caller runs the session pause and prints its own resume command.
 
