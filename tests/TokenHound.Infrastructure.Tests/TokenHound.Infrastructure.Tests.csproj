@@ -68,6 +68,7 @@
     <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateDialogDependencies.cs" Link="ViewModels\UpdateDialogDependencies.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateDialogState.cs" Link="ViewModels\UpdateDialogState.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateMessages.cs" Link="ViewModels\UpdateMessages.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\StartupSettingsViewModel.cs" Link="ViewModels\StartupSettingsViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateSettingsViewModel.cs" Link="ViewModels\UpdateSettingsViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateViewModel.cs" Link="ViewModels\UpdateViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateViewModel.Apply.cs" Link="ViewModels\UpdateViewModel.Apply.cs" />

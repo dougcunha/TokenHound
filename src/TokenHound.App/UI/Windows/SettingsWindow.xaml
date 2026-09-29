@@ -251,8 +251,96 @@
                     Grid.Row="2"
                     Style="{StaticResource SettingsTabControlStyle}"
                     SelectionChanged="OnTabSelectionChanged">
-            <!-- Tab 1: Providers -->
-            <TabItem Header="Providers"
+            <!-- Tab 1: General -->
+            <TabItem x:Name="GeneralTab"
+                     Header="General"
+                     AutomationProperties.Name="General tab">
+                <TabItem.Style>
+                    <Style TargetType="TabItem" BasedOn="{StaticResource SettingsTabItemStyle}">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding Startup}" Value="{x:Null}">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TabItem.Style>
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              HorizontalScrollBarVisibility="Disabled"
+                              Focusable="False"
+                              Margin="0,8,-4,0"
+                              Padding="0,0,4,0">
+                    <Border Background="{StaticResource SurfaceCardBackgroundBrush}"
+                            BorderBrush="{StaticResource SurfaceBorderSubtleBrush}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="14,12"
+                            Margin="0,0,0,4"
+                            DataContext="{Binding Startup}">
+                        <StackPanel>
+                            <TextBlock Text="Startup"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimaryBrush}"
+                                       Margin="0,0,0,2" />
+                            <TextBlock Text="Adds a shortcut to your Windows Startup folder."
+                                       FontSize="11"
+                                       Foreground="{StaticResource TextSecondaryBrush}"
+                                       Margin="0,0,0,12" />
+                            <CheckBox IsChecked="{Binding IsEnabled}"
+                                      Content="Start TokenHound when I sign in to Windows"
+                                      Foreground="{StaticResource TextPrimaryBrush}"
+                                      FontSize="12"
+                                      AutomationProperties.Name="Start TokenHound when I sign in to Windows"
+                                      AutomationProperties.HelpText="Adds or removes the TokenHound shortcut in your Windows Startup folder when you apply" />
+                            <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                <Button Content="Apply"
+                                        Style="{StaticResource DialogButtonStyle}"
+                                        Command="{Binding ApplyCommand}"
+                                        AutomationProperties.Name="Apply startup settings" />
+                                <TextBlock Text="Settings applied"
+                                           Foreground="{StaticResource BadgeOkForegroundBrush}"
+                                           FontSize="12"
+                                           FontWeight="Medium"
+                                           VerticalAlignment="Center"
+                                           Margin="12,0,0,0"
+                                           AutomationProperties.Name="Startup settings status">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsApplied}" Value="True">
+                                                    <Setter Property="Visibility" Value="Visible" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                            <TextBlock Text="{Binding ApplyError}"
+                                       Foreground="{StaticResource BadgeAccessDeniedForegroundBrush}"
+                                       FontSize="11"
+                                       Margin="0,8,0,0"
+                                       TextWrapping="Wrap"
+                                       AutomationProperties.Name="Startup settings error">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding ApplyError}" Value="{x:Null}">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+                        </StackPanel>
+                    </Border>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Tab 2: Providers -->
+            <TabItem x:Name="ProvidersTab"
+                     Header="Providers"
                      Style="{StaticResource SettingsTabItemStyle}"
                      AutomationProperties.Name="Providers tab">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -283,8 +371,9 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!-- Tab 2: Cadence & Rate Limits -->
-            <TabItem Header="Cadence &amp; Rate Limits"
+            <!-- Tab 3: Cadence & Rate Limits -->
+            <TabItem x:Name="CadenceTab"
+                     Header="Cadence &amp; Rate Limits"
                      Style="{StaticResource SettingsTabItemStyle}"
                      AutomationProperties.Name="Cadence and Rate Limits tab">
                 <ScrollViewer VerticalScrollBarVisibility="Auto"
@@ -493,7 +582,7 @@
                 </ScrollViewer>
             </TabItem>
 
-            <!-- Tab 3: Updates -->
+            <!-- Tab 4: Updates -->
             <TabItem Header="Updates"
                      Style="{StaticResource SettingsTabItemStyle}"
                      AutomationProperties.Name="Updates tab">
@@ -623,7 +712,7 @@
                     <Style TargetType="Button" BasedOn="{StaticResource DialogButtonStyle}">
                         <Setter Property="Visibility" Value="Collapsed" />
                         <Style.Triggers>
-                            <DataTrigger Binding="{Binding SelectedIndex, ElementName=SettingsTabControl}" Value="1">
+                            <DataTrigger Binding="{Binding IsSelected, ElementName=CadenceTab}" Value="True">
                                 <Setter Property="Visibility" Value="Visible" />
                             </DataTrigger>
                         </Style.Triggers>
@@ -679,7 +768,7 @@
                         <Style TargetType="Button" BasedOn="{StaticResource DialogButtonStyle}">
                             <Setter Property="Visibility" Value="Visible" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=SettingsTabControl}" Value="1">
+                                <DataTrigger Binding="{Binding IsSelected, ElementName=CadenceTab}" Value="True">
                                     <Setter Property="Visibility" Value="Collapsed" />
                                 </DataTrigger>
                             </Style.Triggers>
@@ -699,7 +788,7 @@
                         <Style TargetType="Button" BasedOn="{StaticResource DialogButtonStyle}">
                             <Setter Property="Visibility" Value="Collapsed" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=SettingsTabControl}" Value="1">
+                                <DataTrigger Binding="{Binding IsSelected, ElementName=CadenceTab}" Value="True">
                                     <Setter Property="Visibility" Value="Visible" />
                                 </DataTrigger>
                             </Style.Triggers>
@@ -718,7 +807,7 @@
                         <Style TargetType="Button" BasedOn="{StaticResource DialogButtonStyle}">
                             <Setter Property="Visibility" Value="Collapsed" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding SelectedIndex, ElementName=SettingsTabControl}" Value="1">
+                                <DataTrigger Binding="{Binding IsSelected, ElementName=CadenceTab}" Value="True">
                                     <Setter Property="Visibility" Value="Visible" />
                                 </DataTrigger>
                             </Style.Triggers>

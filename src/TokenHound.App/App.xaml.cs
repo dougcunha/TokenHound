@@ -20,6 +20,7 @@ using TokenHound.Infrastructure.Providers.Codex;
 using TokenHound.Infrastructure.Providers.Copilot;
 using TokenHound.Infrastructure.Providers.Cursor;
 using TokenHound.Infrastructure.Providers.OpenCode;
+using TokenHound.Infrastructure.Startup;
 
 namespace TokenHound.App;
 
@@ -359,7 +360,10 @@ public partial class App : Application
             )
         )
         {
-            Updates = CreateUpdateSettingsViewModel()
+            Updates = CreateUpdateSettingsViewModel(),
+            Startup = Environment.ProcessPath is { } executablePath
+                ? new StartupSettingsViewModel(StartupLaunchService.CreateDefault(), executablePath)
+                : null
         };
 
     private void InitializeUi(UsageStore usageStore, List<IDisposable> disposableResources)

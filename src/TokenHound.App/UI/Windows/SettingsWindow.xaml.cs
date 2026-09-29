@@ -45,7 +45,7 @@ public sealed partial class SettingsWindow : Window
         if (e.Key == Key.Enter)
         {
 
-            if (SettingsTabControl.SelectedIndex != 1)
+            if (!CadenceTab.IsSelected)
                 return;
 
             if (FocusManager.GetFocusedElement(this) is Button button && button != ApplyButton)
@@ -107,7 +107,7 @@ public sealed partial class SettingsWindow : Window
 
         StatusMessageTextBlock.Visibility = Visibility.Collapsed;
 
-        if (SettingsTabControl.SelectedIndex == 1 && ActiveIntervalTextBox.IsVisible)
+        if (CadenceTab.IsSelected && ActiveIntervalTextBox.IsVisible)
         {
 
             ActiveIntervalTextBox.Focus();
@@ -121,8 +121,13 @@ public sealed partial class SettingsWindow : Window
         if (e.OldValue is SettingsViewModel oldVm)
             oldVm.Cadence.PropertyChanged -= OnCadencePropertyChanged;
 
-        if (e.NewValue is SettingsViewModel newVm)
-            newVm.Cadence.PropertyChanged += OnCadencePropertyChanged;
+        if (e.NewValue is not SettingsViewModel newVm)
+            return;
+
+        newVm.Cadence.PropertyChanged += OnCadencePropertyChanged;
+
+        if (newVm.Startup is null)
+            ProvidersTab.IsSelected = true;
     }
 
     private void OnCadencePropertyChanged(object? sender, PropertyChangedEventArgs e)

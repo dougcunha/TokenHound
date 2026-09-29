@@ -61,6 +61,9 @@ public sealed class SettingsViewModel : IDisposable
     /// <summary>Gets the presentation model of the "Updates" tab, or <see langword="null"/> when updates are not wired.</summary>
     public UpdateSettingsViewModel? Updates { get; init; }
 
+    /// <summary>Gets the presentation model of the "General" tab, or <see langword="null"/> when the executable path is unknown.</summary>
+    public StartupSettingsViewModel? Startup { get; init; }
+
     /// <summary>Gets the provider rows, ordered by display name so the dialog is stable across launches.</summary>
     public ObservableCollection<ProviderToggleViewModel> Providers { get; } = [];
 

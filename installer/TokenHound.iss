@@ -88,7 +88,12 @@ Source: "TokenHound.installed"; DestDir: "{app}"; Flags: ignoreversion
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
-Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: startupicon
+; Same file as StartupLaunchService.SHORTCUT_FILE_NAME in the app; silent setups keep the user's current choice.
+Name: "{userstartup}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: startupicon; Check: ShouldCreateStartupShortcut
+
+[UninstallDelete]
+; Also removes a startup shortcut the app created from Settings, which the uninstall log does not track.
+Type: files; Name: "{userstartup}\{#MyAppName}.lnk"
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
@@ -100,16 +105,53 @@ const
   AppInstanceMutex = 'TokenHound.App.Instance';
   AppExitTimeoutMs = 30000;
   AppExitPollMs = 500;
+  StartupTaskName = 'startupicon';
+
+var
+  StartupShortcutExisted: Boolean;
+  StartupTaskPreselected: Boolean;
+
+function StartupShortcutPath: String;
+begin
+  Result := ExpandConstant('{userstartup}\{#MyAppName}.lnk');
+end;
 
 function ShouldRelaunch: Boolean;
 begin
   Result := ExpandConstant('{param:RELAUNCH|0}') = '1';
 end;
 
+{ Silent setups without an explicit /TASKS (e.g. the app's self-update) keep the shortcut as the user left it. }
+function ShouldCreateStartupShortcut: Boolean;
+begin
+  Result := (not WizardSilent) or (ExpandConstant('{param:TASKS|}') <> '') or StartupShortcutExisted;
+end;
+
+{ The wizard shows the current state of the shortcut, which the app's Settings may have changed. }
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  if (CurPageID = wpSelectTasks) and not StartupTaskPreselected then
+  begin
+    if StartupShortcutExisted then
+      WizardSelectTasks(StartupTaskName)
+    else
+      WizardSelectTasks('!' + StartupTaskName);
+    StartupTaskPreselected := True;
+  end;
+end;
+
+{ Inno never removes an icon for an unticked task; an interactive untick means "do not start with Windows". }
+procedure CurStepChanged(CurStep: TSetupStep);
+begin
+  if (CurStep = ssPostInstall) and not WizardSilent and not WizardIsTaskSelected(StartupTaskName) then
+    DeleteFile(StartupShortcutPath);
+end;
+
 function InitializeSetup: Boolean;
 var
   Waited: Integer;
 begin
+  StartupShortcutExisted := FileExists(StartupShortcutPath);
   { A self-update starts this installer and then exits; wait for its instance mutex before copying files. }
   Waited := 0;
   while ShouldRelaunch and CheckForMutexes(AppInstanceMutex) and (Waited < AppExitTimeoutMs) do
