@@ -20,7 +20,7 @@ Triage spends little to avoid spending a lot: it gathers signals with evidence, 
 
    | Signal | Question |
    | --- | --- |
-   | S1 Public contract | Does it change an API or MCP surface, a serialized DTO, a schema or database script, a file format, or configuration? |
+   | S1 Public contract | Does it change what a consumer sends or receives: an API or MCP surface, a serialized DTO, a schema or database script, a file format, or configuration? Documentation-only text (description, example, grouping) counts as absent. |
    | S2 Critical area | Does it touch an area that `AGENTS.md` declares critical or that requires a risk skill (e.g. credentials, provider authentication, payments)? |
    | S3 Concurrency | Does it involve a transaction, lock, idempotency, queue, background polling, or shared state? |
    | S4 Blast radius | How many production files, modules, and transitive callers change behavior? |
@@ -35,9 +35,8 @@ Triage spends little to avoid spending a lot: it gathers signals with evidence, 
    - `spot` when all hold: one module, up to three production files, none of S1, S2, S3, S5, or S8, an unambiguous expected behavior, and a feasible regression test (S7).
    - `sdd-lean` otherwise.
    A `not measured` signal that would decide the level counts as present.
-   After filling every signal, including with evidence the user supplied (images, examples, answers), and when the host exposes `jev_decide`, make one call: `decision` = which process level this request deserves; `candidates` = the three levels with the table's description; `evidence` = the signal table with its evidence; `priorities` = non-negotiable quality on public contracts, critical areas, and persisted data, speed when the change is localized and reversible, plus the priorities in `AGENTS.md`; `requirements` = `keeps independent review when there is a public contract or critical area`, `process cost proportional to obligations and files`, `takes an open product decision to a HIL before code`. `escaped: true` leaves only the rubric. One call per unchanged request.
-   **Output:** rubric level with the deciding signals, and jev level with probabilities and `warnings` when present.
-4. **HIL 0.** Present the recommended level, which is the rubric's when S1, S5, or S8 is present, the deciding signals with evidence, the jev recommendation as a second opinion when it diverges from the rubric, and what each level costs in artifacts, HILs, and review. Ask with the available question tool, recommended option first. When the host exposes the jev tools and `--jev` was not given, ask in the same call for the flow's jev mode (`off`, `shadow`, `active`), valid only for `sdd-full` and `sdd-lean`. Silence keeps the decision pending. Append one line to `tasks/triage-log.jsonl` with date, summarized request, signals, rubric level, jev level, human decision, and jev mode.
+   **Output:** rubric level with the deciding signals.
+4. **HIL 0.** Present the level the rubric recommends, the deciding signals with evidence, and what each level costs in artifacts, HILs, and review. Ask with the available question tool, recommended option first. When the host exposes the jev tools and `--jev` was not given, ask in the same call for the flow's jev mode (`off`, `shadow`, `active`), valid only for `sdd-full` and `sdd-lean`. Silence keeps the decision pending. Append one line to `tasks/triage-log.jsonl` with date, summarized request, signals, rubric level, human decision, and jev mode.
    **Output:** level decided by the human and recorded; jev mode known for the SDD levels.
 5. **Continue.** `sdd-full` and `sdd-lean` return to `sdd-orchestrate-flow` with the decided jev mode, which it writes to the checkpoint and records with the triage as a decision in `workflow.md`; for `sdd-lean`, also record the merge of HIL 1 and HIL 2 as a change to the stops. `spot` follows the branch below.
    **Output:** next step started on the decided path.
@@ -48,7 +47,7 @@ Triage spends little to avoid spending a lot: it gathers signals with evidence, 
    **Output:** change applied and test result recorded before and after.
 2. **Tripwire.** Stop and return to step 2 with the new evidence when the diff exceeds the file limit decided at HIL 0 (default: three production files), touches S1, S2, S3, or S8, or a product decision appears. The change stays in the worktree as evidence; discarding it is a human decision.
    **Output:** diff confirmed within the limit, or triage reopened with the new evidence.
-3. **Review.** Review the diff with the repository's review skill or the host's native review. When the host exposes `jev_review`, call it with the request as `request`, the diff, and the test output as `tests`: `escalate` is fixed or taken to the human.
+3. **Review.** Review the diff with the repository's review skill or the host's native review.
    **Output:** review findings fixed or taken to the human.
 4. **Deliver.** Commit only when asked, through the `commit` skill.
    **Output:** delivery in the requested state, with the regression test and review as evidence.

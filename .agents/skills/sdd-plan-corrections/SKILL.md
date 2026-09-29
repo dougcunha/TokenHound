@@ -11,7 +11,6 @@ disable-model-invocation: true
    **Output:** exact, readable report, without mixing IDs between reports.
 2. Classify every item as actionable, informational, or pending. In `APPROVED`, plan only what was requested; in `APPROVED WITH RESERVATIONS`, improvements require authorized scope; in `REJECTED`, cover violations, incompleteness, and failures. An unknown status allows only explicitly actionable findings.
    Preserve `CR-NN`; in legacy reports without IDs, assign a local ID by order and section. Inventory root and `done/` metadata to reuse tasks; finding identity is report path + ID.
-   With the `sdd-jev` skill in `shadow` or `active`, apply point `J6` to this classification.
    **Output:** every item assigned; no duplicate finding or invented decision.
 3. Check evidence in the smallest necessary code or TechSpec section; send read-only explorers in parallel only when several findings each need a sweep across many files. Group only the same cause with a reviewable result. Model an acyclic DAG, limits, files, and tests; number new tasks after the largest number in the root and `done/`.
    For desktop C#/.NET, omit E2E; preserve the obligation with relevant unit, integration, or manual acceptance. A missing environment or decision becomes an explicit pending item, not a discarded finding.
