@@ -139,31 +139,7 @@ public sealed class AntigravityLanguageServerClient : IDisposable
         string csrfToken,
         CancellationToken cancellationToken = default)
     {
-        var response = await QuerySchemeAsync(
-            "https",
-            port,
-            csrfToken,
-            cancellationToken
-        ).ConfigureAwait(false);
-
-        if (response is not null)
-            return response;
-
-        return await QuerySchemeAsync(
-            "http",
-            port,
-            csrfToken,
-            cancellationToken
-        ).ConfigureAwait(false);
-    }
-
-    private async ValueTask<AntigravityQuotaSummaryResponse?> QuerySchemeAsync(
-        string scheme,
-        int port,
-        string csrfToken,
-        CancellationToken cancellationToken)
-    {
-        var url = $"{scheme}://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary";
+        var url = $"https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/RetrieveUserQuotaSummary";
 
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
 
@@ -199,31 +175,7 @@ public sealed class AntigravityLanguageServerClient : IDisposable
         string csrfToken,
         CancellationToken cancellationToken)
     {
-        var response = await WarmupSchemeAsync(
-            "https",
-            port,
-            csrfToken,
-            cancellationToken
-        ).ConfigureAwait(false);
-
-        if (response)
-            return true;
-
-        return await WarmupSchemeAsync(
-            "http",
-            port,
-            csrfToken,
-            cancellationToken
-        ).ConfigureAwait(false);
-    }
-
-    private async ValueTask<bool> WarmupSchemeAsync(
-        string scheme,
-        int port,
-        string csrfToken,
-        CancellationToken cancellationToken)
-    {
-        var url = $"{scheme}://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/GetUserStatus";
+        var url = $"https://127.0.0.1:{port}/exa.language_server_pb.LanguageServerService/GetUserStatus";
 
         using var request = new HttpRequestMessage(HttpMethod.Post, url);
 

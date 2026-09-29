@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
@@ -203,5 +204,60 @@ public sealed class AntigravityLanguageServerClientTests
 
         // Assert
         Assert.False(result);
+    }
+
+    [Fact]
+    public async Task QueryPortAsync_WhenHttpsReturnsNotFound_DoesNotFallbackToHttp()
+    {
+        // Arrange
+        var requestedSchemes = new List<string>();
+        var handler = new MockHttpMessageHandler(req =>
+        {
+            requestedSchemes.Add(req.RequestUri!.Scheme);
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        });
+
+        using var httpClient = new HttpClient(handler);
+        using var client = new AntigravityLanguageServerClient(httpClient);
+
+        // Act
+        var result = await client.QueryPortAsync(54321, "csrf", TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Null(result);
+        Assert.DoesNotContain("http", requestedSchemes);
+        Assert.Equal(["https"], requestedSchemes);
+    }
+
+    [Fact]
+    public async Task WarmupSessionAsync_WhenHttpsReturnsNotFound_DoesNotFallbackToHttp()
+    {
+        // Arrange
+        var endpoint = new AntigravityEndpoint
+        {
+            ProcessId = 1234,
+            CsrfToken = "token-csrf",
+            CandidatePorts = [5001]
+        };
+
+        var requestedSchemes = new List<string>();
+        var handler = new MockHttpMessageHandler(req =>
+        {
+            requestedSchemes.Add(req.RequestUri!.Scheme);
+
+            return new HttpResponseMessage(HttpStatusCode.NotFound);
+        });
+
+        using var httpClient = new HttpClient(handler);
+        using var client = new AntigravityLanguageServerClient(httpClient);
+
+        // Act
+        var result = await client.WarmupSessionAsync(endpoint, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.False(result);
+        Assert.DoesNotContain("http", requestedSchemes);
+        Assert.Equal(["https"], requestedSchemes);
     }
 }
