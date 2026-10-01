@@ -126,7 +126,7 @@ public sealed partial class SettingsWindow : Window
 
         newVm.Cadence.PropertyChanged += OnCadencePropertyChanged;
 
-        if (newVm.Startup is null)
+        if (newVm.Startup is null && newVm.HudSize is null)
             ProvidersTab.IsSelected = true;
     }
 

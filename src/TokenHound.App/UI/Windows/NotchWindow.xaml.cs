@@ -50,6 +50,7 @@ public sealed partial class NotchWindow : Window
         MouseLeftButtonDown += OnMouseLeftButtonDown;
         CapsuleBorder.ContextMenuOpening += OnCapsuleContextMenuOpening;
         Closing += OnClosing;
+        InitializeScale();
     }
 
     /// <summary>

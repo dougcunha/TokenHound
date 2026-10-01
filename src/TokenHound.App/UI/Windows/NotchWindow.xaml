@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:controls="clr-namespace:TokenHound.App.UI.Controls"
+        xmlns:presentation="clr-namespace:TokenHound.App.Presentation"
         mc:Ignorable="d"
         Title="TokenHound"
         Icon="../../Assets/logo.ico"
@@ -19,6 +20,10 @@
         WindowStartupLocation="Manual">
 
     <Grid Margin="12,0,12,12">
+        <Grid.LayoutTransform>
+            <ScaleTransform ScaleX="{Binding Factor, Source={x:Static presentation:HudScale.Current}}"
+                            ScaleY="{Binding Factor, Source={x:Static presentation:HudScale.Current}}" />
+        </Grid.LayoutTransform>
         <Border x:Name="CapsuleBorder"
                 Background="#18181B"
                 BorderBrush="#3F3F46"
@@ -100,6 +105,10 @@
                     Focusable="False"
                     Cursor="Hand"
                     MouseLeftButtonDown="OnStatusPopupMouseDown">
+                <Border.LayoutTransform>
+                    <ScaleTransform ScaleX="{Binding Factor, Source={x:Static presentation:HudScale.Current}}"
+                                    ScaleY="{Binding Factor, Source={x:Static presentation:HudScale.Current}}" />
+                </Border.LayoutTransform>
                 <Border.Effect>
                     <DropShadowEffect Color="#000000"
                                       BlurRadius="12"

@@ -179,6 +179,7 @@ public sealed partial class UserSettingsFile
         => new()
         {
             Hud = user?.Hud ?? defaults?.Hud ?? new HudPositionSettings(),
+            HudSize = user?.HudSize ?? defaults?.HudSize ?? new HudSizeSettings(),
             Providers = user?.Providers ?? defaults?.Providers ?? new ProviderSettings(),
             Refresh = user?.Refresh ?? defaults?.Refresh ?? new RefreshSettings(),
             RateLimit = user?.RateLimit ?? defaults?.RateLimit ?? new RateLimitSettings(),

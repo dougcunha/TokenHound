@@ -30,6 +30,7 @@ namespace TokenHound.App;
 public partial class App : Application
 {
     private readonly ProviderSettingsStore _providerSettingsStore = new();
+    private readonly HudSizeStore _hudSizeStore = new();
 
     private RateLimitPolicy? _rateLimitPolicy;
     private UsageStore? _usageStore;
@@ -361,6 +362,7 @@ public partial class App : Application
         )
         {
             Updates = CreateUpdateSettingsViewModel(),
+            HudSize = HudSizeSettingsViewModel.Create(_hudSizeStore, HudScale.Current),
             Startup = Environment.ProcessPath is { } executablePath
                 ? new StartupSettingsViewModel(StartupLaunchService.CreateDefault(), executablePath)
                 : null
@@ -373,6 +375,7 @@ public partial class App : Application
 
         _dialogService = new DialogService(() => _notchWindow);
         _notchViewModel = new NotchViewModel(usageStore, DispatchUiAction);
+        HudScale.Current.Percent = _hudSizeStore.Load().ResolvedPercent;
         _lifetime = new ApplicationLifetime(usageStore, _dialogService, _notchViewModel, disposableResources);
 
         _actionsViewModel = new HudActionsViewModel(

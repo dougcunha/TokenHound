@@ -16,6 +16,11 @@ public sealed record UserSettings
     public HudPositionSettings? Hud { get; init; }
 
     /// <summary>
+    /// Gets the HUD size settings.
+    /// </summary>
+    public HudSizeSettings? HudSize { get; init; }
+
+    /// <summary>
     /// Gets the provider enablement settings.
     /// </summary>
     [JsonConverter(typeof(ProviderSettingsJsonConverter))]

@@ -5,6 +5,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:TokenHound.App.UI.Controls"
              xmlns:vm="clr-namespace:TokenHound.App.ViewModels"
+             xmlns:presentation="clr-namespace:TokenHound.App.Presentation"
              mc:Ignorable="d"
              Background="Transparent">
 
@@ -32,6 +33,11 @@
             Padding="14"
             MinWidth="260"
             MaxWidth="320">
+
+        <Border.LayoutTransform>
+            <ScaleTransform ScaleX="{Binding Factor, Source={x:Static presentation:HudScale.Current}}"
+                            ScaleY="{Binding Factor, Source={x:Static presentation:HudScale.Current}}" />
+        </Border.LayoutTransform>
 
         <Border.Effect>
             <DropShadowEffect Color="#000000"

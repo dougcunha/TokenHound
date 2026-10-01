@@ -92,4 +92,46 @@ public sealed class NotchPlacementTests
         left.Should().Be(0);
         top.Should().Be(0);
     }
+
+    [Fact]
+    public void CenterOnTopEdge_WhenCapsuleShrinks_RecentersOnTheSamePoint()
+    {
+
+        var (wideLeft, _) = NotchPlacement.CenterOnTopEdge(PRIMARY_SCREEN, windowWidth: 240);
+        var (narrowLeft, _) = NotchPlacement.CenterOnTopEdge(PRIMARY_SCREEN, windowWidth: 120);
+
+        (wideLeft + 120).Should().Be(narrowLeft + 60);
+    }
+
+    [Fact]
+    public void Clamp_WhenCapsuleGrowsNearRightEdge_PullsItBackIntoBounds()
+    {
+
+        var (left, top) = NotchPlacement.Clamp(
+            PRIMARY_SCREEN,
+            left: 3300,
+            top: 10,
+            windowWidth: 360,
+            windowHeight: 105
+        );
+
+        left.Should().Be(3080);
+        top.Should().Be(10);
+    }
+
+    [Fact]
+    public void Clamp_WhenCapsuleShrinks_KeepsDraggedPositionUnchanged()
+    {
+
+        var (left, top) = NotchPlacement.Clamp(
+            PRIMARY_SCREEN,
+            left: 3300,
+            top: 10,
+            windowWidth: 120,
+            windowHeight: 35
+        );
+
+        left.Should().Be(3300);
+        top.Should().Be(10);
+    }
 }
