@@ -1,7 +1,7 @@
 ---
 name: sdd-triage
 description: SDD triage that recommends to the human the process level for a feature, fix, or refactoring request — full SDD, lean SDD, or spot change — from risk signals with evidence, before any artifact exists. Use when starting sdd-orchestrate-flow on a feature without a checkpoint or when asked whether a request is worth the SDD flow. Don't use for resuming a feature with a checkpoint or for slicing a broad request into several PRDs (use sdd-orchestrate-prds).
-argument-hint: --prompt "request description" [--jev off|shadow|active]
+argument-hint: --prompt "request description"
 ---
 
 # Triage a request for SDD
@@ -36,9 +36,9 @@ Triage spends little to avoid spending a lot: it gathers signals with evidence, 
    - `sdd-lean` otherwise.
    A `not measured` signal that would decide the level counts as present.
    **Output:** rubric level with the deciding signals.
-4. **HIL 0.** Present the level the rubric recommends, the deciding signals with evidence, and what each level costs in artifacts, HILs, and review. Ask with the available question tool, recommended option first. When the host exposes the jev tools and `--jev` was not given, ask in the same call for the flow's jev mode (`off`, `shadow`, `active`), valid only for `sdd-full` and `sdd-lean`. Silence keeps the decision pending. Append one line to `tasks/triage-log.jsonl` with date, summarized request, signals, rubric level, human decision, and jev mode.
-   **Output:** level decided by the human and recorded; jev mode known for the SDD levels.
-5. **Continue.** `sdd-full` and `sdd-lean` return to `sdd-orchestrate-flow` with the decided jev mode, which it writes to the checkpoint and records with the triage as a decision in `workflow.md`; for `sdd-lean`, also record the merge of HIL 1 and HIL 2 as a change to the stops. `spot` follows the branch below.
+4. **HIL 0.** Present the level the rubric recommends, the deciding signals with evidence, and what each level costs in artifacts, HILs, and review. Ask with the available question tool, recommended option first. Silence keeps the decision pending. Append one line to `tasks/triage-log.jsonl` with date, summarized request, signals, rubric level, and human decision.
+   **Output:** level decided by the human and recorded.
+5. **Continue.** `sdd-full` and `sdd-lean` return to `sdd-orchestrate-flow`, which records the triage as a decision in `workflow.md`; for `sdd-lean`, also record the merge of HIL 1 and HIL 2 as a change to the stops. `spot` follows the branch below.
    **Output:** next step started on the decided path.
 
 ## Spot branch

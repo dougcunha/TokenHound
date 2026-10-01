@@ -30,12 +30,12 @@ Send only data, as paths, in this order:
 - with `context-snapshot.md` in the folder, the path of `.agents/skills/sdd-snapshot/references/load.md`;
 - the contract below and the return format.
 
-Do not send the conversation, diffs you analyzed, handoff summaries, justifications, jev verdicts, or a readiness assessment ("it is ready", "only the review is left"). The reviewer reads handoffs as part of the sources, under the skill's rules.
+Do not send the conversation, diffs you analyzed, handoff summaries, justifications, or a readiness assessment ("it is ready", "only the review is left"). The reviewer reads handoffs as part of the sources, under the skill's rules.
 
 ### Reviewer contract
 
 - Run `sdd-review-code` in full, in step order, as an independent session. Load the snapshot, if any, through the independent-stage filter of `.agents/skills/sdd-snapshot/references/load.md`.
-- Write only `codereview_[num]/codereview.md` in the reserved folder. Do not read `jev-log.jsonl` or call jev: with jev in `shadow` or `active`, this review is the control group of point `J3`.
+- Write only `codereview_[num]/codereview.md` in the reserved folder.
 - You may run the build, tests, and quality profile commands the review requires, including those that write `bin/`, `obj/`, or `TestResults/`. Do not edit code, tasks, manifest, handoffs, `workflow.md`, checkpoint, or snapshot, and do not commit, stash, check out, or clean the worktree.
 - Do not ask the user and do not run the session pause. A missing source, unavailable environment, or doubt becomes a limitation or block in the report, including whatever the skill would have you record in `workflow.md`.
 - Do not delegate to another reviewer. Read-only explorers only if the host allows them to this subagent; otherwise, direct searches.
