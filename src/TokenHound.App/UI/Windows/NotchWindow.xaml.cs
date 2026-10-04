@@ -6,7 +6,6 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using Serilog;
 using TokenHound.App.Interop;
-using TokenHound.App.UI.Placement;
 using TokenHound.App.ViewModels;
 using TokenHound.Infrastructure.Configuration;
 
@@ -19,6 +18,7 @@ public sealed partial class NotchWindow : Window
 {
     private const int WM_MOUSEACTIVATE = 0x0021;
     private const int MA_NOACTIVATE = 3;
+    private const int WM_DISPLAYCHANGE = 0x007E;
 
     private readonly HudPositionStore _positionStore = new();
 
@@ -103,7 +103,7 @@ public sealed partial class NotchWindow : Window
         }
     }
 
-    private static IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
     {
 
         if (msg == WM_MOUSEACTIVATE)
@@ -113,6 +113,9 @@ public sealed partial class NotchWindow : Window
 
             return new IntPtr(MA_NOACTIVATE);
         }
+
+        if (msg == WM_DISPLAYCHANGE)
+            Dispatcher.BeginInvoke(new Action(ApplyPlacement));
 
         return IntPtr.Zero;
     }
@@ -236,21 +239,6 @@ public sealed partial class NotchWindow : Window
         StatusPopup.IsOpen = _actionsViewModel.IsStatusVisible;
     }
 
-    private void ApplyPlacement()
-    {
-
-        if (!_position.TryGetPosition(out var left, out var top))
-            (left, top) = NotchPlacement.CenterOnTopEdge(CurrentWorkArea(), ActualWidth);
-
-        (Left, Top) = NotchPlacement.Clamp(
-            CurrentVirtualScreen(),
-            left,
-            top,
-            ActualWidth,
-            ActualHeight
-        );
-    }
-
     private void PersistPosition()
     {
 
@@ -267,29 +255,4 @@ public sealed partial class NotchWindow : Window
             Log.Warning("Unable to persist HUD position to {SettingsFile}", _positionStore.FilePath);
     }
 
-    private static ScreenBounds CurrentWorkArea()
-    {
-
-        var workArea = SystemParameters.WorkArea;
-
-        return new ScreenBounds
-        {
-            Left = workArea.Left,
-            Top = workArea.Top,
-            Width = workArea.Width,
-            Height = workArea.Height
-        };
-    }
-
-    private static ScreenBounds CurrentVirtualScreen()
-    {
-
-        return new ScreenBounds
-        {
-            Left = SystemParameters.VirtualScreenLeft,
-            Top = SystemParameters.VirtualScreenTop,
-            Width = SystemParameters.VirtualScreenWidth,
-            Height = SystemParameters.VirtualScreenHeight
-        };
-    }
 }

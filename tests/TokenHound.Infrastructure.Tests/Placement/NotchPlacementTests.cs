@@ -134,4 +134,40 @@ public sealed class NotchPlacementTests
         left.Should().Be(3300);
         top.Should().Be(10);
     }
+
+    /// <summary>Recovers the saved position from a gap in a nonrectangular monitor arrangement.</summary>
+    [Fact]
+    public void Clamp_WhenSavedPositionIsInMonitorGap_UsesActualMonitorBounds()
+    {
+
+        var primary = new ScreenBounds { Left = 0, Top = 0, Width = 1280, Height = 720 };
+        var (left, top) = NotchPlacement.Clamp(
+            primary,
+            left: 2242,
+            top: 0,
+            windowWidth: 240,
+            windowHeight: 70
+        );
+
+        left.Should().Be(1040);
+        top.Should().Be(0);
+    }
+
+    /// <summary>Keeps the HUD fully visible when its nearest monitor is above the primary display.</summary>
+    [Fact]
+    public void Clamp_WhenNearestMonitorIsAbovePrimary_RecoversIntoNegativeCoordinates()
+    {
+
+        var upper = new ScreenBounds { Left = 0, Top = -1440, Width = 3440, Height = 1392 };
+        var (left, top) = NotchPlacement.Clamp(
+            upper,
+            left: 2242,
+            top: 0,
+            windowWidth: 240,
+            windowHeight: 70
+        );
+
+        left.Should().Be(2242);
+        top.Should().Be(-118);
+    }
 }
