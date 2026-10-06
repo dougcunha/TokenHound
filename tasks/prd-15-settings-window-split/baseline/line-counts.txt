@@ -1,0 +1,2 @@
+SettingsWindow.xaml 1051
+DialogResources.xaml 561
