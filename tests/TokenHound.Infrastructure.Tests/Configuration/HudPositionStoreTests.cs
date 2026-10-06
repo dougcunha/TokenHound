@@ -203,4 +203,78 @@ public sealed class HudPositionStoreTests : IDisposable
 
         position.TryGetPosition(out _, out _).Should().BeFalse();
     }
+
+    [Fact]
+    public void Save_ThenLoad_RoundTripsModeAndDisplay()
+    {
+
+        var store = new HudPositionStore(_filePath);
+        var display = new HudDisplayPreference
+        {
+            DevicePath = @"\\?\DISPLAY#DELA1F2#5&2b3c#{e6f07b5f-ee97-4a90-b076-33f57bf4eaa7}",
+            EdidKey = "10AC:A1F2",
+            Name = "DELL U2723QE"
+        };
+
+        var saved = store.Save(new HudPositionSettings
+        {
+            Left = 12,
+            Top = 0,
+            Mode = nameof(HudDockMode.RightEdge),
+            Display = display
+        });
+
+        saved.Should().BeTrue();
+
+        var restored = store.Load();
+
+        restored.Mode.Should().Be(nameof(HudDockMode.RightEdge));
+        restored.Display.Should().Be(display);
+        restored.Left.Should().Be(12);
+        restored.ResolveMode().Mode.Should().Be(HudDockMode.RightEdge);
+    }
+
+    [Fact]
+    public void Load_WhenModeIsUnknown_KeepsStoredCoordinates()
+    {
+
+        File.WriteAllText(_filePath, """{ "Hud": { "Left": 700, "Top": 20, "Mode": "Diagonal" } }""");
+        var store = new HudPositionStore(_filePath);
+
+        var restored = store.Load();
+
+        restored.TryGetPosition(out var left, out var top).Should().BeTrue();
+        left.Should().Be(700);
+        top.Should().Be(20);
+        restored.ResolveMode().Mode.Should().Be(HudDockMode.TopCenter);
+    }
+
+    [Fact]
+    public void Load_WhenFileHasOnlyCoordinates_DoesNotRewriteFile()
+    {
+
+        const string LEGACY_JSON = """{ "Hud": { "Left": 500, "Top": 300 } }""";
+        File.WriteAllText(_filePath, LEGACY_JSON);
+        var store = new HudPositionStore(_filePath);
+
+        store.Load().ResolveMode().Mode.Should().Be(HudDockMode.Free);
+
+        File.ReadAllText(_filePath).Should().Be(LEGACY_JSON);
+    }
+
+    [Fact]
+    public void Save_WithMode_PreservesHudSizeSection()
+    {
+
+        File.WriteAllText(_filePath, """{ "HudSize": { "Percent": 125 } }""");
+        var store = new HudPositionStore(_filePath);
+
+        store.Save(new HudPositionSettings { Mode = nameof(HudDockMode.TopRight) }).Should().BeTrue();
+
+        using var document = JsonDocument.Parse(File.ReadAllText(_filePath));
+        var root = document.RootElement;
+
+        root.GetProperty("HudSize").GetProperty("Percent").GetInt32().Should().Be(125);
+        root.GetProperty("Hud").GetProperty("Mode").GetString().Should().Be(nameof(HudDockMode.TopRight));
+    }
 }

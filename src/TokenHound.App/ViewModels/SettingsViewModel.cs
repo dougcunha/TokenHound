@@ -67,6 +67,9 @@ public sealed class SettingsViewModel : IDisposable
     /// <summary>Gets the General tab HUD size section model, or <see langword="null"/> when unavailable.</summary>
     public HudSizeSettingsViewModel? HudSize { get; init; }
 
+    /// <summary>Gets the General tab HUD placement section model, or <see langword="null"/> when unavailable.</summary>
+    public HudPlacementSettingsViewModel? HudPlacement { get; init; }
+
     /// <summary>Gets the provider rows, ordered by display name so the dialog is stable across launches.</summary>
     public ObservableCollection<ProviderToggleViewModel> Providers { get; } = [];
 

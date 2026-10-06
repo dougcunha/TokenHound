@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "generation": 25,
+  "feature": "prd-14-hud-multimonitor-docking",
+  "workspace": "D:/MyProjects/TokenHound",
+  "phase": "completed",
+  "status": "completed",
+  "safe_to_stop": true,
+  "owner_session": null,
+  "objective": "HUD multi-monitor and edge docking: preferred display, docking edges (Top Center, Top Right, Right vertical pill), DPI-aware clamping, persisted placement, default orientation and migration of saved coordinates.",
+  "constraints": [
+    ".NET desktop app: no E2E; unit, integration, and scripted manual acceptance only",
+    "HUD stays non-activating: WM_MOUSEACTIVATE -> MA_NOACTIVATE; SWP_NOZORDER without SWP_SHOWWINDOW",
+    "Existing users' HUD placement must stay stable unless the PRD defines a migration",
+    "Validate HUD visually via Windows MCP App launch and primary-monitor Screenshot"
+  ],
+  "sources": {
+    "workflow": "workflow.md",
+    "prd": "prd.md",
+    "techspec": "techspec.md",
+    "tasks": "tasks.md",
+    "review": "codereview_03/codereview.md",
+    "snapshot": "context-snapshot.md"
+  },
+  "review_status": "APPROVED",
+  "approved_sources": [
+    {
+      "path": "prd.md",
+      "sha256": "ac90b343d87ea927935633b7db5475b231faad40fc5759e3192a2254175265fd",
+      "decision_id": "DEC-03"
+    },
+    {
+      "path": "techspec.md",
+      "sha256": "132e117bcb2b18fee334251f7dddc8e3e907009b0f4e8b6657262bc6cf56f13b",
+      "decision_id": "DEC-04"
+    },
+    {
+      "path": "tasks.md",
+      "sha256": "8648a554bc28d6b6d6208502897fd5cd9520ad8b10e6dbdf89f5fb0ce3f5c24f",
+      "decision_id": "DEC-04"
+    },
+    {
+      "path": "task_01.md",
+      "sha256": "e1632fc462696ace4bf5f50ff1b1dac6f4394fa49bc55c97c080770fc47cab95",
+      "decision_id": "DEC-04"
+    },
+    {
+      "path": "task_02.md",
+      "sha256": "b5f91efdab272ca25aa676c266b06a8236f8059b65984479792f1affebf74bdd",
+      "decision_id": "DEC-04"
+    },
+    {
+      "path": "task_03.md",
+      "sha256": "b34452c35f7638afa2661ec23930c0398222794641e450ede42e4e4e09c32bb6",
+      "decision_id": "DEC-04"
+    },
+    {
+      "path": "task_04.md",
+      "sha256": "7954d52ee2d324dd2ce02752cd2f5d4f07f7bd1b6e80dee9b321b810adb50c04",
+      "decision_id": "DEC-04"
+    },
+    {
+      "path": "task_05.md",
+      "sha256": "0ff50956ce99f51216ab48e5f09368196fbb1819afe5dc8d35fc160f668e97b4",
+      "decision_id": "DEC-04"
+    },
+    {
+      "path": "task_06.md",
+      "sha256": "95d9ddb6baee4bcf82579fd04e88cb45586c84ea6ad7e396ae7a7e2588cccd46",
+      "decision_id": "DEC-04"
+    },
+    {
+      "path": "task_07.md",
+      "sha256": "b995a64420ea00fa7df05ab06c4a95b282fabef04e0c1dc5f71aecf73acac928",
+      "decision_id": "DEC-04"
+    }
+  ],
+  "decisions_to_read": [
+    "DEC-07",
+    "DEC-08"
+  ],
+  "git_base": "c4b55b9cb1b372f819f59639e6836388e78ebed5",
+  "worktree_evidence": "workflow.md#feature-context",
+  "active_work": [],
+  "pending_hil": null,
+  "blockers": [],
+  "correction_round": 1,
+  "rounds_without_progress": 0,
+  "next_action": {
+    "kind": "close",
+    "instruction": "Feature accepted (DEC-08). Refactoring of SettingsWindow.xaml/DialogResources.xaml is a separate feature per DEC-07.",
+    "read": [
+      {
+        "path": "tasks/prd-14-hud-multimonitor-docking/workflow.md",
+        "section": "DEC-07; DEC-08"
+      }
+    ]
+  }
+}

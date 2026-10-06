@@ -30,8 +30,11 @@ public sealed partial class NotchWindow
     {
 
         var factor = HudScale.Current.Factor;
+        var (minWidth, minHeight) = HudDockLayout.Current.IsVertical
+            ? (BASE_MIN_HEIGHT, BASE_MIN_WIDTH)
+            : (BASE_MIN_WIDTH, BASE_MIN_HEIGHT);
 
-        MinWidth = BASE_MIN_WIDTH * factor;
-        MinHeight = BASE_MIN_HEIGHT * factor;
+        MinWidth = minWidth * factor;
+        MinHeight = minHeight * factor;
     }
 }

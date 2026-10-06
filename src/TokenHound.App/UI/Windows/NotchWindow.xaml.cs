@@ -7,7 +7,6 @@ using System.Windows.Interop;
 using Serilog;
 using TokenHound.App.Interop;
 using TokenHound.App.ViewModels;
-using TokenHound.Infrastructure.Configuration;
 
 namespace TokenHound.App.UI.Windows;
 
@@ -19,11 +18,10 @@ public sealed partial class NotchWindow : Window
     private const int WM_MOUSEACTIVATE = 0x0021;
     private const int MA_NOACTIVATE = 3;
     private const int WM_DISPLAYCHANGE = 0x007E;
-
-    private readonly HudPositionStore _positionStore = new();
+    private const int WM_SETTINGCHANGE = 0x001A;
+    private const int SPI_SETWORKAREA = 0x002F;
 
     private HudActionsViewModel? _actionsViewModel;
-    private HudPositionSettings _position = new();
 
     /// <summary>
     /// Predicate deciding whether an incoming Notch close is intercepted and turned into a hide;
@@ -114,8 +112,8 @@ public sealed partial class NotchWindow : Window
             return new IntPtr(MA_NOACTIVATE);
         }
 
-        if (msg == WM_DISPLAYCHANGE)
-            Dispatcher.BeginInvoke(new Action(ApplyPlacement));
+        if (msg == WM_DISPLAYCHANGE || (msg == WM_SETTINGCHANGE && wParam.ToInt64() == SPI_SETWORKAREA))
+            SchedulePlacement();
 
         return IntPtr.Zero;
     }
@@ -123,11 +121,10 @@ public sealed partial class NotchWindow : Window
     private void OnLoaded(object? sender, RoutedEventArgs e)
     {
 
-        _position = _positionStore.Load();
+        if (_placement is not null)
+            Log.Debug("Restoring HUD placement {Mode}", _placement.Mode);
 
-        if (_position.TryGetPosition(out var left, out var top))
-            Log.Debug("Restoring persisted HUD position Left={Left} Top={Top}", left, top);
-
+        ApplyChrome();
         ApplyPlacement();
     }
 
@@ -143,8 +140,13 @@ public sealed partial class NotchWindow : Window
         if (e.ButtonState != MouseButtonState.Pressed)
             return;
 
+        var (left, top) = (Left, Top);
+
         DragMove();
-        PersistPosition();
+
+        // DragMove also runs on a plain click; only a real move switches the HUD to Free.
+        if (Left != left || Top != top)
+            _placement?.RecordDrag(Left, Top);
     }
 
     private void OnCapsuleContextMenuOpening(object sender, ContextMenuEventArgs e)
@@ -152,6 +154,8 @@ public sealed partial class NotchWindow : Window
 
         if (RefreshMenuItem is not null && _actionsViewModel is not null)
             RefreshMenuItem.IsEnabled = !_actionsViewModel.IsRefreshing;
+
+        UpdatePositionChecks();
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e)
@@ -237,22 +241,6 @@ public sealed partial class NotchWindow : Window
 
         StatusText.Text = _actionsViewModel.RefreshStatusText ?? string.Empty;
         StatusPopup.IsOpen = _actionsViewModel.IsStatusVisible;
-    }
-
-    private void PersistPosition()
-    {
-
-        var moved = new HudPositionSettings { Left = Left, Top = Top };
-
-        if (moved == _position)
-            return;
-
-        _position = moved;
-
-        if (_positionStore.Save(moved))
-            Log.Debug("Persisted HUD position Left={Left} Top={Top}", moved.Left, moved.Top);
-        else
-            Log.Warning("Unable to persist HUD position to {SettingsFile}", _positionStore.FilePath);
     }
 
 }

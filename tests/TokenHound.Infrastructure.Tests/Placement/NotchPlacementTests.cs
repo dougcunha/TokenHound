@@ -1,5 +1,7 @@
 using AwesomeAssertions;
+using System;
 using TokenHound.App.UI.Placement;
+using TokenHound.Infrastructure.Configuration;
 using Xunit;
 
 namespace TokenHound.Infrastructure.Tests.Placement;
@@ -15,6 +17,14 @@ public sealed class NotchPlacementTests
         Top = 0,
         Width = 3440,
         Height = 1440
+    };
+
+    private static readonly ScreenBounds LEFT_SECONDARY = new()
+    {
+        Left = -1920,
+        Top = 40,
+        Width = 1920,
+        Height = 1000
     };
 
     [Fact]
@@ -169,5 +179,105 @@ public sealed class NotchPlacementTests
 
         left.Should().Be(2242);
         top.Should().Be(-118);
+    }
+
+    [Theory]
+    [InlineData(HudDockMode.TopLeft, -1920, 40)]
+    [InlineData(HudDockMode.TopCenter, -1110, 40)]
+    [InlineData(HudDockMode.TopRight, -300, 40)]
+    public void Dock_TopModes_AreFlushWithTopEdgeOfNegativeOriginWorkArea(HudDockMode mode, double expectedLeft, double expectedTop)
+    {
+
+        var (left, top) = NotchPlacement.Dock(
+            mode,
+            LEFT_SECONDARY,
+            windowWidth: 300,
+            windowHeight: 60
+        );
+
+        left.Should().Be(expectedLeft);
+        top.Should().Be(expectedTop);
+    }
+
+    [Theory]
+    [InlineData(HudDockMode.LeftEdge, -1920, 390)]
+    [InlineData(HudDockMode.RightEdge, -60, 390)]
+    public void Dock_SideModes_AreFlushAndVerticallyCentered(HudDockMode mode, double expectedLeft, double expectedTop)
+    {
+
+        var (left, top) = NotchPlacement.Dock(
+            mode,
+            LEFT_SECONDARY,
+            windowWidth: 60,
+            windowHeight: 300
+        );
+
+        left.Should().Be(expectedLeft);
+        top.Should().Be(expectedTop);
+    }
+
+    /// <summary>An odd remainder floors so the capsule never sits half a pixel off a whole-pixel grid.</summary>
+    [Fact]
+    public void Dock_TopCenter_WithOddRemainder_FloorsTheOffset()
+    {
+
+        var workArea = new ScreenBounds { Left = 0, Top = 0, Width = 1921, Height = 1080 };
+
+        var (left, _) = NotchPlacement.Dock(
+            HudDockMode.TopCenter,
+            workArea,
+            windowWidth: 200,
+            windowHeight: 60
+        );
+
+        left.Should().Be(860);
+    }
+
+    [Fact]
+    public void Dock_TopCenter_MatchesCenterOnTopEdgeForEvenRemainders()
+    {
+
+        var (left, top) = NotchPlacement.Dock(
+            HudDockMode.TopCenter,
+            PRIMARY_SCREEN,
+            windowWidth: 240,
+            windowHeight: 70
+        );
+
+        (left, top).Should().Be(NotchPlacement.CenterOnTopEdge(PRIMARY_SCREEN, windowWidth: 240));
+    }
+
+    [Theory]
+    [InlineData(HudDockMode.TopRight)]
+    [InlineData(HudDockMode.RightEdge)]
+    [InlineData(HudDockMode.TopCenter)]
+    public void Dock_WhenWindowIsLargerThanWorkArea_StartsAtWorkAreaOrigin(HudDockMode mode)
+    {
+
+        var small = new ScreenBounds { Left = 100, Top = 50, Width = 200, Height = 100 };
+
+        var (left, top) = NotchPlacement.Dock(
+            mode,
+            small,
+            windowWidth: 400,
+            windowHeight: 300
+        );
+
+        left.Should().Be(100);
+        top.Should().Be(50);
+    }
+
+    [Fact]
+    public void Dock_WhenModeIsFree_Throws()
+    {
+
+        var act = () => NotchPlacement.Dock(
+            HudDockMode.Free,
+            PRIMARY_SCREEN,
+            windowWidth: 240,
+            windowHeight: 70
+        );
+
+        act.Should().Throw<ArgumentOutOfRangeException>();
     }
 }

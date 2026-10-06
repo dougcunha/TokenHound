@@ -106,6 +106,12 @@
             </Setter>
         </Style>
 
+        <!-- Combo box item showing the option Label, used by the drop-down and the selection box -->
+        <DataTemplate x:Key="LabelItemTemplate">
+            <TextBlock Text="{Binding Label}"
+                       TextTrimming="CharacterEllipsis" />
+        </DataTemplate>
+
         <!-- Settings TextBox Style -->
         <Style x:Key="SettingsTextBoxStyle" TargetType="TextBox">
             <Setter Property="Background" Value="{StaticResource SurfaceBackgroundBrush}" />
@@ -262,6 +268,7 @@
                                 <MultiDataTrigger.Conditions>
                                     <Condition Binding="{Binding Startup}" Value="{x:Null}" />
                                     <Condition Binding="{Binding HudSize}" Value="{x:Null}" />
+                                    <Condition Binding="{Binding HudPlacement}" Value="{x:Null}" />
                                 </MultiDataTrigger.Conditions>
                                 <Setter Property="Visibility" Value="Collapsed" />
                             </MultiDataTrigger>
@@ -274,6 +281,81 @@
                               Margin="0,8,-4,0"
                               Padding="0,0,4,0">
                     <StackPanel>
+                        <Border Background="{StaticResource SurfaceCardBackgroundBrush}"
+                                BorderBrush="{StaticResource SurfaceBorderSubtleBrush}"
+                                BorderThickness="1"
+                                CornerRadius="8"
+                                Padding="14,12"
+                                Margin="0,0,0,12"
+                                DataContext="{Binding Startup}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
+                            <StackPanel>
+                                <TextBlock Text="Startup"
+                                           FontSize="13"
+                                           FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimaryBrush}"
+                                           Margin="0,0,0,2" />
+                                <TextBlock Text="Adds a shortcut to your Windows Startup folder."
+                                           FontSize="11"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           Margin="0,0,0,12" />
+                                <CheckBox IsChecked="{Binding IsEnabled}"
+                                          Content="Start TokenHound when I sign in to Windows"
+                                          Foreground="{StaticResource TextPrimaryBrush}"
+                                          FontSize="12"
+                                          AutomationProperties.Name="Start TokenHound when I sign in to Windows"
+                                          AutomationProperties.HelpText="Adds or removes the TokenHound shortcut in your Windows Startup folder when you apply" />
+                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                                    <Button Content="Apply"
+                                            Style="{StaticResource DialogButtonStyle}"
+                                            Command="{Binding ApplyCommand}"
+                                            AutomationProperties.Name="Apply startup settings" />
+                                    <TextBlock Text="Settings applied"
+                                               Foreground="{StaticResource BadgeOkForegroundBrush}"
+                                               FontSize="12"
+                                               FontWeight="Medium"
+                                               VerticalAlignment="Center"
+                                               Margin="12,0,0,0"
+                                               AutomationProperties.Name="Startup settings status">
+                                        <TextBlock.Style>
+                                            <Style TargetType="TextBlock">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding IsApplied}" Value="True">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </TextBlock.Style>
+                                    </TextBlock>
+                                </StackPanel>
+                                <TextBlock Text="{Binding ApplyError}"
+                                           Foreground="{StaticResource BadgeAccessDeniedForegroundBrush}"
+                                           FontSize="11"
+                                           Margin="0,8,0,0"
+                                           TextWrapping="Wrap"
+                                           AutomationProperties.Name="Startup settings error">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Visible" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ApplyError}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+                        </Border>
                         <Border Background="{StaticResource SurfaceCardBackgroundBrush}"
                                 BorderBrush="{StaticResource SurfaceBorderSubtleBrush}"
                                 BorderThickness="1"
@@ -393,67 +475,87 @@
                                 CornerRadius="8"
                                 Padding="14,12"
                                 Margin="0,0,0,4"
-                                DataContext="{Binding Startup}">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding}" Value="{x:Null}">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
+                                DataContext="{Binding HudPlacement}">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding}" Value="{x:Null}">
+                                            <Setter Property="Visibility" Value="Collapsed" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Border.Style>
                             <StackPanel>
-                                <TextBlock Text="Startup"
+                                <TextBlock Text="HUD placement"
                                            FontSize="13"
                                            FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimaryBrush}"
                                            Margin="0,0,0,2" />
-                                <TextBlock Text="Adds a shortcut to your Windows Startup folder."
+                                <TextBlock Text="Docks the HUD to a screen edge of the chosen display. Changes apply immediately."
                                            FontSize="11"
                                            Foreground="{StaticResource TextSecondaryBrush}"
+                                           TextWrapping="Wrap"
                                            Margin="0,0,0,12" />
-                                <CheckBox IsChecked="{Binding IsEnabled}"
-                                          Content="Start TokenHound when I sign in to Windows"
-                                          Foreground="{StaticResource TextPrimaryBrush}"
-                                          FontSize="12"
-                                          AutomationProperties.Name="Start TokenHound when I sign in to Windows"
-                                          AutomationProperties.HelpText="Adds or removes the TokenHound shortcut in your Windows Startup folder when you apply" />
-                                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                                    <Button Content="Apply"
-                                            Style="{StaticResource DialogButtonStyle}"
-                                            Command="{Binding ApplyCommand}"
-                                            AutomationProperties.Name="Apply startup settings" />
-                                    <TextBlock Text="Settings applied"
-                                               Foreground="{StaticResource BadgeOkForegroundBrush}"
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="72" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="8" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Text="Position"
                                                FontSize="12"
-                                               FontWeight="Medium"
-                                               VerticalAlignment="Center"
-                                               Margin="12,0,0,0"
-                                               AutomationProperties.Name="Startup settings status">
-                                        <TextBlock.Style>
-                                            <Style TargetType="TextBlock">
-                                                <Setter Property="Visibility" Value="Collapsed" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsApplied}" Value="True">
-                                                        <Setter Property="Visibility" Value="Visible" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </StackPanel>
-                                <TextBlock Text="{Binding ApplyError}"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <ComboBox Grid.Column="1"
+                                              Style="{StaticResource DialogComboBoxStyle}"
+                                              ItemsSource="{Binding Modes}"
+                                              SelectedItem="{Binding SelectedMode, Mode=TwoWay}"
+                                              ItemTemplate="{StaticResource LabelItemTemplate}"
+                                              AutomationProperties.Name="HUD position" />
+                                    <TextBlock Grid.Row="2"
+                                               Text="Display"
+                                               FontSize="12"
+                                               Foreground="{StaticResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <ComboBox Grid.Row="2"
+                                              Grid.Column="1"
+                                              Style="{StaticResource DialogComboBoxStyle}"
+                                              ItemsSource="{Binding Displays}"
+                                              SelectedItem="{Binding SelectedDisplay, Mode=TwoWay}"
+                                              ItemTemplate="{StaticResource LabelItemTemplate}"
+                                              IsEnabled="{Binding IsDisplayEnabled}"
+                                              AutomationProperties.Name="HUD display" />
+                                </Grid>
+                                <TextBlock Text="{Binding DisplayHint}"
+                                           FontSize="11"
+                                           Foreground="{StaticResource TextSecondaryBrush}"
+                                           Margin="72,6,0,0"
+                                           TextWrapping="Wrap"
+                                           AutomationProperties.Name="HUD display hint">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding DisplayHint}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                                <TextBlock Text="{Binding SaveError}"
                                            Foreground="{StaticResource BadgeAccessDeniedForegroundBrush}"
                                            FontSize="11"
                                            Margin="0,8,0,0"
                                            TextWrapping="Wrap"
-                                           AutomationProperties.Name="Startup settings error">
+                                           AutomationProperties.Name="HUD placement error">
                                     <TextBlock.Style>
                                         <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Visible" />
                                             <Style.Triggers>
-                                                <DataTrigger Binding="{Binding ApplyError}" Value="{x:Null}">
+                                                <DataTrigger Binding="{Binding SaveError}" Value="{x:Null}">
                                                     <Setter Property="Visibility" Value="Collapsed" />
                                                 </DataTrigger>
                                             </Style.Triggers>

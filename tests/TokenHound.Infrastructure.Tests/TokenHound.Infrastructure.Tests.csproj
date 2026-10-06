@@ -42,8 +42,15 @@
     <Compile Include="..\..\src\TokenHound.App\Interop\WindowStyles.cs" Link="Interop\WindowStyles.cs" />
     <Compile Include="..\..\src\TokenHound.App\Presentation\ApplicationInfo.cs" Link="Presentation\ApplicationInfo.cs" />
     <Compile Include="..\..\src\TokenHound.App\Presentation\HudScale.cs" Link="Presentation\HudScale.cs" />
+    <Compile Include="..\..\src\TokenHound.App\Presentation\HudPlacementContext.cs" Link="Presentation\HudPlacementContext.cs" />
+    <Compile Include="..\..\src\TokenHound.App\Presentation\HudPlacementService.cs" Link="Presentation\HudPlacementService.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Placement\ScreenBounds.cs" Link="Placement\ScreenBounds.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Placement\NotchPlacement.cs" Link="Placement\NotchPlacement.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\DisplayInfo.cs" Link="Placement\DisplayInfo.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\DisplayResolution.cs" Link="Placement\DisplayResolution.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\DisplayResolver.cs" Link="Placement\DisplayResolver.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudEdge.cs" Link="Placement\HudEdge.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudEdgeLayout.cs" Link="Placement\HudEdgeLayout.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\CadenceSettingsViewModel.cs" Link="ViewModels\CadenceSettingsViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderBadgeState.cs" Link="ViewModels\ProviderBadgeState.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderBadgeResolver.cs" Link="ViewModels\ProviderBadgeResolver.cs" />
@@ -71,6 +78,7 @@
     <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateMessages.cs" Link="ViewModels\UpdateMessages.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\StartupSettingsViewModel.cs" Link="ViewModels\StartupSettingsViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\HudSizeSettingsViewModel.cs" Link="ViewModels\HudSizeSettingsViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\HudPlacementSettingsViewModel.cs" Link="ViewModels\HudPlacementSettingsViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateSettingsViewModel.cs" Link="ViewModels\UpdateSettingsViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateViewModel.cs" Link="ViewModels\UpdateViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\UpdateViewModel.Apply.cs" Link="ViewModels\UpdateViewModel.Apply.cs" />

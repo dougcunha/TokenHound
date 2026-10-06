@@ -1,4 +1,5 @@
 using System;
+using TokenHound.Infrastructure.Configuration;
 
 namespace TokenHound.App.UI.Placement;
 
@@ -45,5 +46,39 @@ public static class NotchPlacement
         var maxTop = Math.Max(bounds.Top, bounds.Bottom - windowHeight);
 
         return (Math.Clamp(left, bounds.Left, maxLeft), Math.Clamp(top, bounds.Top, maxTop));
+    }
+
+    /// <summary>
+    /// Computes the window offset that docks the capsule flush with an edge of the work area.
+    /// Centering floors the remainder; a window larger than the work area starts at its origin on that axis.
+    /// </summary>
+    /// <param name="mode">The docked placement mode; <see cref="HudDockMode.Free"/> is not accepted.</param>
+    /// <param name="workArea">The work area hosting the capsule, in the same units as the window size.</param>
+    /// <param name="windowWidth">The current window width.</param>
+    /// <param name="windowHeight">The current window height.</param>
+    /// <returns>The docked left and top offsets.</returns>
+    public static (double Left, double Top) Dock(
+        HudDockMode mode,
+        ScreenBounds workArea,
+        double windowWidth,
+        double windowHeight
+    )
+    {
+
+        ArgumentNullException.ThrowIfNull(workArea);
+
+        var left = mode switch
+        {
+            HudDockMode.TopLeft or HudDockMode.LeftEdge => workArea.Left,
+            HudDockMode.TopCenter => workArea.Left + Math.Floor((workArea.Width - windowWidth) / 2.0),
+            HudDockMode.TopRight or HudDockMode.RightEdge => workArea.Right - windowWidth,
+            _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Only docked modes have an edge placement.")
+        };
+
+        var top = mode is HudDockMode.LeftEdge or HudDockMode.RightEdge
+            ? workArea.Top + Math.Floor((workArea.Height - windowHeight) / 2.0)
+            : workArea.Top;
+
+        return (Math.Max(workArea.Left, left), Math.Max(workArea.Top, top));
     }
 }

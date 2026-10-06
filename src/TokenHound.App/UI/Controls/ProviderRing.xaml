@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:TokenHound.App.UI.Controls"
+             xmlns:presentation="clr-namespace:TokenHound.App.Presentation"
              mc:Ignorable="d"
              Width="44"
              Height="44">
@@ -21,7 +22,8 @@
     </UserControl.Resources>
 
     <UserControl.ToolTip>
-        <ToolTip Background="Transparent"
+        <ToolTip Placement="{Binding TooltipPlacement, Source={x:Static presentation:HudDockLayout.Current}}"
+                 Background="Transparent"
                  BorderThickness="0"
                  Padding="0"
                  HasDropShadow="False">

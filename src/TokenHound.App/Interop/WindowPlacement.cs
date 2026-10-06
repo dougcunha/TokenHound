@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media;
+using TokenHound.App.UI.Placement;
 
 namespace TokenHound.App.Interop;
 
@@ -12,6 +13,9 @@ namespace TokenHound.App.Interop;
 public static class WindowPlacement
 {
     private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
+    private const uint SWP_NOSIZE = 0x0001;
+    private const uint SWP_NOZORDER = 0x0004;
+    private const uint SWP_NOACTIVATE = 0x0010;
     private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
     private const int DWMWA_BORDER_COLOR = 34;
     private const int DWMWA_CAPTION_COLOR = 35;
@@ -57,6 +61,50 @@ public static class WindowPlacement
         }
 
         return SystemParameters.WorkArea;
+    }
+
+    /// <summary>
+    /// Reads the window rectangle in physical pixels.
+    /// </summary>
+    /// <param name="hwnd">The native window handle.</param>
+    /// <returns>The window bounds, or <see langword="null"/> when the handle is invalid.</returns>
+    public static ScreenBounds? GetWindowPixelBounds(IntPtr hwnd)
+    {
+
+        if (!OperatingSystem.IsWindows() || hwnd == IntPtr.Zero || !GetWindowRect(hwnd, out var rect))
+            return null;
+
+        return new ScreenBounds
+        {
+            Left = rect.Left,
+            Top = rect.Top,
+            Width = rect.Right - rect.Left,
+            Height = rect.Bottom - rect.Top
+        };
+    }
+
+    /// <summary>
+    /// Moves the window to a position in physical pixels without resizing, activating, or reordering it.
+    /// </summary>
+    /// <param name="hwnd">The native window handle.</param>
+    /// <param name="x">The new left edge in physical pixels.</param>
+    /// <param name="y">The new top edge in physical pixels.</param>
+    /// <returns><see langword="true"/> when the window was moved.</returns>
+    public static bool MoveWindowTo(IntPtr hwnd, int x, int y)
+    {
+
+        if (!OperatingSystem.IsWindows() || hwnd == IntPtr.Zero)
+            return false;
+
+        return SetWindowPos(
+            hwnd,
+            IntPtr.Zero,
+            x,
+            y,
+            0,
+            0,
+            SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE
+        );
     }
 
     /// <summary>
@@ -171,6 +219,22 @@ public static class WindowPlacement
 
     [DllImport("user32.dll", SetLastError = true)]
     private static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetWindowRect(IntPtr hwnd, out RECT rect);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool SetWindowPos(
+        IntPtr hwnd,
+        IntPtr insertAfter,
+        int x,
+        int y,
+        int width,
+        int height,
+        uint flags
+    );
 
     [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

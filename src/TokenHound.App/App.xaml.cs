@@ -363,6 +363,7 @@ public partial class App : Application
         {
             Updates = CreateUpdateSettingsViewModel(),
             HudSize = HudSizeSettingsViewModel.Create(_hudSizeStore, HudScale.Current),
+            HudPlacement = CreateHudPlacementSettingsViewModel(),
             Startup = Environment.ProcessPath is { } executablePath
                 ? new StartupSettingsViewModel(StartupLaunchService.CreateDefault(), executablePath)
                 : null
@@ -390,17 +391,7 @@ public partial class App : Application
             CheckForUpdatesAction = ShowUpdateDialog
         };
 
-        _notchWindow = new NotchWindow
-        {
-            DataContext = _notchViewModel,
-            ActionsViewModel = _actionsViewModel
-        };
-
-        MainWindow = _notchWindow;
-        _notchWindow.Show();
-
-        Log.Information("HUD window displayed successfully.");
-
+        ShowNotchWindow(_notchViewModel, _actionsViewModel);
         InitializeTray(disposableResources);
     }
 
