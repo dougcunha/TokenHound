@@ -30,6 +30,7 @@ These numbers match the retained feature directories. Earlier roadmap numbers fo
 | PRD 13 | HUD size setting | [Checkpoint](../tasks/prd-13-hud-size/checkpoint.json) |
 | PRD 14 | Multi-monitor selection, edge docking, and persisted placement | [Checkpoint](../tasks/prd-14-hud-multimonitor-docking/checkpoint.json) |
 | PRD 15 | Settings controls and dialog resource split | [Checkpoint](../tasks/prd-15-settings-window-split/checkpoint.json) |
+| PRD 16 | HUD edge geometry and contour hit testing | [Checkpoint](../tasks/prd-16-hud-geometry-hit-testing/checkpoint.json) |
 
 ### HUD Placement Baseline
 
@@ -44,9 +45,9 @@ Multi-monitor docking landed in commit `90d6748` and shipped in v0.1.13. Setting
 
 The Settings resource refactor landed in commit `6f2e92b` and shipped in the same release. It preserves the existing controls and behavior.
 
-## In Progress: HUD Edge Geometry and Contour Hit Testing
+## Completed: HUD Edge Geometry and Contour Hit Testing
 
-**Status:** implementation under `sdd-full`. The [PRD](../tasks/prd-16-hud-geometry-hit-testing/prd.md), [TechSpec](../tasks/prd-16-hud-geometry-hit-testing/techspec.md), and [task plan](../tasks/prd-16-hud-geometry-hit-testing/tasks.md) are approved. T01 (shared contour) and T02 (interactive contour with passive shadow) are complete. T03 (placement continuity and desktop acceptance) is partial: the Release build and the full Infrastructure suite pass, but desktop confirmation of the right-edge pixel-extent correction, the full size/DPI/display matrix, the human visual gate, independent review, and HIL 3 are still pending.
+**Status:** completed 2026-10-09 under `sdd-full` (commit `2bc32ef` plus evidence). The independent review approved it with reservations; the open improvements and the residual risk (physical preferred-display disconnection not tested) are recorded in the [workflow](../tasks/prd-16-hud-geometry-hit-testing/workflow.md) as DEC-05 and DEC-06.
 
 **Outcome:** the visible HUD contour and its interactive area agree in every supported docking mode, while the HUD keeps its non-activating behavior.
 
@@ -68,7 +69,7 @@ The following work is outside the geometry and hit-testing candidate:
 
 | Candidate | Source and status |
 | --- | --- |
-| Mica/Acrylic backdrop effects | Deferred visual work from the earlier roadmap; compatibility with the transparent, non-activating WPF window requires validation |
+| Acrylic backdrop effect (PRD 17) | Implemented under `sdd-lean` ([plan](../tasks/prd-17-hud-backdrop-effects/tasks.md), [validation](../tasks/prd-17-hud-backdrop-effects/validation.md)): a host-backdrop composition companion under the layered HUD, with a Settings toggle and live fallback. Accepted on 2026-10-09 with recorded open items (outside-click checks in five docking modes, failure-log field, merge test) |
 | Smooth ring progress interpolation | Deferred visual work; the existing busy indicator already pulses |
 | Consumption threshold alerts with per-provider mute | Product idea in the [original implementation plan](reference/2026-08-28-usage-notch-plan.md), not an approved Windows feature |
 | Automatic hiding for fullscreen applications | Product idea in the same reference plan, not an approved Windows feature |

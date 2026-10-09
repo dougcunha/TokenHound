@@ -14,10 +14,10 @@ For a desktop companion functioning as a **screen-edge floating notch / HUD** wi
 | :--- | :--- | :--- |
 | **Non-Rectangular Transparent Windows** | **Native & Mature Support**: `AllowsTransparency="True"`, `WindowStyle="None"`, `Background="Transparent"`, and Bézier curvature drawing via `PathGeometry`. | **Limitations & Bugs**: `AppWindow` in Windows App SDK suffers from long-standing bugs with per-pixel alpha transparency and resizing ghost borders. |
 | **Non-Activating Window (*No-Activate HUD*)** | **Straightforward**: Injection of Win32 styles `WS_EX_NOACTIVATE`, `WS_EX_TOOLWINDOW`, and `WS_EX_TOPMOST` via `HwndSource` so the HUD never steals focus from the editor/terminal. | **Unstable**: Requires complex low-level HWND manipulation; popups and flyouts frequently steal OS focus. |
-| **Click-Through Transparency** | **Simple**: Intercepts `WM_NCHITTEST` returning `HTTRANSPARENT` outside the notch capsule outline, allowing clicks to pass directly to underlying windows. | **Complex**: Requires experimental `InputNonClientPointerSource` APIs with limited support for non-rectangular regions. |
+| **Click-Through Transparency** | **Simple**: The HUD is a layered window (`AllowsTransparency`), so pixels outside the painted capsule contour have zero alpha and Windows routes their clicks to the application behind, across processes. The drop shadow renders in an owned `WS_EX_TRANSPARENT` companion window that never receives input. | **Complex**: Requires experimental `InputNonClientPointerSource` APIs with limited support for non-rectangular regions. |
 | **Idle Memory Footprint** | **Low (~30 to 45 MB)** running continuously in the system tray. | **High (~90 to 160 MB)** due to Windows App SDK runtime overhead and the WinUI 3 compositor. |
 | **System Tray Integration** | **Native & Consolidated** via lightweight libraries such as `Hardcodet.NotifyIcon.Wpf`. | **No native support**: Relies on third-party components and community wrappers. |
-| **Windows 11 Fluent & DWM Design** | **Integrated in .NET 10**: Native Windows 11 theme support (`SystemTheme="Windows11"`), DWM rounded corners, and Mica/Acrylic effects via `DwmSetWindowAttribute`. | **Native**: Built-in Fluent interface controls out-of-the-box. |
+| **Windows 11 Fluent & DWM Design** | **Integrated in .NET 10**: Native Windows 11 theme support (`SystemTheme="Windows11"`), DWM rounded corners, and the HUD Acrylic material through a Windows.UI.Composition host-backdrop companion called with hand-written WinRT interop (no Windows SDK projection, so the single-file size is unchanged). | **Native**: Built-in Fluent interface controls out-of-the-box. |
 | **Distribution / Packaging** | **Single File**: `PublishSingleFile=true`, ReadyToRun, or Native AOT without MSIX dependencies or external runtimes. | **Heavier**: Requires MSIX packaging or Windows App SDK runtime redistribution. |
 
 ---
@@ -115,7 +115,8 @@ TokenHound/
 │       │   └── Animations/                 # Smooth transitions and HUD animations
 │       ├── Interop/                        # Native Win32 window hooks
 │       │   ├── WindowStyles.cs             # WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST
-│       │   ├── DwmHelper.cs                # DWM Mica/Acrylic effects and rounded corners
+│       │   ├── HudBackdropComposition.cs   # Host-backdrop sprite via hand-written WinRT ABI calls
+│       │   ├── HudBackdropInterop.cs       # Input-transparent backdrop companion window and region
 │       │   └── MouseHook.cs                # Cursor tracking for notch expansion
 │       ├── ViewModels/                     # MVVM ViewModels
 │       │   ├── NotchViewModel.cs           # Active rings and HUD state

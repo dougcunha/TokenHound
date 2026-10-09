@@ -1,0 +1,68 @@
+{
+    "schema_version": 1,
+    "generation": 20,
+    "feature": "prd-17-hud-backdrop-effects",
+    "workspace": "D:/MyProjects/TokenHound",
+    "phase": "completed",
+    "status": "completed",
+    "safe_to_stop": true,
+    "owner_session": null,
+    "objective": "Give the HUD capsule a Windows 11 Mica/Acrylic material while preserving outside-contour click-through, non-activation, and readability.",
+    "constraints": [
+        "Windows 11 WPF/.NET 10 desktop application; no E2E tests.",
+        "Preserve WM_MOUSEACTIVATE -> MA_NOACTIVATE and SWP_NOZORDER without SWP_SHOWWINDOW.",
+        "Build on PRD 16 contour/shadow; no implementation before PRD 16 acceptance and the merged HIL 1+2.",
+        "sdd-lean: short PRD, merged HIL 1+2, one or two tasks, independent review kept."
+    ],
+    "sources": {
+        "workflow": "workflow.md",
+        "prd": "prd.md",
+        "techspec": "techspec.md",
+        "tasks": "tasks.md",
+        "review": "codereview_4/codereview.md",
+        "snapshot": "context-snapshot.md"
+    },
+    "review_status": "APPROVED WITH RESERVATIONS",
+    "approved_sources": [
+        {
+            "path": "tasks.md",
+            "sha256": "999f4d2cc7fbe0992c714b5614e433d8cc4624d83ea98021a39922cf3286c619",
+            "decision_id": "DEC-02"
+        },
+        {
+            "path": "task_02.md",
+            "sha256": "34e8d51468751835092d0bc0132d6003915bba7b76333072b4afd8d54b2e426c",
+            "decision_id": "DEC-05"
+        },
+        {
+            "path": "prd.md",
+            "sha256": "abbe9a6d8617c70c692aaecb8969287c15ebbe627740292119155e86b747dcc7",
+            "decision_id": "DEC-07"
+        },
+        {
+            "path": "techspec.md",
+            "sha256": "3f63a311c1b35b326ce14cbd49d8cc45315e2c4cd2d86b812675e672a38acd34",
+            "decision_id": "DEC-11"
+        }
+    ],
+    "decisions_to_read": [
+        "DEC-11"
+    ],
+    "git_base": "2bc32ef80e0e3aff4070bcbd54a45be73ac23855",
+    "worktree_evidence": "workflow.md#feature-context",
+    "active_work": [],
+    "pending_hil": null,
+    "blockers": [],
+    "correction_round": 3,
+    "rounds_without_progress": 0,
+    "next_action": {
+        "kind": "close",
+        "instruction": "Feature accepted at DEC-11; accepted open items recorded there. Commit, push, or release only on request.",
+        "read": [
+            {
+                "path": "tasks/prd-17-hud-backdrop-effects/workflow.md",
+                "section": "DEC-11"
+            }
+        ]
+    }
+}

@@ -28,7 +28,10 @@ public sealed class HudContourDecorator : Decorator
     );
 
     /// <summary>Identifies the capsule fill property.</summary>
-    public static readonly DependencyProperty BACKGROUND_PROPERTY = Panel.BackgroundProperty.AddOwner(typeof(HudContourDecorator));
+    public static readonly DependencyProperty BACKGROUND_PROPERTY = Panel.BackgroundProperty.AddOwner(
+        typeof(HudContourDecorator),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.SubPropertiesDoNotAffectRender)
+    );
 
     /// <summary>Identifies the exposed stroke brush property.</summary>
     public static readonly DependencyProperty BORDER_BRUSH_PROPERTY = Border.BorderBrushProperty.AddOwner(typeof(HudContourDecorator));

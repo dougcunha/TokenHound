@@ -42,7 +42,7 @@
 
         <Ellipse Width="36"
                  Height="36"
-                 Fill="#18181B"
+                 Fill="Transparent"
                  HorizontalAlignment="Center"
                  VerticalAlignment="Center" />
 

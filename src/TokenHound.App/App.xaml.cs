@@ -31,6 +31,7 @@ public partial class App : Application
 {
     private readonly ProviderSettingsStore _providerSettingsStore = new();
     private readonly HudSizeStore _hudSizeStore = new();
+    private readonly HudBackdropStore _hudBackdropStore = new();
 
     private RateLimitPolicy? _rateLimitPolicy;
     private UsageStore? _usageStore;
@@ -363,6 +364,7 @@ public partial class App : Application
         {
             Updates = CreateUpdateSettingsViewModel(),
             HudSize = HudSizeSettingsViewModel.Create(_hudSizeStore, HudScale.Current),
+            HudBackdrop = HudBackdropSettingsViewModel.Create(_hudBackdropStore, HudBackdropPreference.Current),
             HudPlacement = CreateHudPlacementSettingsViewModel(),
             Startup = Environment.ProcessPath is { } executablePath
                 ? new StartupSettingsViewModel(StartupLaunchService.CreateDefault(), executablePath)
@@ -377,6 +379,7 @@ public partial class App : Application
         _dialogService = new DialogService(() => _notchWindow);
         _notchViewModel = new NotchViewModel(usageStore, DispatchUiAction);
         HudScale.Current.Percent = _hudSizeStore.Load().ResolvedPercent;
+        HudBackdropPreference.Current.IsEnabled = _hudBackdropStore.Load().IsEnabled;
         _lifetime = new ApplicationLifetime(usageStore, _dialogService, _notchViewModel, disposableResources);
 
         _actionsViewModel = new HudActionsViewModel(

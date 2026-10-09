@@ -40,6 +40,13 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\TokenHound.App\Interop\WindowStyles.cs" Link="Interop\WindowStyles.cs" />
+    <Compile Include="..\..\src\TokenHound.App\Interop\HudShadowInterop.cs" Link="Interop\HudShadowInterop.cs" />
+    <Compile Include="..\..\src\TokenHound.App\Interop\HudBackdropInterop.cs" Link="Interop\HudBackdropInterop.cs" />
+    <Compile Include="..\..\src\TokenHound.App\Presentation\HudBackdropPreference.cs" Link="Presentation\HudBackdropPreference.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudBackdropMode.cs" Link="Placement\HudBackdropMode.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudBackdropInputs.cs" Link="Placement\HudBackdropInputs.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudBackdropPolicy.cs" Link="Placement\HudBackdropPolicy.cs" />
+    <Compile Include="..\..\src\TokenHound.App\ViewModels\HudBackdropSettingsViewModel.cs" Link="ViewModels\HudBackdropSettingsViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\Presentation\ApplicationInfo.cs" Link="Presentation\ApplicationInfo.cs" />
     <Compile Include="..\..\src\TokenHound.App\Presentation\HudScale.cs" Link="Presentation\HudScale.cs" />
     <Compile Include="..\..\src\TokenHound.App\Presentation\HudPlacementContext.cs" Link="Presentation\HudPlacementContext.cs" />

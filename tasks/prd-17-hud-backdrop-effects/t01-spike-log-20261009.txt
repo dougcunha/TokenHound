@@ -1,0 +1,22 @@
+12:46:36.120 [25740] capsule A companion=0x630B28 hostbackdrop attr hr=0x00000000; dq hr=0x00000000; target hr=0x00000000; 
+12:46:36.853 [11508] panel Left clicks=1 at 533,20
+12:47:21.122 [15656] capsule AL companion=0xA50B1E hostbackdrop attr hr=0x00000000; dq hr=0x00000000; target hr=0x00000000; 
+12:47:21.932 [11508] panel Left clicks=1 at 533,20
+12:47:22.894 [11508] panel Left clicks=1 at 43,69
+12:47:23.822 [11508] panel Right clicks=1 at 43,69
+12:47:24.692 [11508] panel Left clicks=1 at 557,120
+12:47:25.000 [11508] panel Left clicks=2 at 557,120
+13:49:16.783 [38368] capsule AL companion=0x130B88 hostbackdrop attr hr=0x00000000; dq hr=0x00000000; target hr=0x00000000; 
+13:51:12.910 [38368] capsule AL ACTIVATED
+13:53:07.469 [25192] capsule AR companion=0xF00B1C hostbackdrop attr hr=0x00000000; dq hr=0x00000000; target hr=0x00000000; 
+13:53:38.269 [11928] capsule AL companion=0xCF0B4C hostbackdrop attr hr=0x00000000; dq hr=0x00000000; target hr=0x00000000; 
+13:57:00.767 [40660] capsule AR companion=0x12011E hostbackdrop attr hr=0x00000000; dq hr=0x00000000; target hr=0x00000000; 
+13:57:02.499 [37360] capsule ALR companion=0xD0AB2 hostbackdrop attr hr=0x00000000; dq hr=0x00000000; target hr=0x00000000; 
+13:57:14.742 [19872] panel Left clicks=1 at 43,36
+13:57:15.824 [19872] panel Right clicks=1 at 43,36
+13:57:17.515 [19872] panel Left clicks=1 at 557,87
+13:57:17.825 [19872] panel Left clicks=2 at 557,87
+13:57:18.885 [19872] panel Left clicks=1 at 43,236
+13:57:19.733 [19872] panel Right clicks=1 at 43,236
+13:57:20.574 [19872] panel Left clicks=1 at 557,287
+13:57:20.883 [19872] panel Left clicks=2 at 557,287

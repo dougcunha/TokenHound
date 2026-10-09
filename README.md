@@ -21,6 +21,7 @@ TokenHound is a lightweight, peripheral desktop notch / HUD crafted specifically
 - Dock the HUD at the top left, top center, top right, left edge, or right edge of your chosen monitor. Side placements use a vertical capsule. Dragging switches to Free mode, and placement is saved across launches.
 - **Zero Focus Disruption (`WS_EX_NOACTIVATE`)**: Built using native Win32 interop so the notch never steals keyboard or window focus from your IDE, terminal, or browser.
 - Adjust HUD size in Settings. Changes apply immediately and are saved across launches.
+- Translucent (Acrylic) HUD background on Windows 11, on by default and switchable in Settings > General. The HUD uses the solid background while Windows transparency effects are off, or while energy saver or high contrast is on.
 - Enable or disable startup at Windows logon in Settings, with support for the installer's startup option.
 - **"Borrow, Don't Own" Principle**: Never initiates competing logins or asks for raw passwords. TokenHound safely reads existing local sessions (Windows Credential Manager, DPAPI, SQLite WAL databases) in read-only mode (`FileShare.ReadWrite | FileShare.Delete`).
 - **Zero Fake Data**: Strictly reports honest telemetry. If an API provider only exposes remaining quota without a total limit, TokenHound will never invent percentages or artificial denominators.
@@ -28,7 +29,7 @@ TokenHound is a lightweight, peripheral desktop notch / HUD crafted specifically
 - **Self-Updating from GitHub Releases**: Checks the latest stable release periodically (every 24 h by default) and from the tray or HUD menu ("Check for Updates…"), asks before installing, verifies the download (size and SHA-256 when published), and restarts on the new version. See [Updates](#updates).
 - **Ultra-Lean Resource Usage**: Operates continuously at approximately ~30–45 MB RAM in idle desktop state.
 
-Edge geometry and contour hit testing are in progress: the capsule gains inverse rounded joins at screen edges, and clicks outside its visible contour pass through to the application behind it. Mica/Acrylic backdrops and additional ring animations remain separate follow-up work. See the [roadmap](docs/ROADMAP.md) for delivered features and planned scope.
+The capsule uses inverse rounded joins where it meets a screen edge, and clicks outside its visible contour pass through to the application behind it. Additional ring animations remain separate follow-up work. See the [roadmap](docs/ROADMAP.md) for delivered features and planned scope.
 
 ---
 

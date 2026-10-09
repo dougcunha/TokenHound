@@ -1,0 +1,79 @@
+{
+    "schema_version": 1,
+    "generation": 19,
+    "feature": "prd-17-hud-backdrop-effects",
+    "workspace": "D:/MyProjects/TokenHound",
+    "phase": "acceptance",
+    "status": "awaiting-hil",
+    "safe_to_stop": true,
+    "owner_session": null,
+    "objective": "Give the HUD capsule a Windows 11 Mica/Acrylic material while preserving outside-contour click-through, non-activation, and readability.",
+    "constraints": [
+        "Windows 11 WPF/.NET 10 desktop application; no E2E tests.",
+        "Preserve WM_MOUSEACTIVATE -> MA_NOACTIVATE and SWP_NOZORDER without SWP_SHOWWINDOW.",
+        "Build on PRD 16 contour/shadow; no implementation before PRD 16 acceptance and the merged HIL 1+2.",
+        "sdd-lean: short PRD, merged HIL 1+2, one or two tasks, independent review kept."
+    ],
+    "sources": {
+        "workflow": "workflow.md",
+        "prd": "prd.md",
+        "techspec": "techspec.md",
+        "tasks": "tasks.md",
+        "review": "codereview_4/codereview.md",
+        "snapshot": "context-snapshot.md"
+    },
+    "review_status": "APPROVED WITH RESERVATIONS",
+    "approved_sources": [
+        {
+            "path": "tasks.md",
+            "sha256": "999f4d2cc7fbe0992c714b5614e433d8cc4624d83ea98021a39922cf3286c619",
+            "decision_id": "DEC-02"
+        },
+        {
+            "path": "task_02.md",
+            "sha256": "34e8d51468751835092d0bc0132d6003915bba7b76333072b4afd8d54b2e426c",
+            "decision_id": "DEC-05"
+        },
+        {
+            "path": "prd.md",
+            "sha256": "abbe9a6d8617c70c692aaecb8969287c15ebbe627740292119155e86b747dcc7",
+            "decision_id": "DEC-07"
+        },
+        {
+            "path": "techspec.md",
+            "sha256": "7188433eb57880df5ae7dd4c8eda592c12b1aea6d781c3c9a03dfa42d3808847",
+            "decision_id": "DEC-09"
+        }
+    ],
+    "decisions_to_read": [
+        "DEC-09",
+        "DEC-10"
+    ],
+    "git_base": "2bc32ef80e0e3aff4070bcbd54a45be73ac23855",
+    "worktree_evidence": "workflow.md#feature-context",
+    "active_work": [],
+    "pending_hil": {
+        "gate": "reservations + HIL 3",
+        "question": "Reservations on codereview_4 (align techspec.md:115 wording with DEC-10, doc only) and HIL 3 acceptance of the delivery with accepted open items (A outside clicks in 5 modes, C Candidate field and TC-02 test, limitations).",
+        "affected_ids": [
+            "codereview_4",
+            "DEC-09",
+            "DEC-10",
+            "FR-03",
+            "TC-05"
+        ]
+    },
+    "blockers": [],
+    "correction_round": 3,
+    "rounds_without_progress": 0,
+    "next_action": {
+        "kind": "await-decision",
+        "instruction": "Ask the reservations HIL and HIL 3 together; on acceptance, mark checkpoint completed and snapshot closed; commit only if asked.",
+        "read": [
+            {
+                "path": "tasks/prd-17-hud-backdrop-effects/codereview_4/codereview.md",
+                "section": "Limitations and open items"
+            }
+        ]
+    }
+}

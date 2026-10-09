@@ -74,6 +74,7 @@
                                 <MultiDataTrigger.Conditions>
                                     <Condition Binding="{Binding Startup}" Value="{x:Null}" />
                                     <Condition Binding="{Binding HudSize}" Value="{x:Null}" />
+                                    <Condition Binding="{Binding HudBackdrop}" Value="{x:Null}" />
                                     <Condition Binding="{Binding HudPlacement}" Value="{x:Null}" />
                                 </MultiDataTrigger.Conditions>
                                 <Setter Property="Visibility" Value="Collapsed" />
@@ -89,6 +90,7 @@
                     <StackPanel>
                         <settings:StartupSettingsCard />
                         <settings:HudSizeSettingsCard />
+                        <settings:HudBackdropSettingsCard />
                         <settings:HudPlacementSettingsCard />
                     </StackPanel>
                 </ScrollViewer>

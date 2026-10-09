@@ -21,6 +21,11 @@ public sealed record UserSettings
     public HudSizeSettings? HudSize { get; init; }
 
     /// <summary>
+    /// Gets the HUD backdrop (translucent background) settings.
+    /// </summary>
+    public HudBackdropSettings? HudBackdrop { get; init; }
+
+    /// <summary>
     /// Gets the provider enablement settings.
     /// </summary>
     [JsonConverter(typeof(ProviderSettingsJsonConverter))]

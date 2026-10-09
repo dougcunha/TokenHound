@@ -16,6 +16,7 @@ internal sealed class HudContourController : IDisposable
 
     private readonly Window _owner;
     private readonly HudContourDecorator _decorator;
+    private readonly HudBackdropController _backdrop;
     private HudShadowWindow? _shadow;
     private DispatcherOperation? _pending;
     private HudShadowInterop.Bounds? _bounds;
@@ -30,6 +31,8 @@ internal sealed class HudContourController : IDisposable
 
         _owner = owner;
         _decorator = decorator;
+        _backdrop = new HudBackdropController(owner, decorator);
+        _backdrop.Changed += OnChanged;
         decorator.FrameChanged += OnChanged;
         owner.LocationChanged += OnChanged;
         owner.SizeChanged += OnSizeChanged;
@@ -53,6 +56,8 @@ internal sealed class HudContourController : IDisposable
         _owner.DpiChanged -= OnDpiChanged;
         _owner.IsVisibleChanged -= OnVisibleChanged;
         _owner.Closed -= OnClosed;
+        _backdrop.Changed -= OnChanged;
+        _backdrop.Dispose();
         _shadow?.Close();
         _shadow = null;
         Log.Debug("HUD shadow controller disposed");
@@ -80,7 +85,7 @@ internal sealed class HudContourController : IDisposable
             return;
 
         if (!_owner.IsVisible || _decorator.Contour is null)
-            _shadow?.Hide();
+            HideCompanions("Hidden");
 
         if (_pending?.Status is DispatcherOperationStatus.Pending)
             return;
@@ -97,7 +102,7 @@ internal sealed class HudContourController : IDisposable
         if (!_decorator.IsArrangeValid || !_owner.IsArrangeValid)
         {
 
-            _shadow?.Hide();
+            HideCompanions(HudBackdropController.ARRANGE_INVALID_REASON);
 
             return;
         }
@@ -111,7 +116,7 @@ internal sealed class HudContourController : IDisposable
         {
 
             _failed = true;
-            _shadow?.Hide();
+            HideCompanions("ShadowFailure");
             Log.Error(exception, "HUD shadow synchronization failed with Win32 error {NativeError}", exception.NativeErrorCode);
         }
     }
@@ -119,7 +124,21 @@ internal sealed class HudContourController : IDisposable
     private void Synchronize(HudContourGeometry contour)
     {
 
-        var bounds = HudShadowInterop.GetBounds(new WindowInteropHelper(_owner).Handle);
+        var hud = new WindowInteropHelper(_owner).Handle;
+        var bounds = HudShadowInterop.GetBounds(hud);
+        SynchronizeShadow(contour, bounds);
+
+        _backdrop.Synchronize(
+            hud,
+            contour.Fill,
+            ContourTransform(new() { X = 1, Y = 1 }),
+            bounds
+        );
+    }
+
+    private void SynchronizeShadow(HudContourGeometry contour, HudShadowInterop.Bounds bounds)
+    {
+
         _shadow ??= CreateShadow();
         var handle = new WindowInteropHelper(_shadow).EnsureHandle();
 
@@ -127,7 +146,7 @@ internal sealed class HudContourController : IDisposable
             HudShadowInterop.SetBounds(handle, bounds);
 
         var dpi = VisualTreeHelper.GetDpi(_shadow);
-        var matrix = ContourTransform(dpi);
+        var matrix = ContourTransform(new() { X = dpi.DpiScaleX, Y = dpi.DpiScaleY });
 
         if (_bounds != bounds || _contour != contour || _transform != matrix || !_dpi.Equals(dpi))
             UpdateShadow(
@@ -141,6 +160,13 @@ internal sealed class HudContourController : IDisposable
             _shadow.Show();
     }
 
+    private void HideCompanions(string reason)
+    {
+
+        _shadow?.Hide();
+        _backdrop.Hide(reason);
+    }
+
     private HudShadowWindow CreateShadow()
     {
 
@@ -149,13 +175,13 @@ internal sealed class HudContourController : IDisposable
         return new HudShadowWindow { Owner = _owner };
     }
 
-    private Matrix ContourTransform(DpiScale shadowDpi)
+    private Matrix ContourTransform(HudContourPoint targetScale)
     {
 
         var ownerDpi = VisualTreeHelper.GetDpi(_owner);
         var basis = ContourBasis().ForDpi(
             new() { X = ownerDpi.DpiScaleX, Y = ownerDpi.DpiScaleY },
-            new() { X = shadowDpi.DpiScaleX, Y = shadowDpi.DpiScaleY }
+            targetScale
         );
 
         return new Matrix(
