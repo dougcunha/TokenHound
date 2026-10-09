@@ -4,11 +4,13 @@ SDD skills write artifacts and code in the session that runs them; subagents are
 
 ## Session pause
 
+Under `sdd-orchestrate-flow` with a checkpoint in `mode: auto`, the Context and session section of that skill's `references/autonomous-mode.md` replaces the measurement and destinations below: the session neither estimates context nor asks, and reacts to ContextBrake telemetry.
+
 Runs at every **boundary** the calling skill names (between tasks, slices, or workstreams, at HIL gates, before review, and at the end of standalone use), only after writes are persisted and no explorer or process is running.
 
 ### Measure the context
 
-The **threshold** is 65% of the context window, where ContextBrake's `RED` zone starts. Pausing there leaves room to write the snapshot and ask before `CRITICAL` (75%), where ContextBrake blocks every tool except its plan, checkpoint, validation, and git commands, and the snapshot can no longer be written.
+The **threshold** is 65% of the context window, where ContextBrake's `RED` zone starts. Pausing there leaves room to write the snapshot and ask before `CRITICAL` (75%), where ContextBrake asks for the snapshot immediately and the room to finish work is gone. ContextBrake never blocks a tool: its zones only add telemetry and guidance.
 
 - **Telemetry.** When a tool result carries a ContextBrake block (`[ContextBrake vN] … usage=<p>% … zone=<ZONE> …`), or the harness reports usage, use the latest reading: it is a measurement and overrides the estimate. `zone=RED` or `zone=CRITICAL` reaches the threshold at any `usage`.
 - **Estimate.** Without telemetry, add up what entered the context since the session started or last compacted: the fixed system and tool load (about 20k tokens), skills and sources read, tool outputs, diffs, and the text you wrote, at about 4 characters per token, against the model's window (200k tokens when unknown). Start from the estimate announced at the previous boundary and add only what came after; when in doubt, round up. A compaction in this session, or a low-context warning from the harness, reaches the threshold.

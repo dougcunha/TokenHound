@@ -76,5 +76,5 @@ Alone in a code block, ready to paste after `/clear` or in a new session: the ho
 
 ## Failures
 
-- In the `CRITICAL` zone, ContextBrake blocks writing the snapshot: record progress in its plan and checkpoint, which stay allowed, and report that the snapshot was not written.
+- In the `CRITICAL` zone, ContextBrake asks for the snapshot immediately: write it right away, without finishing the unit in progress, after recording its partial state in its handoff.
 - A failed write leaves the previous version intact; report the error instead of announcing a ready snapshot.

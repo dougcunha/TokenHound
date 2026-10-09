@@ -10,7 +10,7 @@ argument-hint: --task tasks/prd-[NN]-name/task_01.md
    **Output:** exact contract, satisfied dependencies, and identified write scope.
 2. Read local instructions and only skills relevant to the change. Inspect worktree, callers, and affected tests; preserve pre-existing changes. Map every acceptance item to implementation and evidence.
    **Output:** known change points; source or write conflicts returned to the caller before mutation.
-3. Implement the smallest coherent change and behavior tests proportional to risk. Mark subtasks only with evidence. Edit only assigned files and the task itself; reserve manifest and moves for the caller.
+3. Implement the smallest coherent change and behavior tests proportional to risk. Mark subtasks only with evidence. Edit only assigned files and the task itself; other features' artifacts stay as they are, even when the code comes to contradict them; reserve manifest and moves for the caller.
    **Output:** implementation limited to the contract, with no global state changed.
 4. Apply the TechSpec profile. In desktop C#/.NET, omit E2E even when legacy commands include it: select projects/filters without E2E and record the divergence. Preserve acceptance with relevant unit, integration, and manual scripts; unexecuted manual work remains pending. When available, use `dotnet-efficient-validation` for runner and build reuse.
    Run checks required by the diff; reuse evidence only from the same code, configuration, and environment. Zero tests or listing are not success. Record pre-existing failures separately.
