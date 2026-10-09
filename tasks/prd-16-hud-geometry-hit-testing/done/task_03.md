@@ -30,12 +30,12 @@ The contour and passive shadow remain aligned across scale, display and placemen
 
 ## Work
 
-- [ ] T03.1 Complete owner-DPI/ancestor-transform synchronization, preserving one application of HUD scale and physical DPI, and event-driven unchanged-frame suppression. Integrate with existing placement/scale paths without new timers.
-- [ ] T03.2 Preserve plain-click versus actual DragMove distinction; verify side-to-Free orientation/contour regeneration and existing saved coordinate/clamping semantics. Add focused transform/placement boundary tests where new logic exists.
-- [ ] T03.3 Build current affected projects and run the complete Infrastructure test executable once for integrated regression evidence. Reuse valid earlier results only while their diff/configuration remains current.
-- [ ] T03.4 Execute TC-04..06 and TechSpec manual script steps 2..6 across all sizes/modes and available displays; record exact results and pending human disconnection evidence. Essential missing cases remain pending.
-- [ ] T03.5 Synchronize README/roadmap and the applicable ARCHITECTURE input-mechanism statement with delivered, verified behavior; run scoped diff/quality checks and refresh `graft build` after the code changes.
-- [ ] T03.6 Record a complete handoff and present visual evidence to the coordinator's human gate. Independent review remains a separate delegated flow stage after visual approval.
+- [x] T03.1 Complete owner-DPI/ancestor-transform synchronization, preserving one application of HUD scale and physical DPI, and event-driven unchanged-frame suppression. Integrate with existing placement/scale paths without new timers.
+- [x] T03.2 Preserve plain-click versus actual DragMove distinction; verify side-to-Free orientation/contour regeneration and existing saved coordinate/clamping semantics. Add focused transform/placement boundary tests where new logic exists.
+- [x] T03.3 Build current affected projects and run the complete Infrastructure test executable once for integrated regression evidence. Reuse valid earlier results only while their diff/configuration remains current.
+- [x] T03.4 (physical disconnection waived by workflow DEC-05) Execute TC-04..06 and TechSpec manual script steps 2..6 across all sizes/modes and available displays; record exact results and pending human disconnection evidence. Essential missing cases remain pending.
+- [x] T03.5 Synchronize README/roadmap and the applicable ARCHITECTURE input-mechanism statement with delivered, verified behavior; run scoped diff/quality checks and refresh `graft build` after the code changes.
+- [x] T03.6 Record a complete handoff and present visual evidence to the coordinator's human gate. Independent review remains a separate delegated flow stage after visual approval.
 
 ## Acceptance criteria
 
@@ -66,11 +66,11 @@ Retain event-only structured logs and verify no recurring geometry output during
 
 ## Handoff
 
-- Produced result: partial production transform extraction and 50% primary-display exploration; T03 is not complete.
+- Produced result: transform extraction, ceiling pixel extent for docking, and coordinator desktop acceptance across six modes, sizes 50/125/150%, three DPIs, drag-to-Free, and restart. Human visual gate approved 2026-10-09; physical display disconnection accepted as residual risk (DEC-05).
 - Changed files: new HudContourTransform.cs and HudContourTransformTests.cs; HudContourController.cs, NotchWindow.Placement.cs, test csproj, TechSpec baseline addendum and validation/workflow/snapshot/checkpoint evidence. No provider/schema change.
 - Checks: App/test Release builds passed before PixelExtent changes. Full MTP run: 1,076 passed, one new fixture failed out of 1,077; corrected its expected translation and reran all 11 transform tests successfully after a clean test rebuild. Existing non-transform results are retained; 2026-10-09 headless rerun built App/test Release with zero warnings/errors and passed the full suite, 1,082/1,082 including the five PixelExtent cases. Details: validation.md T03 partial execution.
-- Validated state: six coordinator-observed 50%/150%-DPI contours, matching owner/companion bounds, Top-center outside left/right/double delivery, focus retention and Right-edge-to-Free drag. Right native bound was 1921, revealing nearest-rounding versus WPF ceiling disagreement. The ceiling correction passes unit tests but still needs desktop reproduction. No full manual matrix, human visuals or final acceptance is claimed.
-- Open items: right-docking desktop reproduction first, then remaining T03 matrix/docs/quality/graph. Human requested use of the desktop: processes closed, installed HUD restored, and no further desktop interaction until availability is confirmed. Physical disconnection, visual gate, Anti Slop gate, independent review and HIL 3 remain pending. See validation.md and the context snapshot.
+- Validated state (2026-10-09): build `2bc32ef`; coordinator matrix across six modes, sizes 50/80/100/125/150%, three DPIs, drag-to-Free, restart, StatusPopup, empty HUD and idle (validation.md); right boundary x=1920 confirmed; human visual gate approved; Anti Slop gate PASS. Earlier partial state is preserved in validation.md history.
+- Open items (2026-10-09): CR-01, physical preferred-display disconnection not executed; accepted as residual risk by DEC-05; delivery accepted at HIL 3 (DEC-07). Review: codereview_01 and codereview_02 rejected on evidence and records only, no code defect.
 
 ### ADR candidates
 

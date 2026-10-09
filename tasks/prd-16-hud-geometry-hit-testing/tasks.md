@@ -64,7 +64,7 @@ Execute serially. T02/T03 share Window, controller, and placement integration fi
 
 - [T01: Define and verify the shared contour](done/task_01.md).
 - [T02: Render the interactive contour and passive shadow](done/task_02.md).
-- [T03: Preserve placement and prove desktop acceptance](task_03.md).
+- [T03: Preserve placement and prove desktop acceptance](done/task_03.md).
 
 ## Coverage gate
 
@@ -86,7 +86,7 @@ Execute serially. T02/T03 share Window, controller, and placement integration fi
 
 - [x] T01: completed, baseline/geometry/build/test/quality evidence in done/task_01.md and validation.md.
 - [x] T02: completed; fresh six-mode mouse/focus, shadow scaling, hide/show, graceful exit and task review recorded.
-- [ ] T03: in progress; transform extraction and pixel-extent correction built and unit-tested (full suite 1,082/1,082 on 2026-10-09), 50% primary checks partial, right-boundary desktop reproduction pending. Desktop unavailable at the human's request; see task_03.md/validation.md.
+- [x] T03: completed 2026-10-09; coordinator desktop acceptance in validation.md, human visual gate approved, physical display disconnection accepted as residual risk (workflow DEC-05); delivery accepted (DEC-07). See done/task_03.md and validation.md.
 
 ## Problems and solutions
 

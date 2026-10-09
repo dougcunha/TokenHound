@@ -109,7 +109,7 @@ Owner: coordinator performs desktop checks and records evidence; the human suppl
 3. Screenshot every mode, including minimum/empty and populated HUD states. Check smooth joins, omitted corner continuation, fully rounded Free, palette/stroke/shadow, badges, busy pulse, and no overlaps. Open provider hover details, StatusPopup, and all existing context-menu actions; verify inward placement and dismissal.
 4. Cycle all existing size choices and repeat representative inside/outside points for top/side/Free. Switch modes repeatedly, then drag from each side into Free; record/drop/restart and verify saved coordinates and horizontal orientation.
 5. Move across the available 100%, 125%, and 150% displays, including negative coordinates and the monitor with a taskbar/work-area offset. Repeat point/focus/shape checks after DPI transitions and dock changes. Hide/show from the tray, then exit: there must be no remaining shadow surface. Idle inspection must show no recurring geometry updates.
-6. Disconnect/reconnect the preferred display and verify existing primary fallback and return behavior. If physical disconnection is unavailable to the coordinator, obtain human evidence; a resolver unit test does not close this desktop case.
+6. (Waived for this delivery by workflow DEC-05, 2026-10-09: accepted residual risk.) Disconnect/reconnect the preferred display and verify existing primary fallback and return behavior. If physical disconnection is unavailable to the coordinator, obtain human evidence; a resolver unit test does not close this desktop case.
 7. Present screenshots and pending items at the human visual gate. Only after that approval, delegate independent code review. Final delivery/HIL 3 requires essential evidence and no blocking review findings.
 
 Read-only DisplayInventory on 2026-10-08 found: DISPLAY1, 1920x1080 at (-1920,-1440), 125%; primary DISPLAY2, 1920x1080 at (0,0), 150%; DISPLAY3, 3440x1440 at (0,-1440), 100%, work area ending at y=-48. Screenshot's display numbering differs from inventory indexing; AGENTS.md requires `display: [2]` for the primary screenshot. Confirm the mapping visually rather than assuming index equality. Baseline interactions and physical disconnection remain unexecuted.
@@ -158,8 +158,8 @@ Preparatory refactoring: not recommended as a separate workstream. No existing t
 
 - Companion synchronization is the main added complexity: test mixed-DPI dragging, hide/show, menus, exit, and transient layout explicitly. Current display inventory supports DPI/negative-coordinate checks.
 - WPF antialiasing and effect clipping are framework behavior, not proven by pure tests. Desktop input and screenshot acceptance remain essential. If the proposed two-surface mechanism fails those checks, fix its cause; a different mechanism or lost shadow needs an exception HIL.
-- Baseline clicks and physical disconnection evidence are pending. HIL 2 approval authorizes the plan; it does not turn these unperformed checks into passes.
-- Human visual approval and HIL 2 are pending. Existing unrelated local tooling changes must be preserved.
+- (Planning-time, superseded 2026-10-09: baseline clicks recorded in T01; physical disconnection waived by DEC-05.) Baseline clicks and physical disconnection evidence are pending. HIL 2 approval authorizes the plan; it does not turn these unperformed checks into passes.
+- (Planning-time, superseded: HIL 2 approved by DEC-03; visual gate approved 2026-10-09.) Human visual approval and HIL 2 are pending. Existing unrelated local tooling changes must be preserved.
 
 ## Relevant files
 

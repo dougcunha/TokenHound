@@ -1,0 +1,47 @@
+﻿Target PID=19408
+MouseDown Left 900,700 clicks=1
+MouseDown Left 1866,540 clicks=1
+MouseDown Right 1866,540 clicks=1
+MouseDown Left 1866,540 clicks=1
+MouseDown Left 1866,540 clicks=2
+MouseDown Left 1900,458 clicks=1
+MouseDown Right 1900,458 clicks=1
+MouseDown Left 1900,622 clicks=1
+MouseDown Left 1900,622 clicks=2
+MouseDown Left 1880,480 clicks=1
+KeyPress 
+KeyPress r
+CASE primary-50-top-right outside
+MouseDown Left 1775,15 clicks=1
+MouseDown Right 1775,15 clicks=1
+MouseDown Left 1850,53 clicks=1
+MouseDown Left 1850,53 clicks=2
+MouseDown Right 1850,53 clicks=1
+MouseDown Left 1791,41 clicks=1
+KeyPress t
+CASE primary-50-left-edge outside
+MouseDown Left 54,540 clicks=1
+MouseDown Right 54,540 clicks=1
+MouseDown Left 20,458 clicks=1
+MouseDown Left 20,458 clicks=2
+MouseDown Right 20,622 clicks=1
+MouseDown Left 40,480 clicks=1
+KeyPress l
+CASE primary-50-top-left outside
+MouseDown Left 146,18 clicks=1
+MouseDown Right 146,18 clicks=1
+KeyPress k
+CASE primary-50-free outside
+MouseDown Left 848,400 clicks=1
+MouseDown Right 994,400 clicks=1
+MouseDown Left 920,432 clicks=1
+MouseDown Left 920,432 clicks=2
+KeyPress f
+CASE primary-50-top-center outside
+MouseDown Left 878,20 clicks=1
+MouseDown Right 1042,20 clicks=1
+MouseDown Left 960,53 clicks=1
+MouseDown Left 960,53 clicks=2
+MouseDown Left 904,41 clicks=1
+KeyPress c
+NOTE target label at (40,40) swallowed MouseDown for points over it; target restarted with label at (600,900)

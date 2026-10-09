@@ -1,5 +1,9 @@
 # HUD contour validation
 
+## Current status
+
+- 2026-10-09: T01-T03 done. Coordinator desktop acceptance recorded; human visual gate approved; Anti Slop delivery gate PASS (`anti-slop-delivery-gate.md`); full Infrastructure suite 1,082/1,082. Accepted at HIL 3 (DEC-07) with residual risk: physical preferred-display disconnection not executed (DEC-05). Older "pending" lines below are dated history.
+
 ## Validated baseline
 
 - Date: 2026-10-08. Coordinator desktop checks, before contour production edits.
@@ -34,7 +38,41 @@ The baseline records observed behavior, including existing failures. It does not
 
 ## Integrated desktop acceptance
 
-Pending T02/T03: all six final contours, fill/stroke/outside left/right/double clicks, shadow input, focus, menus/popups, supported sizes, live switches, side-to-Free, restart, DPI transitions, hide/show/exit/idle, and physical preferred-display disconnection. Human visual approval and independent review remain pending.
+Completed: the coordinator matrix is in "T03 desktop acceptance, 2026-10-09" and "Correction round 1 evidence (codereview_01 CR-02), 2026-10-09"; the human visual gate was approved on 2026-10-09; the Anti Slop delivery gate passed (`anti-slop-delivery-gate.md`). Physical preferred-display disconnection was not executed; accepted as residual risk by DEC-05.
+
+## Correction round 1 evidence (codereview_01 CR-02), 2026-10-09
+
+- Build `2bc32ef` Release, primary DISPLAY2 (150% DPI), HUD 100%. User settings backed up and restored (hash verified); installed PID 8068 preserved. No disposable click target was needed: only HUD menu items and the StatusPopup were clicked.
+- StatusPopup, docked (Top center, PID 32116): HUD menu Refresh showed "Refreshing usage..." below the capsule, inward (`cr01-top-center-refreshing.png`), then "Refresh completed. Some providers need attention." (`cr01-top-center-status-popup.png`). Clicking the popup dismissed it (`cr01-top-center-status-dismissed.png`).
+- StatusPopup, Free (after drag to (960,500)): Refresh result popup opened below the capsule with no clipping (`cr01-free-status-popup.png`).
+- Busy state: the Refreshing capture was taken during the refresh; the pulse is an animation, so a still image shows the busy period but not the motion. No visual defect was observed during the refresh.
+- Badges: provider badge glyphs are bound per provider (`ProviderRingViewModel.ProviderBadge`); the populated HUD shows the configured providers with their glyphs and the attention state ("need attention", dashed rings) without clipping. No other badge state is reachable without changing credentials or provider state; recorded as a limitation.
+- Empty/minimum HUD (all providers disabled in the settings copy, PID 21104): Free shows a fully rounded empty pill at (798,465)-(1068,537) (`cr01-empty-free.png`, `cr01-native-empty-free.json`); Right edge shows the vertical capsule with inverse joins ending at x=1920, bounds (1848,405)-(1920,675) (`cr01-empty-right-edge.png`, `cr01-native-empty-right-edge.json`). Owner and companion bounds match.
+- Settings restored after the checks; only the installed instance remains running.
+
+## T03 desktop acceptance, 2026-10-09
+
+- Environment: human released the desktop. Repository Release build at `2bc32ef` (`src/TokenHound.App/bin/Release/net10.0-windows/TokenHound.App.exe`, built 2026-10-09 10:35). Display inventory unchanged from the validated baseline. Installed PID 8068 preserved throughout. User settings backed up before checks and restored afterwards (SHA-256 `3870E7BD...C795` matches the backup).
+- Click target: disposable WinForms window covering only the primary display (0,0)-(1920,1080), per-monitor DPI aware, logging physical `MouseDown` and `KeyPress` only (`t03-click-log-20261009.txt`, `t03-click-log-20261009b.txt`). Its first label at (40,40) swallowed clicks over it; the target was restarted with the label moved and those points were retested.
+- Right-boundary fix: PID 26392 at Right edge 50% on primary (150% DPI) measured owner and companion (1860,450)-(1920,630); Top right 50% measured (1767,0)-(1920,60). Both now end at the work-area edge x=1920 (previously 1921). Right edge 150% measured (1778,306)-(1920,773). Evidence: `t03-native-primary-50-right-edge-after-fix.json`, `t03-native-primary-50-top-right-after-fix.json`, `t03-native-primary-150-right-edge-20261009.json`.
+
+| Mode, size, display | Outside points (left/right/double) | Inside right click | Focus after menu | Result |
+| --- | --- | --- | --- | --- |
+| Right edge 50%, primary | gutter (1866,540), above join (1900,458), below (1900,622), corner (1880,480) | menu opened inward, no target event | Esc and `r` reached the target | Pass |
+| Top right 50%, primary | gutter (1775,15), below (1850,53), corner (1791,41) | menu inward | `t` reached target | Pass |
+| Left edge 50%, primary | gutter (54,540), above (20,458), below (20,622), corner (40,480) | menu inward | `l` reached target | Pass |
+| Top left 50%, primary | gutter (146,18); retest after label move: below (60,53), corner (129,41), (132,44), (100,56) | menu inward | `k` reached target | Pass |
+| Free 50%, primary (after drag from Top left) | gutters (848,400), (994,400), shadow (920,432); corner retest (863,381), (861,384), (857,398), (900,377) | menu inward | `f` reached target | Pass. (865,381) was captured by the HUD: screenshot pixel `AAACAF` is the anti-aliased stroke edge (owner alpha > 0), correct per DEC-02 |
+| Top center 50%, primary | gutters (878,20), (1042,20), below (960,53), corner (904,41) | menu inward | `c` reached target | Pass |
+| Right edge 150%, primary | gutter (1786,540), above (1860,322), below (1860,760), corner (1799,360) | menu inward | Esc and `g` reached target | Pass |
+
+- Visual (coordinator, live screenshots): all six modes at 50%, Free and Right edge at 150%, show contained provider rings, inverse joins on docked edges, omitted continuation at screen corners, fully rounded Free, and the existing palette, stroke, and shadow. Provider hover card (Claude Code) opened below the Free HUD without clipping. Context menus and the Position submenu opened inward in every mode.
+- Sizes: Settings HUD size Large (125%) and slider 150% applied live with "Settings applied"; Free HUD resized to (840,378)-(1253,521) with no clipping. The Settings window covers the HUD while open because it is owned by the HUD window; unchanged from v0.1.13 (`DialogService` owner), not a regression.
+- Drag and persistence: Right edge 150% dragged to Free became horizontal at (818,136)-(1231,279) and saved `Mode=Free` with `Display=null`. After terminating and relaunching (PID 27116) the HUD restored the same bounds and orientation.
+- DPI transitions: Free dragged to DISPLAY3 (100%) measured (1263,-716)-(1538,-621), then to DISPLAY1 (125%, negative coordinates) measured (-1072,-960)-(-728,-841); sizes scale exactly with DPI (413/1.5 = 275, 275 x 1.25 = 344). Left edge on the preferred DISPLAY1 at 100% after restart (PID 40516) measured (-1920,-1035)-(-1836,-765), vertically centered on that display. Screenshots show clean contours over third-party content.
+- Idle (TC-06): no log lines after start-up refresh during idle. Repository build used 8.0-8.3 s CPU per 60 s; a v0.1.13 baseline built from a temporary worktree at `6f2e92b` used 12.9-13.6 s per 60 s in the same placement and provider state. The feature does not add idle cost; the pre-existing idle CPU is outside this feature scope and worth a separate investigation.
+- Lifecycle: terminating the repository process left no TokenHound or shadow window behind (probe after each stop). Graceful tray Exit and tray hide/show could not be driven: the tray icon in the notification overflow did not open its menu through automation. T02 recorded graceful exit and hide/show evidence for the same companion lifecycle code.
+- Not covered by the coordinator: physical disconnection and reconnection of the preferred display (TechSpec step 6) and the human visual gate (step 7).
 
 ## T03 partial execution, stopped for desktop availability
 
@@ -47,7 +85,7 @@ Pending T02/T03: all six final contours, fill/stroke/outside left/right/double c
 - ContextBrake reached RED during this correction. The human then requested use of the computer, interrupting the pending cleanup tool. Validation processes 18084 and 33928 were terminated and their exit confirmed; this is not graceful-exit evidence. `t03-native-cleanup.json` records the remaining visible installed instance. No T03 timer/idle/disposal acceptance is claimed by this termination.
 - The target was enlarged across the virtual desktop, which covered the upper taskbar and prevented tray interactions; use the original primary-display target for further checks. Snapshot can list UI elements underneath this target, so visible screenshots must confirm the hit surface. Use integer chrome coordinates for inside menu actions; center-of-native-bounds can lie outside a small capsule or on provider/popup content.
 - 2026-10-09 headless rerun: App and test Release builds passed with zero warnings/errors, exit 0. Full Infrastructure MTP run executed 1,082 tests (the previous 1,077 plus five `PixelExtent` cases): 1,082 passed, zero failed, zero skipped, exit 0. `git diff --check` is clean. This validates the pixel-extent helper and the two docking expressions at unit level only; the right-boundary desktop reproduction is still pending.
-- Remaining: fresh right-boundary checks, full size/DPI/display/restart/provider/popup matrix, documentation sync, quality sweep, graph refresh, physical disconnection, human visuals, Anti Slop gate, independent review and HIL 3. Do not perform additional desktop interaction until the human says the computer is available.
+- Remaining: fresh right-boundary checks, full size/DPI/display/restart/provider/popup matrix, documentation sync, quality sweep, graph refresh, physical disconnection, human visuals, Anti Slop gate, independent review and HIL 3. Do not perform additional desktop interaction until the human says the computer is available. (Superseded 2026-10-09: see "Current status" at the top of this file.)
 
 T01 source/link fingerprint (SHA-256 of ordered path:file-SHA256 lines): 936a6296860ddef52fa4e6c63db6edba0e8c3115bbf7f8e0229868c560e6c2b8
 
@@ -77,7 +115,7 @@ Each listed outside point received a left click, right click and double left cli
 - MTP: HudContour filter 23 passed; WindowStylesTests filter 12 passed; zero failures/skips, exit 0, minimum expected tests 1. Tests were not rerun after whitespace-only App edits; test-linked sources did not change.
 - Quality: scoped async/suppression/native/input/lifecycle inspection and git diff --check passed. No new periodic callback, input forwarding, warning suppression or unchecked native call was introduced. New files remain below 300 lines. Final task approval is still pending.
 - Resume concern: verify HUD-scale application to the shadow effect; the source geometry is transformed, while blur/depth currently remain fixed at 20/4 DIPs. The previous effect was inside the HUD LayoutTransform. Any correction needs fresh affected build and desktop evidence.
-- Anti Slop delivery gate is pending the complete T03 matrix. No final delivery or visual approval is claimed.
+- Anti Slop delivery gate is pending the complete T03 matrix. No final delivery or visual approval is claimed. (Superseded 2026-10-09: see "Current status" at the top of this file.)
 
 ## T02 completion after shadow scaling correction
 
@@ -89,4 +127,4 @@ Each listed outside point received a left click, right click and double left cli
 - [Hidden state](t02-native-hidden-after-scale.json) and [restored state](t02-native-restored-after-scale.json) show both surfaces hiding and returning with identical handles/bounds. Repository tray icon was (3098,-145), installed icon (3090,-24); current UI-tree inspection established these positions. The repository tray menu appeared at x=2066..2206 rather than next to its icon; Exit was (2136,-116).
 - Graceful final Exit at 16:14:02: tray Exit dispatched/invoked, resource cleanup and tray disposal, application shutdown completed, HUD shadow controller disposed at 16:14:02.621, then exit code 0 at .623. [Post-exit native inspection](t02-native-exited-after-scale.json) contains only the restored installed process 23240; repository process 35448 and its HWNDs are gone. The disposable target closed with Escape. Earlier process 10988 also exited gracefully at 16:04:26, before the Canvas rebuild.
 - Scoped task review: frozen common envelope and post-effect mask, checked last-error/native operations, main/companion style distinction, event removal and single companion ownership all match T02. QA-01..07 and git diff --check introduce no blocking hit or new reservation. New C# file lengths: 69/72/94/146/192; test file 34. Native callbacks use prescribed signatures. T02 approved for done/; T03 has not started.
-- Full size/DPI/restart/provider-state matrix, physical display disconnection, human visual gate, Anti Slop delivery gate, independent review and HIL 3 remain pending. No final feature acceptance is claimed.
+- Full size/DPI/restart/provider-state matrix, physical display disconnection, human visual gate, Anti Slop delivery gate, independent review and HIL 3 remain pending. No final feature acceptance is claimed. (Superseded 2026-10-09: see "Current status" at the top of this file.)

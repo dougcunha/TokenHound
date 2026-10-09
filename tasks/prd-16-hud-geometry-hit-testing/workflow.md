@@ -50,9 +50,33 @@
 | HIL 0 | Decided | DEC-01 |
 | HIL 1 | Approved | DEC-02; prd.md; PD-01 through PD-04 |
 | HIL 2 | Approved | DEC-03; techspec.md and three-task plan |
-| Visual check | Pending implementation | Manual acceptance will be defined in the TechSpec |
-| Independent review | Pending implementation | Delegation required by the flow |
-| HIL 3 | Pending review and validation | No delivery acceptance recorded |
+| Visual check | Approved 2026-10-09 | Human text "Aprovado" after the collage `t03-visual-gate-20261009.png`; see Events |
+| Independent review | APPROVED WITH RESERVATIONS (round 3) | `codereview_01` and `codereview_02` REJECTED on evidence and records only; `codereview_03/codereview.md` approved with reservations; DEC-06 |
+| HIL 3 | Accepted 2026-10-09 | DEC-07; residual risk DEC-05 |
+
+### DEC-05: Exception HIL, accept physical display disconnection as residual risk
+
+- Date: 2026-10-09.
+- Human text: selected "Aceitar como risco residual (Recomendado)" for CR-01 (codereview_01/CR-01, codereview_02/CR-01). Earlier answer on the same item: "Aceitar sem esse teste".
+- Decision: TechSpec manual acceptance step 6 (physical disconnection and reconnection of the preferred display) is waived for this delivery and accepted as residual risk.
+- Reason: the preferred-display fallback and return logic belongs to PRD 14 and is unchanged by this feature (no diff in `src/TokenHound.Infrastructure` or display resolution); it is covered by the existing display resolver unit tests; this feature's contour and companion follow placement changes, verified across three displays, DPI transitions, and restart.
+- Scope: FR-08 is accepted with this residual risk. HIL 3 still applies. No product or code change.
+- Provenance: AskUserQuestion answer at the exception HIL after codereview_02.
+
+### DEC-06: Reservations HIL, finalize with accepted reservations
+
+- Date: 2026-10-09.
+- Human text: selected "Finalizar e aceitar (Recomendado)".
+- Decision: close the review cycle on `codereview_03` (APPROVED WITH RESERVATIONS). Accepted open items: QA-07 `HudShadowInterop.Bounds` record; style (blank line before `return` in `HudContourLayout.cs:157-158`, fully qualified `HudDockMode` in `HudContourGeometry.cs:41`); `HudContourDecorator.ArrangeOverride` double layout build and per-render Pen allocation. Records-precision items synchronized at closing.
+- Provenance: AskUserQuestion answer at the reservations HIL.
+
+### DEC-07: HIL 3, accept the delivery
+
+- Date: 2026-10-09.
+- Human text: selected "Aceitar a entrega".
+- Decision: accept the PRD 16 delivery at commit `2bc32ef` plus the recorded documentation and evidence. Residual risk per DEC-05; open improvements per DEC-06.
+- Scope: feature completed. Commit, push, and release are not authorized by this decision.
+- Provenance: AskUserQuestion answer at HIL 3, together with DEC-06.
 
 ## HIL 1 material
 
@@ -64,8 +88,19 @@
 - Decision: approved by DEC-02. Approval was explicitly given after HIL 0.
 - Next authorized stage after product approval: `sdd-create-techspec`, then task planning and HIL 2.
 
+
 ## Events
 
+- 2026-10-09: DEC-06 and DEC-07 recorded; records synchronized; checkpoint completed and snapshot closed; ROADMAP and README updated.
+- 2026-10-09: round-2 re-review codereview_03/codereview.md: APPROVED WITH RESERVATIONS (delegated reviewer), no blocks, no code defect. Worktree matched the pre-review record plus the report folder. Reservations HIL and HIL 3 presented together.
+- 2026-10-09: DEC-05 recorded (CR-01 accepted as residual risk; TechSpec step 6 waived for this delivery). TechSpec manual script annotated. Next: round-2 re-review in codereview_03.
+- 2026-10-09: re-review `codereview_02/codereview.md` REJECTED (delegated reviewer): CR-01 persistent (physical disconnection), CR-02 remaining stale records and no Anti Slop gate record. Round 2: Anti Slop delivery gate run and recorded PASS in `anti-slop-delivery-gate.md` (DEC-04 closed); stale lines in validation.md, done/task_03.md and tasks.md corrected. CR-01 taken to an exception HIL.
+- 2026-10-09: correction round 1 executed: task_01 (CR-02 desktop evidence in validation.md) and task_02 (CR-03 records). Next: re-review by a new delegated reviewer in codereview_02.
+- 2026-10-09: delegated review received: `codereview_01/codereview.md`, status REJECTED, Execution: delegated reviewer. Worktree after the review matched the pre-review record except the expected report folder. No code defect; findings are evidence and records only. Correction round 1 planned in codereview_01: task_01 (CR-02 desktop evidence), task_02 (CR-03 records). CR-01 (physical disconnection) is pending for an explicit HIL 3 decision; no task.
+- 2026-10-09: visual gate approved. Human text: "Aprovado", after reviewing the collage `t03-visual-gate-20261009.png` sent in chat. T03 moved to done/. Next: delegated independent review in `codereview_01/` against base `6f2e92b`.
+- 2026-10-09: human decision on TechSpec step 6, selected "Aceitar sem esse teste": physical disconnection and reconnection of the preferred display is an accepted open item, covered only by the display resolver unit tests; present it at HIL 3. Visual gate still pending: the human is away from the computer and asked for the screenshots in chat; collage `t03-visual-gate-20261009.png` sent.
+- 2026-10-09: T03 coordinator desktop acceptance recorded in validation.md. ARCHITECTURE click-through statement synchronized; quality checks clean; graft rebuilt. Test processes stopped, temporary baseline worktree removed, user settings restored (hash verified). Next: human visual gate and physical disconnection evidence, then delegated review.
+- 2026-10-09: human released the desktop ("Sim. Ninguém está usando agora."). ENV-T03-DESKTOP cleared. User settings backed up to `%LOCALAPPDATA%/TokenHound/settings.json.before-prd16-t03-20261009.bak` (TopCenter on Display 1, 80%) for restoration after checks. Repository Release PID 26392 launched at Right edge 50% on primary DISPLAY2 (150% DPI): owner and companion bounds (1860,450)-(1920,630), Right=1920 within the work area; the PixelExtent ceiling fix is confirmed on the desktop. Evidence `t03-native-primary-50-right-edge-after-fix.json`. Installed PID 8068 preserved.
 - 2026-10-09: headless T03 validation, no desktop interaction. App/test Release builds passed with zero warnings/errors; full Infrastructure suite passed 1,082/1,082 including the five PixelExtent cases. The human explicitly asked to commit the in-progress feature and update documentation, superseding the DEC-03 no-commit constraint for this commit only (no push/release). Refreshed tasks.md/task_03.md checkpoint hashes for administrative state/handoff changes only; contracts unchanged. ROADMAP status synchronized. Right-boundary desktop reproduction and remaining T03 gates stay pending.
 - 2026-10-08: T03 partial checkpoint. Extracted pure transform conversion; builds passed, full Infrastructure run had 1,076 passes plus one incorrect new fixture, corrected and reran 11 transform tests successfully. Six-mode 50%/150%-DPI visual exploration found one-pixel right docking overflow. Confirmed WPF SizeToContent ceiling rule; wrote PixelExtent helper, two placement expressions and five tests, not yet built/validated. ContextBrake reached RED. Human text: "O que aconteceu? Não terminou os testes? Vou precisar usar o computador." Closed and confirmed validation processes 18084/33928, restored installed HUD 23240. Preserve partial evidence; no further desktop interactions until human confirms availability. No visual/final approval or independent review occurred.
 - 2026-10-08: resumed T03 from handoff 20261008T191951.071Z. All six approved source hashes matched; only installed process 23240 is running. DEC-03/04 reused. Current controller already synchronizes ancestor transforms and owner/shadow DPI with unchanged-frame suppression. Extract the numeric conversion into a pure App record for TC-02 without changing WPF placement or persistence contracts. Three-monitor inventory is unchanged. Human physical-disconnection and visual evidence remain pending.

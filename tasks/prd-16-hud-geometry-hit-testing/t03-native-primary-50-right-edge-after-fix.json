@@ -1,0 +1,53 @@
+{
+  "ForegroundHandle": 199022,
+  "Windows": [
+    {
+      "Pid": 26392,
+      "Handle": 7539434,
+      "Title": "TokenHound shadow",
+      "Visible": true,
+      "Left": 1860,
+      "Top": 450,
+      "Right": 1920,
+      "Bottom": 630,
+      "ExStyle": "0x080800A8",
+      "Foreground": false
+    },
+    {
+      "Pid": 26392,
+      "Handle": 13502988,
+      "Title": "TokenHound",
+      "Visible": true,
+      "Left": 1860,
+      "Top": 450,
+      "Right": 1920,
+      "Bottom": 630,
+      "ExStyle": "0x08080088",
+      "Foreground": false
+    },
+    {
+      "Pid": 8068,
+      "Handle": 133364,
+      "Title": "TokenHound shadow",
+      "Visible": true,
+      "Left": -1071,
+      "Top": -1440,
+      "Right": -849,
+      "Bottom": -1370,
+      "ExStyle": "0x080800A8",
+      "Foreground": false
+    },
+    {
+      "Pid": 8068,
+      "Handle": 197862,
+      "Title": "TokenHound",
+      "Visible": true,
+      "Left": -1071,
+      "Top": -1440,
+      "Right": -849,
+      "Bottom": -1370,
+      "ExStyle": "0x08080088",
+      "Foreground": false
+    }
+  ]
+}

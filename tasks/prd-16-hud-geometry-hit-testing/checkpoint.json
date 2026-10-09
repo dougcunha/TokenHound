@@ -1,10 +1,10 @@
 {
     "schema_version": 1,
-    "generation": 19,
+    "generation": 29,
     "feature": "prd-16-hud-geometry-hit-testing",
     "workspace": "D:/MyProjects/TokenHound",
-    "phase": "implementation",
-    "status": "paused",
+    "phase": "completed",
+    "status": "completed",
     "safe_to_stop": true,
     "owner_session": null,
     "objective": "Align the HUD visible contour and interactive area for all existing docking modes while preserving non-activation, drag, menus, scale, DPI, and monitor placement.",
@@ -20,10 +20,10 @@
         "prd": "prd.md",
         "techspec": "techspec.md",
         "tasks": "tasks.md",
-        "review": null,
+        "review": "codereview_03/codereview.md",
         "snapshot": "context-snapshot.md"
     },
-    "review_status": null,
+    "review_status": "APPROVED WITH RESERVATIONS",
     "approved_sources": [
         {
             "path": "prd.md",
@@ -32,12 +32,12 @@
         },
         {
             "path": "techspec.md",
-            "sha256": "617bcae79666de7f3679c61e2d8660c5c4f3e6c24fa55896be0d0bfb326c97ba",
-            "decision_id": "DEC-03"
+            "sha256": "8c0cf09c57c773d23314ebb2b9b27dd1621976e2e2df4fba08450f4382decfea",
+            "decision_id": "DEC-05"
         },
         {
             "path": "tasks.md",
-            "sha256": "31a2a36a02902dd3027a620335ee33216668b3226ca85c45d37f782f796675b6",
+            "sha256": "9b1f9a840c28a938804e487a0049674340d4bf52d1f7198af394467ab0fb6f5d",
             "decision_id": "DEC-03"
         },
         {
@@ -51,49 +51,26 @@
             "decision_id": "DEC-03"
         },
         {
-            "path": "task_03.md",
-            "sha256": "32444a643f6ba09653f32255593d2322b9cd348f21e396e88cc77752c08ffffd",
+            "path": "done/task_03.md",
+            "sha256": "686abbda6bb2bc57c6a91cfd3d37c6af94487f62eafc5570c250cf4134b30ee4",
             "decision_id": "DEC-03"
         }
     ],
     "decisions_to_read": [
-        "DEC-02",
-        "DEC-03",
-        "DEC-04"
+        "DEC-05",
+        "DEC-06",
+        "DEC-07"
     ],
     "git_base": "6f2e92b0f4cc40c5cde1326149f000768fe3a781",
     "worktree_evidence": "workflow.md#feature-context",
     "active_work": [],
     "pending_hil": null,
-    "blockers": [
-        {
-            "summary": "Human needs the computer; no further desktop interaction until availability confirmed.",
-            "evidence": "workflow.md#events",
-            "id": "ENV-T03-DESKTOP"
-        }
-    ],
-    "correction_round": 0,
+    "blockers": [],
+    "correction_round": 2,
     "rounds_without_progress": 0,
     "next_action": {
-        "kind": "validate",
-        "instruction": "Resume T03 with the right-boundary desktop reproduction at 50%/150% DPI: the PixelExtent ceiling correction is built and the full Infrastructure suite passed 1,082/1,082 on 2026-10-09, but the one-pixel overflow must be confirmed fixed on the desktop. Do not launch or manipulate desktop windows until the human confirms availability. Remaining matrix/docs/quality/graph and human gates pending.",
-        "read": [
-            {
-                "section": "DEC-03/04; latest Events",
-                "path": "tasks/prd-16-hud-geometry-hit-testing/workflow.md"
-            },
-            {
-                "section": "Header; Next step brief; now/T03 entries",
-                "path": "tasks/prd-16-hud-geometry-hit-testing/context-snapshot.md"
-            },
-            {
-                "section": "Entire task and partial Handoff",
-                "path": "tasks/prd-16-hud-geometry-hit-testing/task_03.md"
-            },
-            {
-                "section": "T03 partial execution, stopped for desktop availability",
-                "path": "tasks/prd-16-hud-geometry-hit-testing/validation.md"
-            }
-        ]
+        "kind": "close",
+        "instruction": "Feature completed (DEC-07). Open improvements in DEC-06; residual risk in DEC-05.",
+        "read": []
     }
 }

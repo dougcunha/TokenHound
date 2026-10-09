@@ -4,15 +4,15 @@
 
 ## Header
 
-- status: active
+- status: closed
 - generated: 2026-10-09
 - stage: tasks
 - stage_source: tasks.md
-- covers_through: T01/T02 completed; T03 partial, not approved
+- covers_through: completed; codereview_03 APPROVED WITH RESERVATIONS; HIL 3 accepted
 - authored_code: yes
-- git_head: 6f2e92b
-- worktree: feature App/test edits and artifacts; preceding docs/triage and unrelated tooling preserved
-- next_step: sdd-orchestrate-flow, resume T03 right-boundary desktop reproduction once the desktop is available
+- git_head: 2bc32ef
+- worktree: PRD 16 docs/evidence (ARCHITECTURE, ROADMAP, task artifacts, new t03 JSON/logs), PRD 17 artifacts, unrelated local tooling
+- next_step: none (feature completed 2026-10-09, DEC-07)
 - other_eligible: none
 - superseded_by: none
 
@@ -22,31 +22,26 @@ Read now entries before choosing work, on-select for T03, on-run before commands
 
 ## Next step brief
 
-T03 has partial code and validation. Headless validation is current: on 2026-10-09 App/test Release builds passed and the full Infrastructure suite passed 1,082/1,082, including the five PixelExtent cases; the work was committed as in-progress. Six 50%/150%-DPI contours were observed; right docking ended at physical x=1921 rather than 1920. Primary WPF source confirms non-layout-rounded SizeToContent uses ceiling; placement used nearest rounding. The fix in NotchWindow.Placement.cs passes unit tests; desktop reproduction remains pending. Read task_03.md, validation.md T03 partial section, workflow latest Events, and checkpoint first. The user needs the computer: do not launch or manipulate desktop windows until availability is explicitly confirmed. ContextBrake reached RED; processes 18084/33928 exited and installed 23240 restored. No final visual/review/acceptance gate has passed.
+T03 coordinator acceptance is recorded in validation.md "T03 desktop acceptance, 2026-10-09": right-boundary fix confirmed (x=1920), six-mode outside-click/focus matrix passed, sizes 50/125/150%, DPI transitions over three displays, drag-to-Free, restart persistence, and idle comparison with a v0.1.13 baseline (repository lower). Visual gate approved; T03 in done/. codereview_01 was REJECTED for evidence and records only (no code defect); correction round 1 (codereview_01/task_01, task_02) is done. Next: delegate the re-review to a new reviewer in codereview_02, then HIL 3, where the human confirms CR-01 (physical disconnection accepted without execution).
 
 ## Decisions
 
-- [D-01] (when: now) Workflow DEC-03 permits implementation/validation/corrections within existing contracts; no commit/push/release; src: workflow.md#dec-03-hil-2-approve-the-technical-plan-and-implementation; until: material scope change.
+- [D-01] (when: now) Workflow DEC-03 permits implementation/validation/corrections within existing contracts; no commit/push/release without an explicit request; src: workflow.md#dec-03-hil-2-approve-the-technical-plan-and-implementation; until: material scope change.
 - [D-02] (when: on-select: T03) Preserve the canonical contour and passive WS_EX_TRANSPARENT shadow companion; src: techspec.md#technical-decisions; until: technical decision changes.
-- [D-03] (when: on-select: T03) Anti Slop during is an explicit session override, PD-01..04 supplies Windows direction and dials 1/1/1; src: workflow.md#dec-04-anti-slop-during-implementation; until: preference changes.
 
 ## Learnings
 
-- [L-03] (when: on-run: desktop screenshot) Inventory primary is index 1/DISPLAY2; required Screenshot [2] is upper DISPLAY3. Regions spanning a boundary use live pillow; single-monitor dxcam may be stale; src: validation.md#validated-baseline; until: MCP changes.
-- [L-04] (when: on-run: shell hashing) Nested Windows PowerShell lacks SHA256.HashData and Convert.ToHexString; use SHA256.Create/ComputeHash plus BitConverter; src: workflow.md#events; until: environment changes.
-- [L-05] (when: on-run: native bounds) Temporary ContourProbe sets thread DPI context -4 before native queries; actual target HWND was 9832970; src: validation.md#t03-partial-execution-stopped-for-desktop-availability; until: target recreated.
-- [L-07] (when: on-run: desktop target) Oversized all-desktop target covers taskbar/overflow; Snapshot still lists covered UI. Use the original primary target, inspect visible screenshots, and use integer chrome points for menus; src: validation.md#t03-partial-execution-stopped-for-desktop-availability; until: harness changes.
-- [L-08] (when: on-edit: NotchWindow.Placement.cs; HudContourTransform.cs) Fractional SizeToContent pixels use ceiling in HwndSource.RoundDeviceSize; new PixelExtent fixes Math.Round mismatch, but current correction is unverified; src: validation.md#t03-partial-execution-stopped-for-desktop-availability; until: correction validated.
+- [L-03] (when: on-run: desktop screenshot) Single-monitor dxcam captures can be stale; regions crossing a display boundary use the live pillow backend; src: validation.md#validated-baseline; until: MCP changes.
+- [L-09] (when: on-run: click target) WinForms child labels swallow MouseDown; keep target labels away from test points; src: validation.md#t03-desktop-acceptance-2026-10-09; until: next session.
+- [L-10] (when: on-run: tray) The notification-overflow tray icon did not open its menu through automation; use HUD menus or process stop for lifecycle checks; src: validation.md#t03-desktop-acceptance-2026-10-09; until: harness changes.
+- [L-11] (when: on-run: bash heredoc) Heredocs containing apostrophes fail in this shell wrapper; write scripts with the Write tool; src: —; until: next session.
 
 ## Code map
 
 - [M-02] (when: on-edit: NotchWindow*) ApplyChrome sets mode/padding/popups; drag records Free only when Left/Top change; src: done/task_02.md#handoff; until: integration changes.
-- [M-03] (when: on-run: MTP) Native executable links pure App files; filters follow -- and minimum expected tests 1/exit code are mandatory. Latest five PixelExtent tests passed on 2026-10-09; src: task_03.md#handoff; until: current validation supersedes it.
-- [M-04] (when: on-edit: HudContourController*; HudShadowWindow*) Controller captures ancestor basis, converts owner/shadow DPI, compares contour/matrix/bounds/DPI; shadow Path uses Canvas+whole-effect RenderTransform and shared post-effect exclusion; src: done/task_02.md#handoff; until: integration changes.
+- [M-04] (when: on-edit: HudContourController*; HudShadowWindow*) Controller converts owner/shadow DPI and suppresses unchanged frames; Win32 failures log and hide the shadow; src: done/task_02.md#handoff; until: integration changes.
 
 ## Open threads
 
-- [O-02] (when: on-select: T03) Current build/tests, right-boundary reproduction, full size/DPI/display/restart/provider/popup matrix, docs/quality/graph and physical disconnection remain pending; src: validation.md#t03-partial-execution-stopped-for-desktop-availability; until: evidence recorded.
-- [O-03] (when: on-edit: worktree) Preserve preceding README/roadmap/triage and unrelated tooling; src: workflow.md#feature-context; until: scope changes.
-- [O-04] (when: now) Human visual gate precedes independent delegated review/HIL 3; Anti Slop delivery gate pending; src: workflow.md#gates; until: gates completed.
-- [O-05] (when: now) Human requested use of the computer. Desktop validation is unavailable until explicitly released; headless work can resume separately; src: workflow.md#events; until: human confirms desktop availability.
+- [O-06] (when: now) CR-01: physical disconnection accepted without execution; confirm at HIL 3; src: validation.md#t03-desktop-acceptance-2026-10-09; until: decided.
+- [O-07] (when: on-demand) Idle CPU of about 8-13 s per minute exists in v0.1.13 as well; candidate for a separate investigation, not this feature; src: validation.md#t03-desktop-acceptance-2026-10-09; until: triaged.

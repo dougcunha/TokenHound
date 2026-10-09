@@ -1,107 +1,88 @@
-﻿{
-    "schema_version":  1,
-    "generation":  17,
-    "feature":  "prd-16-hud-geometry-hit-testing",
-    "workspace":  "D:/MyProjects/TokenHound",
-    "phase":  "implementation",
-    "status":  "active",
-    "safe_to_stop":  false,
-    "owner_session":  null,
-    "objective":  "Align the HUD visible contour and interactive area for all existing docking modes while preserving non-activation, drag, menus, scale, DPI, and monitor placement.",
-    "constraints":  [
-                        "Windows 11 WPF/.NET 10 desktop application; no E2E tests.",
-                        "Preserve WM_MOUSEACTIVATE -\u003e MA_NOACTIVATE and SWP_NOZORDER without SWP_SHOWWINDOW.",
-                        "No credentials, provider adapters, MCP/API contracts, or new configuration schema.",
-                        "Mica/Acrylic and new animations are out of scope.",
-                        "No implementation before HIL 2; preserve unrelated worktree changes."
-                    ],
-    "sources":  {
-                    "workflow":  "workflow.md",
-                    "prd":  "prd.md",
-                    "techspec":  "techspec.md",
-                    "tasks":  "tasks.md",
-                    "review":  null,
-                    "snapshot":  "context-snapshot.md"
-                },
-    "review_status":  null,
-    "approved_sources":  [
-                             {
-                                 "path":  "prd.md",
-                                 "sha256":  "218c9fc6e172bd8f6aced85ffd0f6f63e70f16627b4691f2ea92dc5279c346e8",
-                                 "decision_id":  "DEC-02"
-                             },
-                             {
-                                 "path":  "techspec.md",
-                                 "sha256":  "34514bba5d9fad5b58a8ecabc3245df168175a25b3bdb4d1e1b4a1021c6ede59",
-                                 "decision_id":  "DEC-03"
-                             },
-                             {
-                                 "path":  "tasks.md",
-                                 "sha256":  "fb234db63c46ff5755004ecf047813f9bef27949180cc684a031608cd8866966",
-                                 "decision_id":  "DEC-03"
-                             },
-                             {
-                                 "path":  "done/task_01.md",
-                                 "sha256":  "fc28d1bdf57720e73c784ba1163e1113517d0a42a994831d979fee6cfe95dab6",
-                                 "decision_id":  "DEC-03"
-                             },
-                             {
-                                 "path":  "done/task_02.md",
-                                 "sha256":  "9ca2911f75240007055cbcd109c22eeb73a029210259c725ebec0c704aac4287",
-                                 "decision_id":  "DEC-03"
-                             },
-                             {
-                                 "path":  "task_03.md",
-                                 "sha256":  "6b2dade8c1691f9d7ae7e8171cb52c055f2cc724de0642a8cba9273b1a02c389",
-                                 "decision_id":  "DEC-03"
-                             }
-                         ],
-    "decisions_to_read":  [
-                              "DEC-02",
-                              "DEC-03",
-                              "DEC-04"
-                          ],
-    "git_base":  "6f2e92b0f4cc40c5cde1326149f000768fe3a781",
-    "worktree_evidence":  "workflow.md#feature-context",
-    "active_work":  [
-                        {
-                            "scope":  "T03 repository HUD",
-                            "state":  "running",
-                            "handle":  "33928",
-                            "owner":  "coordinator",
-                            "kind":  "process"
-                        }
-                    ],
-    "pending_hil":  null,
-    "blockers":  [
-
-                 ],
-    "correction_round":  0,
-    "rounds_without_progress":  0,
-    "next_action":  {
-                        "kind":  "run",
-                        "instruction":  "Execute T03: transform extraction/tests, integrated Infrastructure regression and desktop matrix. Reuse DEC-03/04; human display-disconnection and visual gate remain pending.",
-                        "read":  [
-                                     {
-                                         "section":  "DEC-03/04; latest Events",
-                                         "path":  "tasks/prd-16-hud-geometry-hit-testing/workflow.md"
-                                     },
-                                     {
-                                         "section":  "Header; Next step brief; matching T03 entries",
-                                         "path":  "tasks/prd-16-hud-geometry-hit-testing/context-snapshot.md"
-                                     },
-                                     {
-                                         "section":  "Entire task",
-                                         "path":  "tasks/prd-16-hud-geometry-hit-testing/task_03.md"
-                                     },
-                                     {
-                                         "section":  "Handoff",
-                                         "path":  "tasks/prd-16-hud-geometry-hit-testing/done/task_02.md"
-                                     },
-                                     {
-                                         "section":  "T02 completion after shadow scaling correction",
-                                         "path":  "tasks/prd-16-hud-geometry-hit-testing/validation.md"
-                                     }
-                                 ]
-                    }
+{
+    "schema_version": 1,
+    "generation": 28,
+    "feature": "prd-16-hud-geometry-hit-testing",
+    "workspace": "D:/MyProjects/TokenHound",
+    "phase": "acceptance",
+    "status": "awaiting-hil",
+    "safe_to_stop": true,
+    "owner_session": null,
+    "objective": "Align the HUD visible contour and interactive area for all existing docking modes while preserving non-activation, drag, menus, scale, DPI, and monitor placement.",
+    "constraints": [
+        "Windows 11 WPF/.NET 10 desktop application; no E2E tests.",
+        "Preserve WM_MOUSEACTIVATE -> MA_NOACTIVATE and SWP_NOZORDER without SWP_SHOWWINDOW.",
+        "No credentials, provider adapters, MCP/API contracts, or new configuration schema.",
+        "Mica/Acrylic and new animations are out of scope.",
+        "No implementation before HIL 2; preserve unrelated worktree changes."
+    ],
+    "sources": {
+        "workflow": "workflow.md",
+        "prd": "prd.md",
+        "techspec": "techspec.md",
+        "tasks": "tasks.md",
+        "review": "codereview_03/codereview.md",
+        "snapshot": "context-snapshot.md"
+    },
+    "review_status": "APPROVED WITH RESERVATIONS",
+    "approved_sources": [
+        {
+            "path": "prd.md",
+            "sha256": "218c9fc6e172bd8f6aced85ffd0f6f63e70f16627b4691f2ea92dc5279c346e8",
+            "decision_id": "DEC-02"
+        },
+        {
+            "path": "techspec.md",
+            "sha256": "5b6749bf240550893578ef5e58220bf73bcc6772e36aaeb5b9683333ac85d9a1",
+            "decision_id": "DEC-03"
+        },
+        {
+            "path": "tasks.md",
+            "sha256": "257571c5d8575d24add85ce2766c9251899b92d0d7d09544e61a32006cb4a134",
+            "decision_id": "DEC-03"
+        },
+        {
+            "path": "done/task_01.md",
+            "sha256": "fc28d1bdf57720e73c784ba1163e1113517d0a42a994831d979fee6cfe95dab6",
+            "decision_id": "DEC-03"
+        },
+        {
+            "path": "done/task_02.md",
+            "sha256": "9ca2911f75240007055cbcd109c22eeb73a029210259c725ebec0c704aac4287",
+            "decision_id": "DEC-03"
+        },
+        {
+            "path": "done/task_03.md",
+            "sha256": "a607aeb8c5190173f37910aabcad7ffd5c728a73a83f53dc624fa5679d09d26c",
+            "decision_id": "DEC-03"
+        }
+    ],
+    "decisions_to_read": [
+        "DEC-02",
+        "DEC-03",
+        "DEC-04",
+        "DEC-05"
+    ],
+    "git_base": "6f2e92b0f4cc40c5cde1326149f000768fe3a781",
+    "worktree_evidence": "workflow.md#feature-context",
+    "active_work": [],
+    "pending_hil": {
+        "gate": "Reservations HIL + HIL 3",
+        "question": "Correct chosen reservations or finalize; accept the current delivery.",
+        "affected": [
+            "codereview_03/codereview.md"
+        ]
+    },
+    "blockers": [],
+    "correction_round": 2,
+    "rounds_without_progress": 0,
+    "next_action": {
+        "kind": "await-decision",
+        "instruction": "Record the reservations decision and HIL 3; on acceptance mark completed, close the snapshot, sync ROADMAP/README.",
+        "read": [
+            {
+                "path": "tasks/prd-16-hud-geometry-hit-testing/codereview_03/codereview.md",
+                "section": "Findings"
+            }
+        ]
+    }
 }
