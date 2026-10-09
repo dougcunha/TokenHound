@@ -51,6 +51,11 @@
     <Compile Include="..\..\src\TokenHound.App\UI\Placement\DisplayResolver.cs" Link="Placement\DisplayResolver.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudEdge.cs" Link="Placement\HudEdge.cs" />
     <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudEdgeLayout.cs" Link="Placement\HudEdgeLayout.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudContourLayout.cs" Link="Placement\HudContourLayout.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudContourFrame.cs" Link="Placement\HudContourFrame.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudContourSegment.cs" Link="Placement\HudContourSegment.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudContourPoint.cs" Link="Placement\HudContourPoint.cs" />
+    <Compile Include="..\..\src\TokenHound.App\UI\Placement\HudContourTransform.cs" Link="Placement\HudContourTransform.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\CadenceSettingsViewModel.cs" Link="ViewModels\CadenceSettingsViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderBadgeState.cs" Link="ViewModels\ProviderBadgeState.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderBadgeResolver.cs" Link="ViewModels\ProviderBadgeResolver.cs" />

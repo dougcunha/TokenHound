@@ -10,8 +10,6 @@ public sealed partial class NotchWindow
 {
     private const double GUTTER = 12;
     private const double STATUS_POPUP_GAP = 4;
-    private const double CAPSULE_RADIUS = 24;
-    private const double CAPSULE_BORDER = 1.5;
 
     private static readonly Thickness HORIZONTAL_PADDING = new(8) { Top = 5, Bottom = 5 };
     private static readonly Thickness VERTICAL_PADDING = new(8) { Left = 5, Right = 5 };
@@ -25,8 +23,7 @@ public sealed partial class NotchWindow
 
         HudDockLayout.Current.Apply(edge, isVertical);
         RootGrid.Margin = GutterFor(mode);
-        CapsuleBorder.CornerRadius = CornersFor(edge);
-        CapsuleBorder.BorderThickness = BorderFor(edge);
+        CapsuleBorder.Mode = mode;
         CapsuleBorder.Padding = isVertical ? VERTICAL_PADDING : HORIZONTAL_PADDING;
         ApplyStatusPopupPlacement(edge);
         ApplyScaledMinimums();
@@ -52,21 +49,5 @@ public sealed partial class NotchWindow
             HudDockMode.LeftEdge => new Thickness(GUTTER) { Left = 0 },
             HudDockMode.RightEdge => new Thickness(GUTTER) { Right = 0 },
             _ => new Thickness(GUTTER) { Top = 0 }
-        };
-
-    private static CornerRadius CornersFor(HudEdge edge)
-        => edge switch
-        {
-            HudEdge.Left => new CornerRadius(CAPSULE_RADIUS) { TopLeft = 0, BottomLeft = 0 },
-            HudEdge.Right => new CornerRadius(CAPSULE_RADIUS) { TopRight = 0, BottomRight = 0 },
-            _ => new CornerRadius(CAPSULE_RADIUS) { TopLeft = 0, TopRight = 0 }
-        };
-
-    private static Thickness BorderFor(HudEdge edge)
-        => edge switch
-        {
-            HudEdge.Left => new Thickness(CAPSULE_BORDER) { Left = 0 },
-            HudEdge.Right => new Thickness(CAPSULE_BORDER) { Right = 0 },
-            _ => new Thickness(CAPSULE_BORDER) { Top = 0 }
         };
 }

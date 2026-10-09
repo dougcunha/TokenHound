@@ -25,15 +25,13 @@
             <ScaleTransform ScaleX="{Binding Factor, Source={x:Static presentation:HudScale.Current}}"
                             ScaleY="{Binding Factor, Source={x:Static presentation:HudScale.Current}}" />
         </Grid.LayoutTransform>
-        <Border x:Name="CapsuleBorder"
+        <controls:HudContourDecorator x:Name="CapsuleBorder"
                 Background="#18181B"
                 BorderBrush="#3F3F46"
-                BorderThickness="1.5,0,1.5,1.5"
-                CornerRadius="0,0,24,24"
                 Padding="8,5"
                 Cursor="Hand"
                 SnapsToDevicePixels="True">
-            <Border.ContextMenu>
+            <controls:HudContourDecorator.ContextMenu>
                 <ContextMenu x:Name="CapsuleContextMenu"
                              Style="{StaticResource HudContextMenuStyle}">
                     <MenuItem x:Name="RefreshMenuItem"
@@ -90,14 +88,7 @@
                               Style="{StaticResource HudMenuItemStyle}"
                               Click="OnCloseClick" />
                 </ContextMenu>
-            </Border.ContextMenu>
-            <Border.Effect>
-                <DropShadowEffect Color="#000000"
-                                  BlurRadius="20"
-                                  ShadowDepth="4"
-                                  Opacity="0.65"
-                                  Direction="270" />
-            </Border.Effect>
+            </controls:HudContourDecorator.ContextMenu>
             <ItemsControl ItemsSource="{Binding Rings}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -116,7 +107,7 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-        </Border>
+        </controls:HudContourDecorator>
 
         <Popup x:Name="StatusPopup"
                PlacementTarget="{Binding ElementName=CapsuleBorder}"

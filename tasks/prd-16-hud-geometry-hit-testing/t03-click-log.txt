@@ -1,0 +1,19 @@
+Target PID=18084
+MouseDown Left 2320,1873 clicks=1
+KeyPress p
+MouseDown Left 2320,1873 clicks=1
+CASE primary-50-top-center outside gutter+shadow
+MouseDown Left 2501,1460 clicks=1
+MouseDown Right 2501,1460 clicks=1
+MouseDown Left 2501,1460 clicks=1
+MouseDown Left 2501,1460 clicks=2
+DoubleClick Left 2501,1460
+MouseDown Left 2560,1478 clicks=1
+MouseDown Right 2560,1478 clicks=1
+MouseDown Left 2560,1478 clicks=1
+MouseDown Left 2560,1478 clicks=2
+DoubleClick Left 2560,1478
+KeyPress q
+MouseDown Left 2320,1873 clicks=1
+MouseDown Left 3945,1424 clicks=1
+MouseDown Left 3945,1424 clicks=1

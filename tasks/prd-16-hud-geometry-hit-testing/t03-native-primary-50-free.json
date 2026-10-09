@@ -1,0 +1,41 @@
+{
+  "ForegroundHandle": 9832970,
+  "Windows": [
+    {
+      "Pid": 33928,
+      "Handle": 4525242,
+      "Title": "TokenHound shadow",
+      "Visible": true,
+      "Left": 846,
+      "Top": 260,
+      "Right": 1008,
+      "Bottom": 320,
+      "ExStyle": "0x080800A8",
+      "Foreground": false
+    },
+    {
+      "Pid": 33928,
+      "Handle": 1247904,
+      "Title": "TokenHound",
+      "Visible": true,
+      "Left": 846,
+      "Top": 260,
+      "Right": 1008,
+      "Bottom": 320,
+      "ExStyle": "0x08080088",
+      "Foreground": false
+    },
+    {
+      "Pid": 23240,
+      "Handle": 198816,
+      "Title": "TokenHound",
+      "Visible": false,
+      "Left": -1219,
+      "Top": -1440,
+      "Right": -1020,
+      "Bottom": -1369,
+      "ExStyle": "0x08080088",
+      "Foreground": false
+    }
+  ]
+}

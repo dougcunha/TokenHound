@@ -28,6 +28,12 @@ public static class WindowStyles
     /// </summary>
     public const int WS_EX_TOPMOST = 0x00000008;
 
+    /// <summary>Passes mouse input through a layered companion window.</summary>
+    public const int WS_EX_TRANSPARENT = 0x00000020;
+
+    /// <summary>Enables native per-pixel layered window composition.</summary>
+    public const int WS_EX_LAYERED = 0x00080000;
+
     private const uint SWP_FLAGS = 0x0002 | 0x0001 | 0x0004 | 0x0010 | 0x0020;
     private static readonly IntPtr HWND_TOPMOST = new(-1);
 
@@ -39,6 +45,10 @@ public static class WindowStyles
     /// <returns>The updated style bitmask containing all non-activating flags.</returns>
     public static int ApplyExtendedStyles(int currentStyle)
         => currentStyle | WS_EX_NOACTIVATE | WS_EX_TOOLWINDOW | WS_EX_TOPMOST;
+
+    /// <summary>Composes passive shadow styles without changing the interactive HUD policy.</summary>
+    public static int ApplyShadowStyles(int currentStyle)
+        => ApplyExtendedStyles(currentStyle) | WS_EX_TRANSPARENT | WS_EX_LAYERED;
 
     /// <summary>
     /// Determines whether the specified style bitmask contains all non-activating flags.

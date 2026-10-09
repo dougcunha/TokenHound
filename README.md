@@ -18,14 +18,17 @@ TokenHound is a lightweight, peripheral desktop notch / HUD crafted specifically
 
 ## Key Features
 
-- **Screen-Edge Floating Notch**: Glides at the top or edge of your screen with smooth Bézier curvature, Win11 Mica/Acrylic styling, and minimal visual intrusion.
+- Dock the HUD at the top left, top center, top right, left edge, or right edge of your chosen monitor. Side placements use a vertical capsule. Dragging switches to Free mode, and placement is saved across launches.
 - **Zero Focus Disruption (`WS_EX_NOACTIVATE`)**: Built using native Win32 interop so the notch never steals keyboard or window focus from your IDE, terminal, or browser.
-- **Click-Through Transparency**: Outside the notch's capsule contours, mouse clicks pass directly through to whatever application is behind it via `WM_NCHITTEST` handling.
+- Adjust HUD size in Settings. Changes apply immediately and are saved across launches.
+- Enable or disable startup at Windows logon in Settings, with support for the installer's startup option.
 - **"Borrow, Don't Own" Principle**: Never initiates competing logins or asks for raw passwords. TokenHound safely reads existing local sessions (Windows Credential Manager, DPAPI, SQLite WAL databases) in read-only mode (`FileShare.ReadWrite | FileShare.Delete`).
 - **Zero Fake Data**: Strictly reports honest telemetry. If an API provider only exposes remaining quota without a total limit, TokenHound will never invent percentages or artificial denominators.
 - **HTTP 429 Resilience & Persistence**: Backoff deadlines and rate-limit states are persisted to `%LOCALAPPDATA%\TokenHound\`, guaranteeing that restart cycles will never hammer provider endpoints under active penalty windows.
 - **Self-Updating from GitHub Releases**: Checks the latest stable release periodically (every 24 h by default) and from the tray or HUD menu ("Check for Updates…"), asks before installing, verifies the download (size and SHA-256 when published), and restarts on the new version. See [Updates](#updates).
 - **Ultra-Lean Resource Usage**: Operates continuously at approximately ~30–45 MB RAM in idle desktop state.
+
+Edge geometry and contour hit testing are in progress: the capsule gains inverse rounded joins at screen edges, and clicks outside its visible contour pass through to the application behind it. Mica/Acrylic backdrops and additional ring animations remain separate follow-up work. See the [roadmap](docs/ROADMAP.md) for delivered features and planned scope.
 
 ---
 
@@ -134,10 +137,11 @@ dotnet build TokenHound.slnx --no-restore
 
 ### Running Tests
 
-Execute the unit test suite:
+After building the solution, run each test project through its Microsoft.Testing.Platform executable:
 
 ```powershell
-dotnet test TokenHound.slnx --no-build
+dotnet run --project tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1
+dotnet run --project tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj --no-build --no-restore -- --minimum-expected-tests 1
 ```
 
 ---

@@ -1,0 +1,17 @@
+<Window x:Class="TokenHound.App.UI.Windows.HudShadowWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="TokenHound shadow"
+        WindowStyle="None" AllowsTransparency="True" Background="Transparent"
+        ShowActivated="False" ShowInTaskbar="False" Topmost="True"
+        Focusable="False" IsHitTestVisible="False" ResizeMode="NoResize"
+        WindowStartupLocation="Manual">
+    <Canvas x:Name="ShadowMask" IsHitTestVisible="False">
+        <Path x:Name="ShadowSource" Fill="Black">
+            <Path.Effect>
+                <DropShadowEffect Color="Black" BlurRadius="20" ShadowDepth="4"
+                                  Opacity="0.65" Direction="270" />
+            </Path.Effect>
+        </Path>
+    </Canvas>
+</Window>

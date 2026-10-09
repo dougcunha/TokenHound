@@ -128,8 +128,8 @@ public sealed partial class NotchWindow
         var (left, top) = NotchPlacement.Dock(
             mode,
             target.WorkArea,
-            Math.Round(ActualWidth * dpi.DpiScaleX),
-            Math.Round(ActualHeight * dpi.DpiScaleY)
+            HudContourTransform.PixelExtent(ActualWidth, dpi.DpiScaleX),
+            HudContourTransform.PixelExtent(ActualHeight, dpi.DpiScaleY)
         );
 
         if ((int)left == (int)window.Left && (int)top == (int)window.Top)

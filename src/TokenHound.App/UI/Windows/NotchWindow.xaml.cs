@@ -42,6 +42,8 @@ public sealed partial class NotchWindow : Window
 
         InitializeComponent();
 
+        _ = new HudContourController(this, CapsuleBorder);
+
         SourceInitialized += OnSourceInitialized;
         Loaded += OnLoaded;
         SizeChanged += OnSizeChanged;
