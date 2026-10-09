@@ -10,7 +10,8 @@ namespace TokenHound.App.ViewModels;
 
 /// <summary>
 /// Presentation model for the translucent background toggle of the "General" settings tab.
-/// Toggling saves the preference and updates the live HUD immediately; a failed save restores the previous value.
+/// Toggling or moving the transparency slider saves the preference and updates the live HUD immediately;
+/// a failed save restores the previous value.
 /// The card binds <see cref="Preference"/> for the live notice shown while Windows keeps the HUD solid.
 /// </summary>
 public sealed class HudBackdropSettingsViewModel : INotifyPropertyChanged
@@ -24,6 +25,7 @@ public sealed class HudBackdropSettingsViewModel : INotifyPropertyChanged
     private readonly HudBackdropPreference _preference;
     private readonly Action<string> _openUri;
     private bool _isEnabled;
+    private int _transparency;
 
     /// <summary>Initializes a new instance of the <see cref="HudBackdropSettingsViewModel"/> class.</summary>
     /// <param name="settings">The persisted preference used as the baseline.</param>
@@ -45,6 +47,7 @@ public sealed class HudBackdropSettingsViewModel : INotifyPropertyChanged
         _preference = preference;
         _openUri = openUri ?? OpenWithShell;
         _isEnabled = settings.IsEnabled;
+        _transparency = settings.TransparencyPercent;
         OpenSystemSettingsCommand = new RelayCommand(OpenSystemSettings);
     }
 
@@ -71,23 +74,40 @@ public sealed class HudBackdropSettingsViewModel : INotifyPropertyChanged
         set
         {
 
-            if (_isEnabled == value)
+            if (_isEnabled == value || !TrySave(value, _transparency))
                 return;
-
-            if (!_save(new HudBackdropSettings { Enabled = value }))
-            {
-
-                LOGGER.Warning("Unable to persist HUD backdrop preference {IsEnabled}", value);
-                ApplyError = APPLY_ERROR;
-                Refresh();
-
-                return;
-            }
 
             _isEnabled = value;
             _preference.IsEnabled = value;
-            ApplyError = null;
             LOGGER.Debug("Applied HUD backdrop preference {IsEnabled}", value);
+            Refresh();
+        }
+    }
+
+    /// <summary>Gets the lowest transparency the slider offers, in percent.</summary>
+    public int Minimum
+        => HudBackdropSettings.MINIMUM_TRANSPARENCY;
+
+    /// <summary>Gets the highest transparency the slider offers, in percent.</summary>
+    public int Maximum
+        => HudBackdropSettings.MAXIMUM_TRANSPARENCY;
+
+    /// <summary>Gets or sets the transparency of the capsule tint in percent; setting it applies immediately.</summary>
+    public int Transparency
+    {
+        get
+            => _transparency;
+        set
+        {
+
+            var transparency = Math.Clamp(value, Minimum, Maximum);
+
+            if (_transparency == transparency || !TrySave(_isEnabled, transparency))
+                return;
+
+            _transparency = transparency;
+            _preference.Transparency = transparency;
+            LOGGER.Debug("Applied HUD backdrop transparency {Transparency}", transparency);
             Refresh();
         }
     }
@@ -104,6 +124,24 @@ public sealed class HudBackdropSettingsViewModel : INotifyPropertyChanged
 
     private void Refresh()
         => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
+
+    private bool TrySave(bool enabled, int transparency)
+    {
+
+        if (_save(new HudBackdropSettings { Enabled = enabled, Transparency = transparency }))
+        {
+
+            ApplyError = null;
+
+            return true;
+        }
+
+        LOGGER.Warning("Unable to persist HUD backdrop preference {IsEnabled} {Transparency}", enabled, transparency);
+        ApplyError = APPLY_ERROR;
+        Refresh();
+
+        return false;
+    }
 
     private void OpenSystemSettings()
     {

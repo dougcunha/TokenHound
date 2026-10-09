@@ -40,6 +40,35 @@
                       FontSize="12"
                       AutomationProperties.Name="Use a translucent HUD background"
                       AutomationProperties.HelpText="Turns the blurred HUD background on or off immediately" />
+            <TextBlock Text="Transparency"
+                       FontSize="12"
+                       Foreground="{StaticResource TextSecondaryBrush}"
+                       Margin="0,10,0,4" />
+            <Grid IsEnabled="{Binding IsEnabled}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Slider x:Name="TransparencySlider"
+                        Minimum="{Binding Minimum}"
+                        Maximum="{Binding Maximum}"
+                        Value="{Binding Transparency, Mode=TwoWay, Delay=200}"
+                        TickFrequency="1"
+                        IsSnapToTickEnabled="True"
+                        SmallChange="1"
+                        LargeChange="5"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="HUD background transparency"
+                        AutomationProperties.HelpText="Sets how much of the blur shows through the HUD, from 0 to 50 percent; higher values reduce contrast over bright backgrounds" />
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Value, ElementName=TransparencySlider, StringFormat={}{0:0}%}"
+                           Width="48"
+                           TextAlignment="Right"
+                           FontSize="12"
+                           FontWeight="Medium"
+                           Foreground="{StaticResource TextPrimaryBrush}"
+                           VerticalAlignment="Center" />
+            </Grid>
             <Border Background="{StaticResource BadgeNeedsAuthBackgroundBrush}"
                     BorderBrush="{StaticResource BadgeNeedsAuthForegroundBrush}"
                     BorderThickness="1"

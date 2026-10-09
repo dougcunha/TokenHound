@@ -1,6 +1,7 @@
 using System;
 using System.ComponentModel;
 using TokenHound.App.UI.Placement;
+using TokenHound.Infrastructure.Configuration;
 
 namespace TokenHound.App.Presentation;
 
@@ -23,6 +24,7 @@ public sealed class HudBackdropPreference : INotifyPropertyChanged
     public const string OS_BUILD_NOTICE = "The translucent background needs Windows 11, so the HUD uses the solid background.";
 
     private bool _isEnabled = true;
+    private int _transparency = HudBackdropSettings.DEFAULT_TRANSPARENCY;
     private string? _unavailability;
 
     /// <summary>
@@ -52,6 +54,26 @@ public sealed class HudBackdropPreference : INotifyPropertyChanged
     }
 
     /// <summary>
+    /// Gets or sets the transparency of the capsule tint over the material, in percent, clamped to the supported range.
+    /// </summary>
+    public int Transparency
+    {
+        get
+            => _transparency;
+        set
+        {
+
+            var transparency = Clamp(value);
+
+            if (_transparency == transparency)
+                return;
+
+            _transparency = transparency;
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Transparency)));
+        }
+    }
+
+    /// <summary>
     /// Gets or sets the name of the Windows input that blocks the material regardless of the setting,
     /// or <see langword="null"/> when Windows allows it.
     /// </summary>
@@ -77,6 +99,15 @@ public sealed class HudBackdropPreference : INotifyPropertyChanged
     /// <summary>Gets the Windows settings page that can lift the current block, or <see langword="null"/>.</summary>
     public string? SystemSettingsUri
         => _isEnabled ? Describe(_unavailability).Uri : null;
+
+    /// <summary>Maps a transparency percentage to the alpha of the capsule tint.</summary>
+    /// <param name="transparency">The transparency in percent.</param>
+    /// <returns>The tint alpha, where 7 % yields the approved 0xED; values outside the range are clamped first.</returns>
+    public static byte TintAlpha(int transparency)
+        => (byte)Math.Round(byte.MaxValue * (100 - Clamp(transparency)) / 100.0);
+
+    private static int Clamp(int transparency)
+        => Math.Clamp(transparency, HudBackdropSettings.MINIMUM_TRANSPARENCY, HudBackdropSettings.MAXIMUM_TRANSPARENCY);
 
     private static (string? Notice, string? Uri) Describe(string? reason)
         => reason switch

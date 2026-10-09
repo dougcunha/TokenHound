@@ -87,6 +87,38 @@ public sealed class HudBackdropStoreTests : IDisposable
         store.Load().IsEnabled.Should().BeFalse();
     }
 
+    /// <summary>
+    /// Verifies that a missing transparency reads as the default and that stored values outside the range are clamped.
+    /// </summary>
+    [Fact]
+    public void Load_WhenTransparencyIsAbsentOrOutOfRange_UsesDefaultOrClamps()
+    {
+
+        var withoutValue = CreateStore("""{"HudBackdrop":{"Enabled":true}}""");
+        var belowRange = CreateStore("""{"HudBackdrop":{"Transparency":-5}}""");
+        var aboveRange = CreateStore("""{"HudBackdrop":{"Transparency":80}}""");
+
+        withoutValue.Load().TransparencyPercent.Should().Be(HudBackdropSettings.DEFAULT_TRANSPARENCY);
+        belowRange.Load().TransparencyPercent.Should().Be(HudBackdropSettings.MINIMUM_TRANSPARENCY);
+        aboveRange.Load().TransparencyPercent.Should().Be(HudBackdropSettings.MAXIMUM_TRANSPARENCY);
+    }
+
+    /// <summary>
+    /// Verifies that the transparency round-trips together with the toggle.
+    /// </summary>
+    [Fact]
+    public void Save_PersistsTransparencyWithToggle()
+    {
+
+        var store = CreateStore(SETTINGS_WITH_SIBLING_SECTIONS_JSON);
+
+        store.Save(new HudBackdropSettings { Enabled = true, Transparency = 20 }).Should().BeTrue();
+
+        var loaded = store.Load();
+        loaded.IsEnabled.Should().BeTrue();
+        loaded.TransparencyPercent.Should().Be(20);
+    }
+
     private HudBackdropStore CreateStore(string json)
     {
 

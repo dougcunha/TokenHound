@@ -379,7 +379,9 @@ public partial class App : Application
         _dialogService = new DialogService(() => _notchWindow);
         _notchViewModel = new NotchViewModel(usageStore, DispatchUiAction);
         HudScale.Current.Percent = _hudSizeStore.Load().ResolvedPercent;
-        HudBackdropPreference.Current.IsEnabled = _hudBackdropStore.Load().IsEnabled;
+        var hudBackdrop = _hudBackdropStore.Load();
+        HudBackdropPreference.Current.IsEnabled = hudBackdrop.IsEnabled;
+        HudBackdropPreference.Current.Transparency = hudBackdrop.TransparencyPercent;
         _lifetime = new ApplicationLifetime(usageStore, _dialogService, _notchViewModel, disposableResources);
 
         _actionsViewModel = new HudActionsViewModel(

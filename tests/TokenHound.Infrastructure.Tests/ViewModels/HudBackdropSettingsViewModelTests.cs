@@ -52,6 +52,61 @@ public sealed class HudBackdropSettingsViewModelTests
         model.ApplyError.Should().Be(HudBackdropSettingsViewModel.APPLY_ERROR);
     }
 
+    /// <summary>Verifies that the slider starts at the stored transparency, clamped to the supported range.</summary>
+    [Fact]
+    public void Constructor_ReadsClampedTransparency()
+    {
+
+        var model = new HudBackdropSettingsViewModel(new HudBackdropSettings { Transparency = 90 }, static _ => true, new HudBackdropPreference());
+
+        model.Transparency.Should().Be(HudBackdropSettings.MAXIMUM_TRANSPARENCY);
+        model.Minimum.Should().Be(HudBackdropSettings.MINIMUM_TRANSPARENCY);
+        model.Maximum.Should().Be(HudBackdropSettings.MAXIMUM_TRANSPARENCY);
+    }
+
+    /// <summary>Verifies that moving the slider saves it with the toggle and updates the live HUD tint.</summary>
+    [Fact]
+    public void Transparency_WhenChanged_SavesWithToggleAndUpdatesLivePreference()
+    {
+
+        var saved = new List<HudBackdropSettings>();
+        var preference = new HudBackdropPreference();
+        var model = new HudBackdropSettingsViewModel(new HudBackdropSettings(), settings => Save(saved, settings), preference);
+
+        model.Transparency = 20;
+
+        saved.Should().ContainSingle().Which.Should().Be(new HudBackdropSettings { Enabled = true, Transparency = 20 });
+        preference.Transparency.Should().Be(20);
+    }
+
+    /// <summary>Verifies that toggling the background keeps the chosen transparency in the saved section.</summary>
+    [Fact]
+    public void IsEnabled_WhenToggled_KeepsTransparency()
+    {
+
+        var saved = new List<HudBackdropSettings>();
+        var model = new HudBackdropSettingsViewModel(new HudBackdropSettings { Transparency = 15 }, settings => Save(saved, settings), new HudBackdropPreference());
+
+        model.IsEnabled = false;
+
+        saved.Should().ContainSingle().Which.Should().Be(new HudBackdropSettings { Enabled = false, Transparency = 15 });
+    }
+
+    /// <summary>Verifies that a failed save keeps the previous transparency and the live tint.</summary>
+    [Fact]
+    public void Transparency_WhenSaveFails_KeepsPreviousValue()
+    {
+
+        var preference = new HudBackdropPreference();
+        var model = new HudBackdropSettingsViewModel(new HudBackdropSettings(), static _ => false, preference);
+
+        model.Transparency = 25;
+
+        model.Transparency.Should().Be(HudBackdropSettings.DEFAULT_TRANSPARENCY);
+        preference.Transparency.Should().Be(HudBackdropSettings.DEFAULT_TRANSPARENCY);
+        model.ApplyError.Should().Be(HudBackdropSettingsViewModel.APPLY_ERROR);
+    }
+
     /// <summary>Verifies that the notice button opens the Windows settings page for the current reason.</summary>
     [Fact]
     public void OpenSystemSettingsCommand_WhenTransparencyIsOff_OpensColorsPage()

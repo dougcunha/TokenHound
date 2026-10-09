@@ -1,12 +1,14 @@
 using Serilog;
 using Serilog.Events;
 using System;
+using System.ComponentModel;
 using System.Windows;
 using System.Windows.Media;
 using TokenHound.App.Interop;
 using TokenHound.App.Presentation;
 using TokenHound.App.UI.Controls;
 using TokenHound.App.UI.Placement;
+using TokenHound.Infrastructure.Configuration;
 
 namespace TokenHound.App.UI.Windows;
 
@@ -19,12 +21,14 @@ internal sealed class HudBackdropController : IDisposable
 
     /// <summary>Hide reason for a frame whose arrange is invalid; its transitions are transient and log at Debug.</summary>
     internal const string ARRANGE_INVALID_REASON = "ArrangeInvalid";
-    private const byte TINT_ALPHA = 0xED;
-    private static readonly SolidColorBrush TINT = CreateFill(TINT_ALPHA);
+    private const string FAILURE_REASON = "Failure";
+    private const string OPAQUE_REASON = "Opaque";
     private readonly HudContourDecorator _decorator;
+    private readonly HudBackdropPreference _preference = HudBackdropPreference.Current;
     private readonly Brush _solid;
     private readonly HudBackdropAvailability _availability;
     private readonly HudBackdropWindow _window = new();
+    private SolidColorBrush _tint;
     private HudBackdropMode? _mode;
     private bool _failed;
     private bool _transient;
@@ -34,8 +38,10 @@ internal sealed class HudBackdropController : IDisposable
 
         _decorator = decorator;
         _solid = decorator.Background ?? CreateFill(byte.MaxValue);
-        _availability = new HudBackdropAvailability(owner, HudBackdropPreference.Current);
+        _tint = CreateTint();
+        _availability = new HudBackdropAvailability(owner, _preference);
         _availability.Changed += OnAvailabilityChanged;
+        _preference.PropertyChanged += OnPreferenceChanged;
     }
 
     /// <summary>Raised when the material availability changed and the frame must be synchronized again.</summary>
@@ -45,8 +51,10 @@ internal sealed class HudBackdropController : IDisposable
     internal void Synchronize(IntPtr hud, Geometry contour, Matrix pixelTransform, HudShadowInterop.Bounds bounds)
     {
 
-        var inputs = _availability.Inputs;
-        var mode = _failed ? HudBackdropMode.Solid : HudBackdropPolicy.Resolve(inputs);
+        var reason = ResolveReason(_availability.Inputs);
+        var mode = string.Equals(reason, HudBackdropPolicy.AVAILABLE, StringComparison.OrdinalIgnoreCase)
+            ? HudBackdropMode.Material
+            : HudBackdropMode.Solid;
 
         if (mode is HudBackdropMode.Material
             && !TryShow(
@@ -60,7 +68,7 @@ internal sealed class HudBackdropController : IDisposable
         if (mode is HudBackdropMode.Solid)
             _window.Hide();
 
-        Apply(mode, _failed ? "Failure" : HudBackdropPolicy.Reason(inputs));
+        Apply(mode, _failed ? FAILURE_REASON : reason);
     }
 
     /// <summary>
@@ -78,6 +86,7 @@ internal sealed class HudBackdropController : IDisposable
     public void Dispose()
     {
 
+        _preference.PropertyChanged -= OnPreferenceChanged;
         _availability.Changed -= OnAvailabilityChanged;
         _availability.Dispose();
         _window.Dispose();
@@ -121,12 +130,45 @@ internal sealed class HudBackdropController : IDisposable
 
         var level = transient || afterTransient ? LogEventLevel.Debug : LogEventLevel.Information;
         _mode = mode;
-        _decorator.Background = mode is HudBackdropMode.Material ? TINT : _solid;
+        _decorator.Background = mode is HudBackdropMode.Material ? _tint : _solid;
         Log.Write(level, "HUD background switched to {Mode} ({Reason})", mode, reason);
     }
 
     private void OnAvailabilityChanged(object? sender, EventArgs args)
         => Changed?.Invoke(this, EventArgs.Empty);
+
+    private void OnPreferenceChanged(object? sender, PropertyChangedEventArgs args)
+    {
+
+        if (!string.IsNullOrEmpty(args.PropertyName)
+            && !string.Equals(args.PropertyName, nameof(HudBackdropPreference.Transparency), StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _tint = CreateTint();
+
+        if (_mode is HudBackdropMode.Material)
+            _decorator.Background = _tint;
+
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Names the input that keeps the solid fill; a fully opaque tint would hide the material, so it is skipped.</summary>
+    private string ResolveReason(HudBackdropInputs inputs)
+    {
+
+        if (_failed)
+            return FAILURE_REASON;
+
+        var reason = HudBackdropPolicy.Reason(inputs);
+
+        return string.Equals(reason, HudBackdropPolicy.AVAILABLE, StringComparison.OrdinalIgnoreCase)
+            && _preference.Transparency <= HudBackdropSettings.MINIMUM_TRANSPARENCY
+                ? OPAQUE_REASON
+                : reason;
+    }
+
+    private SolidColorBrush CreateTint()
+        => CreateFill(HudBackdropPreference.TintAlpha(_preference.Transparency));
 
     private static SolidColorBrush CreateFill(byte alpha)
     {
