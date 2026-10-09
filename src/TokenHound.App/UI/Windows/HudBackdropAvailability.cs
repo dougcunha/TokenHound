@@ -51,6 +51,7 @@ internal sealed class HudBackdropAvailability : IDisposable
         _owner = owner;
         _preference = preference;
         Inputs = Read();
+        Publish(Inputs);
         preference.PropertyChanged += OnPreferenceChanged;
         SystemParameters.StaticPropertyChanged += OnSystemParameterChanged;
         owner.SourceInitialized += OnSourceInitialized;
@@ -101,7 +102,11 @@ internal sealed class HudBackdropAvailability : IDisposable
     }
 
     private void OnPreferenceChanged(object? sender, PropertyChangedEventArgs args)
-        => Refresh();
+    {
+
+        if (string.Equals(args.PropertyName, nameof(HudBackdropPreference.IsEnabled), StringComparison.OrdinalIgnoreCase))
+            Refresh();
+    }
 
     private void OnSystemParameterChanged(object? sender, PropertyChangedEventArgs args)
     {
@@ -119,7 +124,18 @@ internal sealed class HudBackdropAvailability : IDisposable
             return;
 
         Inputs = next;
+        Publish(next);
         Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Shares the Windows input that blocks the material, ignoring the setting, for the Settings notice.</summary>
+    private void Publish(HudBackdropInputs inputs)
+    {
+
+        var reason = HudBackdropPolicy.Reason(inputs with { IsEnabled = true });
+        _preference.Unavailability = string.Equals(reason, HudBackdropPolicy.AVAILABLE, StringComparison.OrdinalIgnoreCase)
+            ? null
+            : reason;
     }
 
     private HudBackdropInputs Read()
