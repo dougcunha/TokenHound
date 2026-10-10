@@ -46,6 +46,11 @@ Write code, comments, documentation, and repository-facing text in English. The 
 
 - Launch `TokenHound.App` via Windows MCP `App` tool (`mode="launch_executable"`); shell `Start-Process` runs in an isolated desktop and will not render to the user screen.
 - Verify HUD positioning with Windows MCP `Screenshot` on the primary monitor (`display: [2]`).
+- Expose every new app command in both menus: the tray menu (`TrayMenuItemKey`, `UI/Tray/`) and the HUD context menu (`NotchWindow.xaml`).
+
+## Releasing
+
+- Push a `v*` tag, wait for `.github/workflows/release.yml` to publish the release, then replace its auto-generated notes with English release notes and update `README.md` for user-facing changes.
 
 ## Skills to load first
 
