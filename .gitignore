@@ -61,3 +61,17 @@ PublishApp.ps1
 /graft/
 .deep-review/
 .audits/
+
+# >>> context-brake (managed by `context-brake init`; do not edit) >>>
+/.agents/hooks/context-brake-statusline.mjs
+/.agents/hooks/context-brake.mjs
+/.claude/hooks/context-brake-statusline.mjs
+/.claude/hooks/context-brake.mjs
+/.codex/hooks/context-brake.mjs
+/.context-brake/
+/context-brake.config.json
+# <<< context-brake <<<
+/.agents/settings.json
+/.agents/settings.local.json
+/.agents/skills/chat-clean
+/.codex/hooks.json
