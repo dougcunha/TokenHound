@@ -1,6 +1,6 @@
 ---
 name: commit
-description: 'Create conventional commits with a title and bullet-point description, handling submodules with pending changes before the main repository, and offer to remove from Git the SDD artifacts (`tasks/prd-*/`) of completed features. Use when the user asks to commit, save changes to Git, generate a commit message, or use /commit. Push to a remote only when the invocation includes `push`, `--push`, `send`, or `--send`.'
+description: 'Create conventional commits with a title and bullet-point description, handling submodules with pending changes before the main repository, and offer to remove from Git the SDD artifacts (`tasks/prd-*/`) of completed features, moving their ADRs to `docs/adr/` first. Use when the user asks to commit, save changes to Git, generate a commit message, or use /commit. Push to a remote only when the invocation includes `push`, `--push`, `send`, or `--send`.'
 ---
 
 # Commit (submodules first)
@@ -48,13 +48,13 @@ Classify each `tasks/prd-[slug]/` by the first row that decides:
 
 A feature in progress is never offered. For each completed or undetermined one, gather before asking what removal would take away without a record elsewhere:
 
-- ADR candidates in the handoffs (`### ADR candidates` with content other than `None`), with ID and title;
+- the folder's ADRs: candidates in task and correction handoffs (`### ADR candidates` with content other than `None`) and loose ADR files in the folder, with ID and title; they are not lost, because step 7 moves them to `docs/adr/` before the removal, and the question states the number each one will get;
 - accepted reservations and open items recorded in the latest review or in `workflow.md`;
 - untracked files in the folder (`git status --porcelain -- tasks/prd-[slug]/`), which removal deletes for good;
 - tracked files outside the folder that cite it (`git grep -l "prd-[slug]/" -- ":!tasks/prd-[slug]/"`), such as a README or docs, which would be left with broken links; recommend keeping the feature or first moving the cited content into the documentation;
 - `checkpoint.json` with `mode: auto`: acceptance was automatic and no human saw the delivery; point to the decision log (`decision_log`) for review before removal.
 
-Ask a single question for all repositories, through the available question tool (`AskUserQuestion` with `multiSelect`) or, without it, as text with the same options. One option per feature: the repository when it is not the main one, the slug, the class with the evidence that decided it and, in the description, the items gathered above. An undetermined feature is never marked as recommended. When there is an ADR candidate, recommend promoting it first, and do not remove the feature in this run if the user wants to promote it. With more features than the tool can hold, ask as text listing all of them. No selection, "none", or silence keeps everything. Keep the choice for step 7; the question happens now so the rest of the skill runs without another interruption.
+Ask a single question for all repositories, through the available question tool (`AskUserQuestion` with `multiSelect`) or, without it, as text with the same options. One option per feature: the repository when it is not the main one, the slug, the class with the evidence that decided it and, in the description, the items gathered above. An undetermined feature is never marked as recommended. With more features than the tool can hold, ask as text listing all of them. No selection, "none", or silence keeps everything. Keep the choice for step 7; the question happens now so the rest of the skill runs without another interruption.
 
 ### 3. Process every submodule with pending changes
 
@@ -127,11 +127,19 @@ After committing the submodules, return to the repository root and repeat steps 
 
 Only when step 2 had a chosen feature, after the normal commit of the repository that holds it. In a submodule, remove right after its commit, before returning to the main repository, so the gitlink already includes the removal. The removal goes into a commit of its own to keep the feature commit clean and leave the artifacts recoverable from history starting at the previous commit.
 
-For each chosen feature:
+For each chosen feature, first move the ADRs, then remove the folder. An architectural decision stays valid after the feature completes, and the handoff that holds it leaves with the folder; moving it to `docs/adr/` is what keeps it as durable documentation.
 
-```bash
-git -C <repo> rm -r -q tasks/prd-<slug>/
-```
+1. **Move ADRs.** For each ADR listed in step 2, except a candidate that `workflow.md` or the review records as rejected:
+   - Follow the repository's `docs/adr/` convention (numbering, title, sections) by reading an existing ADR; without the folder or any ADR, create it with sequential `NNNN-slug.md` numbering from the highest existing number, a short title, and one paragraph with context, decision, and reason.
+   - Carry the candidate's content over: alternatives and consequences only when they add something; evidence as a reference to the code, not to the artifact being removed.
+   - End with an origin line: `Origin: prd-<slug>, <TXX-ADR-NN>, artifacts up to <short-hash>`.
+   - A decision that already has an ADR in `docs/adr/` (same decision or same origin) is not duplicated: cite the existing one in the report.
+   - `git -C <repo> add docs/adr/`.
+2. **Remove the folder.**
+
+   ```bash
+   git -C <repo> rm -r -q tasks/prd-<slug>/
+   ```
 
 - If `git rm` refuses because of a local change (the user committed only part of the stage in step 4), skip that feature and report it; never use `-f`.
 - Untracked files left in the folder were announced in the question: delete the remaining folder.
@@ -143,7 +151,10 @@ Commit with title and language matching the `git log`, and one bullet per featur
 chore(sdd): remove artifacts of completed features
 
 - prd-<slug>: artifacts up to <short-hash>
+- docs/adr/NNNN-slug.md: ADR <TXX-ADR-NN> from prd-<slug>
 ```
+
+The ADRs go into the same commit as the removal so the change is a move: the decision is never out of the repository between two commits.
 
 Never offer or remove `tasks/triage-log.jsonl`: it is the triage calibration log, not a feature artifact.
 

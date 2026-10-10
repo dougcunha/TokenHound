@@ -69,7 +69,7 @@ When escalating: first finish the independent units, save the checkpoint with `s
 | Visual check | Records the manual acceptance script as pending manual acceptance and proceeds to the review |
 | HIL 3 | Automatic acceptance, below |
 
-**Automatic acceptance.** With the latest review `APPROVED`, or `APPROVED WITH RESERVATIONS` with the reservations routed, no blocking obligation open, and no essential manual validation pending, mark the checkpoint `completed` and the snapshot `closed`, and record `automatic acceptance` in the log with the review path. A pending visual check or other essential manual validation prevents completion: escalate, with the manual acceptance script and the log summary at HIL 3. ADR candidates and accepted open items go into the final summary, because the later removal of the artifacts would take them along.
+**Automatic acceptance.** With the latest review `APPROVED`, or `APPROVED WITH RESERVATIONS` with the reservations routed, no blocking obligation open, and no essential manual validation pending, mark the checkpoint `completed` and the snapshot `closed`, and record `automatic acceptance` in the log with the review path. A pending visual check or other essential manual validation prevents completion: escalate, with the manual acceptance script and the log summary at HIL 3. ADR candidates and accepted open items go into the final summary: the candidates are moved to `docs/adr/` when the `commit` skill removes the artifacts, and the accepted open items would leave with them.
 
 ## Context and session
 
