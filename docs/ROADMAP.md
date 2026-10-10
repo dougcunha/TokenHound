@@ -16,21 +16,21 @@ The initial tracer bullet established the pure Core models and contracts, resili
 
 ## Completed SDD Tracks
 
-These numbers match the retained feature directories. Earlier roadmap numbers for visual polish and docking are obsolete.
+Their SDD artifacts were removed after completion; recover one with `git checkout 7a1ee4c -- tasks/prd-NN-<slug>/`. Earlier roadmap numbers for visual polish and docking are obsolete.
 
 | Track | Delivered behavior | Evidence |
 | --- | --- | --- |
-| PRD 06 | Local read-only MCP provider metrics | [Checkpoint](../tasks/prd-06-mcp-metrics/checkpoint.json) |
-| PRD 07 | Claude multi-profile support | [Checkpoint](../tasks/prd-07-claude-multi-profile/checkpoint.json) |
-| PRD 08 | Claude quota breakdown | [Checkpoint](../tasks/prd-08-claude-quota-breakdown/checkpoint.json) |
-| PRD 09 | Provider Status window | [Checkpoint](../tasks/prd-09-provider-status-window/checkpoint.json) |
-| PRD 10 | Antigravity empty-quota session warmup | [Checkpoint](../tasks/prd-10-antigravity-quota-warmup/checkpoint.json) |
-| PRD 11 | GitHub release checks and updates | [Checkpoint](../tasks/prd-11-auto-update/checkpoint.json) |
-| PRD 12 | Start-with-Windows setting compatible with the installer | [Checkpoint](../tasks/prd-12-windows-autostart/checkpoint.json) |
-| PRD 13 | HUD size setting | [Checkpoint](../tasks/prd-13-hud-size/checkpoint.json) |
-| PRD 14 | Multi-monitor selection, edge docking, and persisted placement | [Checkpoint](../tasks/prd-14-hud-multimonitor-docking/checkpoint.json) |
-| PRD 15 | Settings controls and dialog resource split | [Checkpoint](../tasks/prd-15-settings-window-split/checkpoint.json) |
-| PRD 16 | HUD edge geometry and contour hit testing | [Checkpoint](../tasks/prd-16-hud-geometry-hit-testing/checkpoint.json) |
+| PRD 06 | Local read-only MCP provider metrics | SDD artifacts at `7a1ee4c` |
+| PRD 07 | Claude multi-profile support | SDD artifacts at `7a1ee4c` |
+| PRD 08 | Claude quota breakdown | SDD artifacts at `7a1ee4c` |
+| PRD 09 | Provider Status window | SDD artifacts at `7a1ee4c` |
+| PRD 10 | Antigravity empty-quota session warmup | SDD artifacts at `7a1ee4c` |
+| PRD 11 | GitHub release checks and updates | SDD artifacts at `7a1ee4c` |
+| PRD 12 | Start-with-Windows setting compatible with the installer | SDD artifacts at `7a1ee4c` |
+| PRD 13 | HUD size setting | SDD artifacts at `7a1ee4c` |
+| PRD 14 | Multi-monitor selection, edge docking, and persisted placement | SDD artifacts at `7a1ee4c` |
+| PRD 15 | Settings controls and dialog resource split | SDD artifacts at `7a1ee4c` |
+| PRD 16 | HUD edge geometry and contour hit testing | SDD artifacts at `7a1ee4c` |
 
 ### HUD Placement Baseline
 
@@ -47,7 +47,7 @@ The Settings resource refactor landed in commit `6f2e92b` and shipped in the sam
 
 ## Completed: HUD Edge Geometry and Contour Hit Testing
 
-**Status:** completed 2026-10-09 under `sdd-full` (commit `2bc32ef` plus evidence). The independent review approved it with reservations; the open improvements and the residual risk (physical preferred-display disconnection not tested) are recorded in the [workflow](../tasks/prd-16-hud-geometry-hit-testing/workflow.md) as DEC-05 and DEC-06.
+**Status:** completed 2026-10-09 under `sdd-full` (commit `2bc32ef` plus evidence). The independent review approved it with reservations; the open improvements and the residual risk (physical preferred-display disconnection not tested) are recorded as DEC-05 and DEC-06 in the prd-16 `workflow.md` (SDD artifacts at `7a1ee4c`).
 
 **Outcome:** the visible HUD contour and its interactive area agree in every supported docking mode, while the HUD keeps its non-activating behavior.
 

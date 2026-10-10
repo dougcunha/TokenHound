@@ -1,8 +1,0 @@
-08-10-2026 16:14:02.476|TokenHound|INFO |2|Tray action "Exit" dispatched
-08-10-2026 16:14:02.476|TokenHound|INFO |2|Tray action Exit invoked
-08-10-2026 16:14:02.478|TokenHound|INFO |2|Initiating application shutdown and resource cleanup...
-08-10-2026 16:14:02.479|TokenHound.Infrastructure.Updates.UpdateCheckScheduler|INFO |10|Update check scheduler stopped
-08-10-2026 16:14:02.519|TokenHound|INFO |2|Tray icon Dispose
-08-10-2026 16:14:02.520|TokenHound|INFO |2|Application shutdown completed successfully.
-08-10-2026 16:14:02.621|TokenHound|DEBUG|2|HUD shadow controller disposed
-08-10-2026 16:14:02.623|TokenHound|INFO |2|TokenHound exiting with code 0
