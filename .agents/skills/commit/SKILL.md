@@ -15,7 +15,7 @@ Enable **push mode** whenever the message that invoked the skill contains `push`
 
 - Use the network only in **push mode**, and only through `git push`, `git fetch`, and `git pull --rebase`. Never use `git merge` or a pull that creates a merge.
 - **NEVER** use `--no-verify` or `--no-gpg-sign`. If a hook fails, investigate and report the failure instead of bypassing it.
-- Prefer a new commit over `--amend`.
+- Prefer a new commit over `--amend`. The one exception: fixing the message of the commit just created in step 5, before any push.
 - Do not create branches, check out another branch, or alter the working tree beyond the agreed `git add` operation and the removal of the SDD artifacts the user chooses in step 2.
 
 ## Procedure
@@ -101,6 +101,7 @@ type(scope): imperative lowercase summary without a period
 - Relevant change 3
 ```
 
+- **Put one blank line between the title and the bullets.** Without it, Git reads the whole message as the title (`%s`), and after a push only a history rewrite can fix it.
 - Keep the title at 72 characters or fewer. Allowed types are `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `chore`, `build`, `ci`, and `style`.
 - Match the language and scope conventions in the `git log` of the repository being committed. Each repository may use a different convention, and a submodule may differ from the main repository.
 - Describe what changed and why instead of listing files. A trivial commit, such as a submodule reference bump, may contain only the title.
@@ -117,7 +118,24 @@ type(scope): summary
 '@
 ```
 
-In Bash, use the equivalent heredoc form: `git commit -F - <<'EOF'`.
+In Bash, use the equivalent heredoc form, with the same blank line:
+
+```bash
+git commit -F - <<'EOF'
+type(scope): summary
+
+- Bullet 1
+- Bullet 2
+EOF
+```
+
+Right after each commit, check the title:
+
+```bash
+git log -1 --format=%s
+```
+
+The output must be the title line alone. If it includes bullet text, the blank line is missing: redo the message with `git commit --amend -F -` (the same text, now with the blank line) and check again before moving on. This is the only allowed `--amend`, and only before a push.
 
 ### 6. Commit the main repository
 
