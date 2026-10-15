@@ -1,0 +1,69 @@
+﻿{
+    "schema_version":  1,
+    "generation":  3,
+    "feature":  "prd-18-owned-cli-processes",
+    "workspace":  "D:/MyProjects/TokenHound",
+    "phase":  "corrections",
+    "status":  "awaiting-hil",
+    "safe_to_stop":  true,
+    "owner_session":  null,
+    "mode":  "monitored",
+    "decision_log":  null,
+    "objective":  "Implement the supplied CLI lifecycle fix without changing usage behavior",
+    "constraints":  [
+                        "Read-only credentials",
+                        "No Core OS dependencies",
+                        "No E2E desktop tests"
+                    ],
+    "sources":  {
+                    "workflow":  "workflow.md",
+                    "prd":  "prd.md",
+                    "techspec":  "techspec.md",
+                    "tasks":  "tasks.md",
+                    "review":  "codereview_01/codereview.md",
+                    "snapshot":  "context-snapshot.md"
+                },
+    "review_status":  "REJECTED",
+    "approved_sources":  [
+
+                         ],
+    "decisions_to_read":  [
+                              "DEC-01",
+                              "DEC-03"
+                          ],
+    "git_base":  "577a55a79f52e225c28f2e4fb92362c6b35a818d",
+    "worktree_evidence":  "workflow.md#dec-01-scope-and-authorization",
+    "active_work":  [
+
+                    ],
+    "pending_hil":  {
+                        "gate":  "manual-acceptance",
+                        "question":  "Record TC-05 real desktop one-hour observation and live acceptance before final approval",
+                        "affected_ids":  [
+                                             "TC-05"
+                                         ]
+                    },
+    "blockers":  [
+                     {
+                         "id":  "TC-05",
+                         "summary":  "Essential real desktop observation not performed; Windows MCP attempt returned USER_CONTROL",
+                         "evidence":  "codereview_01/task_01.md"
+                     }
+                 ],
+    "correction_round":  0,
+    "rounds_without_progress":  0,
+    "next_action":  {
+                        "kind":  "validate",
+                        "instruction":  "Perform codereview_01/task_01.md manual observation, then obtain independent re-review",
+                        "read":  [
+                                     {
+                                         "path":  "tasks/prd-18-owned-cli-processes/context-snapshot.md",
+                                         "section":  "Header and Open threads"
+                                     },
+                                     {
+                                         "path":  "tasks/prd-18-owned-cli-processes/codereview_01/task_01.md",
+                                         "section":  "Work and acceptance"
+                                     }
+                                 ]
+                    }
+}

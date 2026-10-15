@@ -26,4 +26,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="TokenHound.Infrastructure.Tests" />
+    <InternalsVisibleTo Include="TokenHound.ProcessTestHelper" />
+  </ItemGroup>
+
 </Project>

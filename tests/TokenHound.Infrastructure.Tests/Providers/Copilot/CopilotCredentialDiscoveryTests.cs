@@ -110,6 +110,46 @@ public sealed class CopilotCredentialDiscoveryTests
         Assert.Null(result);
     }
 
+    /// <summary>Expected CLI failures leave the read-only config fallback available.</summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public async Task DiscoverAsync_WhenGhIsUnavailable_UsesConfigFallback(int failure)
+    {
+
+        using var config = new TestConfigScope("{\"oauthToken\":\"config-token\"}");
+        Exception error = failure switch
+        {
+            0 => new global::System.ComponentModel.Win32Exception(2),
+            1 => new InvalidOperationException("CLI could not start"),
+            2 => new global::System.IO.IOException("CLI pipe closed"),
+            _ => new UnauthorizedAccessException("CLI access denied")
+        };
+        var discovery = CreateDiscovery(
+            new RecordingCredentialStore([]),
+            new CopilotConfigReader(config.DirectoryPath, "oauthToken"),
+            _ => ValueTask.FromException<string?>(error));
+        var result = await discovery.DiscoverAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal("config-token", result!.AccessToken);
+        Assert.Equal("Copilot CLI config", result.Source);
+    }
+
+    /// <summary>CLI cancellation is propagated instead of probing more credential sources.</summary>
+    [Fact]
+    public async Task DiscoverAsync_WhenGhIsCancelled_PropagatesCancellation()
+    {
+
+        var discovery = CreateDiscovery(
+            new RecordingCredentialStore([]),
+            ghTokenReader: static token => ValueTask.FromException<string?>(new OperationCanceledException(token)));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await discovery.DiscoverAsync(TestContext.Current.CancellationToken));
+    }
+
     private static CopilotCredentialDiscovery CreateDiscovery(
         ICredentialStore store,
         CopilotConfigReader? configReader = null,

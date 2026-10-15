@@ -36,7 +36,15 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\TokenHound.Core\TokenHound.Core.csproj" />
     <ProjectReference Include="..\..\src\TokenHound.Infrastructure\TokenHound.Infrastructure.csproj" />
+    <ProjectReference Include="..\TokenHound.ProcessTestHelper\TokenHound.ProcessTestHelper.csproj" ReferenceOutputAssembly="false" />
   </ItemGroup>
+
+  <Target Name="CopyProcessTestHelper" AfterTargets="Build">
+    <ItemGroup>
+      <ProcessHelperFiles Include="..\TokenHound.ProcessTestHelper\bin\$(Configuration)\net10.0\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ProcessHelperFiles)" DestinationFiles="@(ProcessHelperFiles->'$(OutDir)ProcessHelper\%(RecursiveDir)%(Filename)%(Extension)')" SkipUnchangedFiles="true" />
+  </Target>
 
   <ItemGroup>
     <Compile Include="..\..\src\TokenHound.App\Interop\WindowStyles.cs" Link="Interop\WindowStyles.cs" />

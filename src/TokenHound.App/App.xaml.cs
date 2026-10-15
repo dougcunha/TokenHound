@@ -175,7 +175,7 @@ public partial class App : Application
 
         RegisterClaude(usageStore, rateLimitPolicy);
         RegisterAntigravity(usageStore, rateLimitPolicy, disposableResources);
-        RegisterCodex(usageStore);
+        RegisterCodex(usageStore, disposableResources);
         RegisterCursor(usageStore, rateLimitPolicy, disposableResources);
         RegisterCopilot(
             usageStore,
@@ -239,12 +239,13 @@ public partial class App : Application
         disposableResources.Add(provider);
     }
 
-    private static void RegisterCodex(UsageStore usageStore)
+    private static void RegisterCodex(UsageStore usageStore, List<IDisposable> disposableResources)
     {
 
         var provider = new CodexUsageProvider();
         usageStore.RegisterProvider(provider);
         usageStore.RegisterActivityMonitor(new CodexActivityMonitor());
+        disposableResources.Add(provider);
     }
 
     private static void RegisterCursor(
@@ -383,6 +384,9 @@ public partial class App : Application
         HudBackdropPreference.Current.IsEnabled = hudBackdrop.IsEnabled;
         HudBackdropPreference.Current.Transparency = hudBackdrop.TransparencyPercent;
         _lifetime = new ApplicationLifetime(usageStore, _dialogService, _notchViewModel, disposableResources);
+
+        foreach (var resource in disposableResources.OfType<IAsyncDisposable>())
+            _lifetime.TrackAsyncResource(resource);
 
         _actionsViewModel = new HudActionsViewModel(
             usageStore.RefreshNowAsync,

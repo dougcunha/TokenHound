@@ -19,7 +19,7 @@ public sealed class CodexAppServerClientTests
 
         var process = new FakeProcess(new StringReader("{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\n{\"jsonrpc\":\"2.0\",\"method\":\"initialized\"}\n" + RATE_LIMITS_RESPONSE));
         var factory = new FakeProcessFactory(process);
-        var client = new CodexAppServerClient(factory, () => "codex.exe");
+        await using var client = new CodexAppServerClient(factory, static () => "codex.exe");
 
         var limits = await client.GetRateLimitsAsync(TestContext.Current.CancellationToken);
 
@@ -36,8 +36,8 @@ public sealed class CodexAppServerClientTests
         process.Input.ToString().Should().Contain("\"method\":\"initialize\"");
         process.Input.ToString().Should().Contain("\"method\":\"initialized\"");
         process.Input.ToString().Should().Contain("\"method\":\"account/rateLimits/read\"");
-        process.KillCalled.Should().BeTrue();
-        process.Disposed.Should().BeTrue();
+        process.KillCalled.Should().BeFalse();
+        process.Disposed.Should().BeFalse();
     }
 
     /// <summary>Verifies that missing executable discovery returns null without starting a process.</summary>

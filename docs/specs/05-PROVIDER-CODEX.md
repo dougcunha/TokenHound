@@ -57,7 +57,7 @@ When ChatGPT Desktop or the CLI are installed on Windows 11, the local `codex.ex
 4. Resolution via Windows `PATH` (`where.exe codex`).
 
 ### Stdio Communication Protocol
-The process launches with argument `app-server`. Three messages are written sequentially to `StandardInput`:
+One process launches lazily with argument `app-server` and is reused across serialized polls. The client sends `initialize`, awaits its successful reply, and sends `initialized` once per server session. Each `account/rateLimits/read` request has a distinct numeric ID (the first is 2); notifications and replies for other IDs cannot satisfy it. The first exchange is:
 
 ```json
 {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"clientInfo":{"name":"TokenHound","title":"TokenHound","version":"1.0"}}}
@@ -95,7 +95,10 @@ The process launches with argument `app-server`. Three messages are written sequ
 - `windowDurationMins: 300` $\rightarrow$ 5-hour window.
 - `windowDurationMins: 10080` $\rightarrow$ Weekly window (7 days).
 - `rateLimitReachedType`: If non-null (e.g. `"rate_limit_reached"`, `"workspace_owner_credits_depleted"`), flags an active rate limit. Produces a `UsageBlock` warning that the assistant is blocked even if quota percentage remains.
-- **Timeout Watchdog**: Enforce a strict 10-second timeout to kill the child process if it hangs or fails to respond.
+- **Timeout Watchdog**: Bound each request to 10 seconds after acquiring the session gate. Timeout, broken transport, invalid quota payload, or process exit retires the session; caller cancellation propagates. Successful reads retain the process, including RPC responses without available quota, which preserve local-log fallback.
+- **Recovery**: Failed sessions and starts defer the next launch by 5 seconds, doubling after consecutive failures up to 60 seconds. Successful requests reset the failure count. Polls during backoff use local-log fallback without launching another process.
+- **Process ownership**: Windows creates the server in a non-inheritable Job Object with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`, using a process creation job attribute to contain descendants from birth. Only redirected stdio handles are inherited, and no console window is created. Stderr is drained continuously without storing or logging its contents.
+- **Shutdown**: Application disposal cancels outstanding requests, closes stdin, and waits up to three seconds for graceful exit before forcing entire-tree termination. Closing the job also removes descendants after the root has exited, including when Windows terminates TokenHound without managed cleanup. Browser and update handoffs intentionally have independent lifetimes.
 
 ---
 

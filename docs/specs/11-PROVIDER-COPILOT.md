@@ -30,6 +30,8 @@ Sources are checked in strict order; the first usable token wins:
 5. Copilot CLI keychain entry, with plaintext fallback at `%USERPROFILE%\.copilot\config.json` (override via `COPILOT_HOME`).
 6. VS Code extension state at `%APPDATA%\Code\User\globalStorage\github.copilot` (identity hint only).
 
+`gh auth token` runs without a console in the same owned-process host as Codex. On Windows its entire tree belongs to a kill-on-close Job Object from creation. Stderr is drained without retaining its contents; timeout/cancellation closes stdin and allows a bounded graceful exit before whole-tree termination. Credential discovery precedence and read-only token borrowing are unchanged.
+
 ### C# Discovery Sketch
 
 ```csharp

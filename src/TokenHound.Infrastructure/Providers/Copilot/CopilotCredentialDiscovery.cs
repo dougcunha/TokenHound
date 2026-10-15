@@ -1,9 +1,10 @@
+using Serilog;
 using System;
-using System.Diagnostics;
-using System.Text;
+using System.ComponentModel;
 using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Contracts;
+using TokenHound.Infrastructure.Processes;
 using TokenHound.Infrastructure.Security;
 
 namespace TokenHound.Infrastructure.Providers.Copilot;
@@ -67,7 +68,7 @@ public sealed class CopilotCredentialDiscovery
                 return Create(environmentToken, $"{ENVIRONMENT_SOURCE}:{variable}");
         }
 
-        var ghToken = Usable(await _ghTokenReader(cancellationToken).ConfigureAwait(false));
+        var ghToken = await TryReadGhTokenAsync(cancellationToken).ConfigureAwait(false);
 
         if (ghToken is not null)
             return Create(ghToken, GH_SOURCE);
@@ -112,34 +113,26 @@ public sealed class CopilotCredentialDiscovery
         }
     }
 
-    private static async ValueTask<string?> ReadGhTokenAsync(CancellationToken cancellationToken)
+    private async ValueTask<string?> TryReadGhTokenAsync(CancellationToken cancellationToken)
     {
-        using var process = new Process
-        {
-            StartInfo = new ProcessStartInfo
-            {
-                FileName = "gh",
-                Arguments = "auth token",
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                StandardOutputEncoding = Encoding.UTF8,
-                StandardErrorEncoding = Encoding.UTF8
-            },
-            EnableRaisingEvents = true
-        };
 
         try
         {
-            if (!process.Start())
-                return null;
+
+            return Usable(await _ghTokenReader(cancellationToken).ConfigureAwait(false));
         }
-        catch (Exception ex) when (ex is InvalidOperationException or global::System.ComponentModel.Win32Exception)
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or Win32Exception)
         {
+
+            Log.Debug("GitHub CLI credential source unavailable: {ErrorType}", ex.GetType().Name);
+
             return null;
         }
+    }
 
+    private static async ValueTask<string?> ReadGhTokenAsync(CancellationToken cancellationToken)
+    {
+        await using var process = OwnedProcess.Start("gh", "auth token");
         using var timeoutCts = new CancellationTokenSource(GH_COMMAND_TIMEOUT);
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
             cancellationToken,
@@ -148,36 +141,14 @@ public sealed class CopilotCredentialDiscovery
 
         try
         {
-            var outputTask = process.StandardOutput.ReadToEndAsync(linkedCts.Token);
+            var output = await process.StandardOutput.ReadToEndAsync(linkedCts.Token).ConfigureAwait(false);
             await process.WaitForExitAsync(linkedCts.Token).ConfigureAwait(false);
-            var output = await outputTask.ConfigureAwait(false);
 
             return process.ExitCode == 0 ? Usable(output) : null;
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
-            TryKill(process);
             return null;
-        }
-        finally
-        {
-            if (!process.HasExited)
-                TryKill(process);
-        }
-    }
-
-    private static void TryKill(Process process)
-    {
-        try
-        {
-            if (!process.HasExited)
-                process.Kill(entireProcessTree: true);
-        }
-        catch (InvalidOperationException)
-        {
-        }
-        catch (global::System.ComponentModel.Win32Exception)
-        {
         }
     }
 

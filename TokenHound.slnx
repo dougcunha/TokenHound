@@ -7,5 +7,6 @@
   <Folder Name="/tests/">
     <Project Path="tests/TokenHound.Core.Tests/TokenHound.Core.Tests.csproj" />
     <Project Path="tests/TokenHound.Infrastructure.Tests/TokenHound.Infrastructure.Tests.csproj" />
+    <Project Path="tests/TokenHound.ProcessTestHelper/TokenHound.ProcessTestHelper.csproj" />
   </Folder>
 </Solution>

@@ -8,7 +8,7 @@ using TokenHound.Core.Models;
 namespace TokenHound.Infrastructure.Providers.Codex;
 
 /// <summary>Adapts Codex app-server and rollout telemetry into usage snapshots.</summary>
-public sealed class CodexUsageProvider : IUsageProvider
+public sealed class CodexUsageProvider : IUsageProvider, IDisposable, IAsyncDisposable
 {
     /// <summary>The unique provider identifier for Codex.</summary>
     public const string PROVIDER_ID = "codex";
@@ -39,6 +39,14 @@ public sealed class CodexUsageProvider : IUsageProvider
     /// <inheritdoc />
     public string ProviderId
         => PROVIDER_ID;
+
+    /// <inheritdoc />
+    public void Dispose()
+        => _appServerClient.Dispose();
+
+    /// <inheritdoc />
+    public ValueTask DisposeAsync()
+        => _appServerClient.DisposeAsync();
 
     /// <inheritdoc />
     public async ValueTask<Snapshot> GetSnapshotAsync(CancellationToken cancellationToken = default)
