@@ -107,25 +107,81 @@ internal static class AntigravityProcessMemoryReader
         IntPtr baseAddress,
         long regionSize,
         byte[] buffer)
-    {
-        var readSize = (int)Math.Min(regionSize, MAX_REGION_READ_SIZE);
+        => ScanRegion(
+            (ProcessHandle: processHandle, BaseAddress: baseAddress),
+            regionSize,
+            buffer,
+            static (state, offset, chunkBuffer, readSize) => ReadProcessChunk(
+                state.ProcessHandle,
+                state.BaseAddress,
+                offset,
+                chunkBuffer,
+                readSize
+            )
+        );
 
+    internal static string? ScanRegion<TState>(
+        TState state,
+        long regionSize,
+        byte[] buffer,
+        Func<TState, long, byte[], int, int> readChunk)
+    {
+
+        var overlap = TARGET_PREFIX.Length + GUID_STRING_LENGTH - 1;
+        var step = Math.Max(buffer.Length - overlap, 1);
+
+        for (var regionOffset = 0L; regionOffset < regionSize; regionOffset += step)
+        {
+
+            var readSize = (int)Math.Min(regionSize - regionOffset, buffer.Length);
+            var bytesRead = readChunk(
+                state,
+                regionOffset,
+                buffer,
+                readSize
+            );
+            var token = bytesRead > 0
+                ? FindTokenInSpan(buffer.AsSpan(0, bytesRead))
+                : null;
+
+            if (!string.IsNullOrEmpty(token))
+                return token;
+
+            if (regionOffset + readSize >= regionSize)
+                break;
+        }
+
+        return null;
+    }
+
+    private static int ReadProcessChunk(
+        IntPtr processHandle,
+        IntPtr baseAddress,
+        long regionOffset,
+        byte[] buffer,
+        int readSize)
+    {
+
+        var chunkAddress = (IntPtr)(baseAddress.ToInt64() + regionOffset);
         var readSuccess = ReadProcessMemory(
             processHandle,
-            baseAddress,
+            chunkAddress,
             buffer,
             (IntPtr)readSize,
             out var bytesRead
         );
 
-        if (!readSuccess)
-            return null;
+        return readSuccess ? (int)bytesRead : 0;
+    }
 
-        var span = new ReadOnlySpan<byte>(buffer, 0, (int)bytesRead);
+    internal static string? FindTokenInSpan(ReadOnlySpan<byte> span)
+    {
+
         var offset = 0;
 
         while (offset < span.Length)
         {
+
             var index = span[offset..].IndexOf(TARGET_PREFIX);
 
             if (index < 0)
@@ -136,6 +192,7 @@ internal static class AntigravityProcessMemoryReader
 
             if (tokenStart + GUID_STRING_LENGTH <= span.Length)
             {
+
                 var token = ExtractValidToken(span.Slice(tokenStart, GUID_STRING_LENGTH));
 
                 if (!string.IsNullOrEmpty(token))
@@ -150,12 +207,11 @@ internal static class AntigravityProcessMemoryReader
 
     private static string? ExtractValidToken(ReadOnlySpan<byte> tokenBytes)
     {
+
         Span<char> charBuffer = stackalloc char[GUID_STRING_LENGTH];
 
         for (var i = 0; i < GUID_STRING_LENGTH; i++)
-        {
             charBuffer[i] = (char)tokenBytes[i];
-        }
 
         if (Guid.TryParse(charBuffer, out var guid))
             return guid.ToString();
