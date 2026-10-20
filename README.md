@@ -40,7 +40,7 @@ The capsule uses inverse rounded joins where it meets a screen edge, and clicks 
 | **Claude Code** | `%USERPROFILE%\.claude\.credentials.json` | OAuth token, 5-hour rolling session quotas, 7-day limits |
 | **Cursor** | Local SQLite (`state.vscdb`, WAL mode) | Session requests, plan thresholds, active agent status |
 | **OpenAI Codex** | stdio JSON-RPC bridge & rollout logs | Execution tokens, rate-limit resets, active command states |
-| **Google Antigravity / Gemini** | Language server IPC & Windows Credential Manager (`gemini:antigravity`) | Quota tier, prompt tokens, session transcripts |
+| **Google Antigravity / Gemini** | Language server IPC & Windows Credential Manager (`gemini:antigravity`) | 5-hour and weekly model-group quotas, session transcripts |
 | **GitHub Copilot** | Borrowed `gh` / Copilot CLI OAuth token & internal quota API | Monthly premium interactions, reset windows, billing AI credits, active CLI sessions |
 | **OpenCode Go** | Borrowed `auth.json` API key & official usage API | 5-hour rolling, weekly, and monthly quotas, process and session activity |
 | **Cline** | Borrowed `providers.json` session & account API (`api.cline.bot`) | Credit balance, plan scope, local session token usage, free-model limit, hub/CLI activity |

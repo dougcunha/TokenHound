@@ -31,6 +31,7 @@ Their SDD artifacts were removed after completion; recover one with `git checkou
 | PRD 14 | Multi-monitor selection, edge docking, and persisted placement | SDD artifacts at `7a1ee4c` |
 | PRD 15 | Settings controls and dialog resource split | SDD artifacts at `7a1ee4c` |
 | PRD 16 | HUD edge geometry and contour hit testing | SDD artifacts at `7a1ee4c` |
+| PRD 17 | HUD Acrylic backdrop effect and transparency slider | SDD artifacts at `d827da2`, ADRs [0002](adr/0002-host-backdrop-composition-companion.md) and [0003](adr/0003-hand-written-winrt-composition-abi.md) |
 
 ### HUD Placement Baseline
 
@@ -69,7 +70,7 @@ The following work is outside the geometry and hit-testing candidate:
 
 | Candidate | Source and status |
 | --- | --- |
-| Acrylic backdrop effect (PRD 17) | Implemented under `sdd-lean` ([plan](../tasks/prd-17-hud-backdrop-effects/tasks.md), [validation](../tasks/prd-17-hud-backdrop-effects/validation.md)): a host-backdrop composition companion under the layered HUD, with a Settings toggle and live fallback. Accepted on 2026-10-09 with recorded open items (outside-click checks in five docking modes, failure-log field, merge test) |
+| Acrylic backdrop effect (PRD 17) | Implemented under `sdd-lean` (SDD artifacts at `d827da2`, ADRs [0002](adr/0002-host-backdrop-composition-companion.md) and [0003](adr/0003-hand-written-winrt-composition-abi.md)): a host-backdrop composition companion under the layered HUD, with a Settings toggle and live fallback. Accepted on 2026-10-09 with recorded open items (outside-click checks in five docking modes, failure-log field, merge test) |
 | Smooth ring progress interpolation | Deferred visual work; the existing busy indicator already pulses |
 | Consumption threshold alerts with per-provider mute | Product idea in the [original implementation plan](reference/2026-08-28-usage-notch-plan.md), not an approved Windows feature |
 | Automatic hiding for fullscreen applications | Product idea in the same reference plan, not an approved Windows feature |
