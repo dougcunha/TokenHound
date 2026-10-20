@@ -14,10 +14,7 @@ internal static class AntigravityProcessMemoryReader
     private const uint PAGE_READWRITE = 0x04;
     private const uint PAGE_EXECUTE_READWRITE = 0x40;
     private const int MAX_REGION_READ_SIZE = 1048576;
-    private const int GUID_STRING_LENGTH = 36;
     private const long MAX_USER_ADDRESS = 0x7FFFFFFF0000L;
-
-    private static readonly byte[] TARGET_PREFIX = "ANTIGRAVITY_CSRF_TOKEN="u8.ToArray();
 
     [StructLayout(LayoutKind.Sequential)]
     private struct MEMORY_BASIC_INFORMATION
@@ -66,10 +63,10 @@ internal static class AntigravityProcessMemoryReader
     {
         var currentAddress = 0L;
         var buffer = new byte[MAX_REGION_READ_SIZE];
+        string? fallbackToken = null;
 
         while (currentAddress < MAX_USER_ADDRESS)
         {
-
             var queryResult = VirtualQueryEx(
                 processHandle,
                 (IntPtr)currentAddress,
@@ -82,57 +79,87 @@ internal static class AntigravityProcessMemoryReader
 
             if (IsReadableCommittedRegion(mbi))
             {
-                var token = TryReadAndFindToken(
+                var goStructToken = ScanProcessRegion(
                     processHandle,
                     mbi.BaseAddress,
                     mbi.RegionSize.ToInt64(),
-                    buffer
+                    buffer,
+                    ref fallbackToken
                 );
 
-                if (!string.IsNullOrEmpty(token))
-                    return token;
+                if (!string.IsNullOrEmpty(goStructToken))
+                    return goStructToken;
             }
 
             currentAddress = mbi.BaseAddress.ToInt64() + mbi.RegionSize.ToInt64();
         }
 
-        return null;
+        return fallbackToken;
     }
 
     private static bool IsReadableCommittedRegion(MEMORY_BASIC_INFORMATION mbi)
         => mbi.State == MEM_COMMIT && (mbi.Protect == PAGE_READWRITE || mbi.Protect == PAGE_EXECUTE_READWRITE);
 
-    private static string? TryReadAndFindToken(
+    private static string? ScanProcessRegion(
         IntPtr processHandle,
         IntPtr baseAddress,
         long regionSize,
-        byte[] buffer)
-        => ScanRegion(
-            (ProcessHandle: processHandle, BaseAddress: baseAddress),
+        byte[] buffer,
+        ref string? fallbackToken)
+        => ScanRegionCore(
+            (ProcessHandle: processHandle, BaseAddress: baseAddress.ToInt64()),
             regionSize,
             buffer,
-            static (state, offset, chunkBuffer, readSize) => ReadProcessChunk(
+            static (state, offset, chunkBuffer, readSize) => ReadProcessAt(
                 state.ProcessHandle,
-                state.BaseAddress,
-                offset,
+                state.BaseAddress + offset,
                 chunkBuffer,
                 readSize
-            )
+            ),
+            static (state, address, scratchBuffer, readSize) => ReadProcessAt(
+                state.ProcessHandle,
+                address,
+                scratchBuffer,
+                readSize
+            ),
+            ref fallbackToken
         );
 
     internal static string? ScanRegion<TState>(
         TState state,
         long regionSize,
         byte[] buffer,
-        Func<TState, long, byte[], int, int> readChunk)
+        Func<TState, long, byte[], int, int> readChunk,
+        Func<TState, long, byte[], int, int>? readAtAddress = null)
     {
+        string? fallbackToken = null;
+        var goStructToken = ScanRegionCore(
+            state,
+            regionSize,
+            buffer,
+            readChunk,
+            readAtAddress,
+            ref fallbackToken
+        );
 
-        var overlap = TARGET_PREFIX.Length + GUID_STRING_LENGTH - 1;
-        var step = Math.Max(buffer.Length - overlap, 1);
+        return goStructToken ?? fallbackToken;
+    }
+
+    private static string? ScanRegionCore<TState>(
+        TState state,
+        long regionSize,
+        byte[] buffer,
+        Func<TState, long, byte[], int, int> readChunk,
+        Func<TState, long, byte[], int, int>? readAtAddress,
+        ref string? fallbackToken)
+    {
+        var step = Math.Max(buffer.Length - AntigravityCsrfTokenScanner.CHUNK_OVERLAP, 1);
+        var scratch = readAtAddress is not null
+            ? new byte[AntigravityCsrfTokenScanner.SCRATCH_BUFFER_SIZE]
+            : [];
 
         for (var regionOffset = 0L; regionOffset < regionSize; regionOffset += step)
         {
-
             var readSize = (int)Math.Min(regionSize - regionOffset, buffer.Length);
             var bytesRead = readChunk(
                 state,
@@ -140,12 +167,16 @@ internal static class AntigravityProcessMemoryReader
                 buffer,
                 readSize
             );
-            var token = bytesRead > 0
-                ? FindTokenInSpan(buffer.AsSpan(0, bytesRead))
-                : null;
+            var goStructToken = ScanChunk(
+                state,
+                buffer.AsSpan(0, Math.Max(bytesRead, 0)),
+                scratch,
+                readAtAddress,
+                ref fallbackToken
+            );
 
-            if (!string.IsNullOrEmpty(token))
-                return token;
+            if (!string.IsNullOrEmpty(goStructToken))
+                return goStructToken;
 
             if (regionOffset + readSize >= regionSize)
                 break;
@@ -154,18 +185,44 @@ internal static class AntigravityProcessMemoryReader
         return null;
     }
 
-    private static int ReadProcessChunk(
+    private static string? ScanChunk<TState>(
+        TState state,
+        ReadOnlySpan<byte> chunk,
+        byte[] scratch,
+        Func<TState, long, byte[], int, int>? readAtAddress,
+        ref string? fallbackToken)
+    {
+
+        if (chunk.IsEmpty)
+            return null;
+
+        if (readAtAddress is not null)
+        {
+            var goStructToken = AntigravityCsrfTokenScanner.FindGoStructToken(
+                chunk,
+                state,
+                scratch,
+                readAtAddress
+            );
+
+            if (!string.IsNullOrEmpty(goStructToken))
+                return goStructToken;
+        }
+
+        fallbackToken ??= AntigravityCsrfTokenScanner.FindPrefixToken(chunk);
+
+        return null;
+    }
+
+    private static int ReadProcessAt(
         IntPtr processHandle,
-        IntPtr baseAddress,
-        long regionOffset,
+        long address,
         byte[] buffer,
         int readSize)
     {
-
-        var chunkAddress = (IntPtr)(baseAddress.ToInt64() + regionOffset);
         var readSuccess = ReadProcessMemory(
             processHandle,
-            chunkAddress,
+            (IntPtr)address,
             buffer,
             (IntPtr)readSize,
             out var bytesRead
@@ -175,49 +232,7 @@ internal static class AntigravityProcessMemoryReader
     }
 
     internal static string? FindTokenInSpan(ReadOnlySpan<byte> span)
-    {
-
-        var offset = 0;
-
-        while (offset < span.Length)
-        {
-
-            var index = span[offset..].IndexOf(TARGET_PREFIX);
-
-            if (index < 0)
-                break;
-
-            var matchPos = offset + index;
-            var tokenStart = matchPos + TARGET_PREFIX.Length;
-
-            if (tokenStart + GUID_STRING_LENGTH <= span.Length)
-            {
-
-                var token = ExtractValidToken(span.Slice(tokenStart, GUID_STRING_LENGTH));
-
-                if (!string.IsNullOrEmpty(token))
-                    return token;
-            }
-
-            offset = matchPos + TARGET_PREFIX.Length;
-        }
-
-        return null;
-    }
-
-    private static string? ExtractValidToken(ReadOnlySpan<byte> tokenBytes)
-    {
-
-        Span<char> charBuffer = stackalloc char[GUID_STRING_LENGTH];
-
-        for (var i = 0; i < GUID_STRING_LENGTH; i++)
-            charBuffer[i] = (char)tokenBytes[i];
-
-        if (Guid.TryParse(charBuffer, out var guid))
-            return guid.ToString();
-
-        return null;
-    }
+        => AntigravityCsrfTokenScanner.FindPrefixToken(span);
 
     [DllImport("kernel32.dll", SetLastError = true)]
     private static extern IntPtr OpenProcess(

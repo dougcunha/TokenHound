@@ -37,5 +37,16 @@ public sealed class AntigravityLiveUsageProviderTests
         }
 
         Assert.Equal(Fidelity.Official, snapshot.Fidelity);
+        Assert.All(
+            snapshot.LimitWindows,
+            static window =>
+            {
+                Assert.False(string.IsNullOrWhiteSpace(window.Name));
+                Assert.NotEqual("Quota Window", window.Name);
+                Assert.False(string.IsNullOrWhiteSpace(window.GroupName));
+                Assert.NotNull(window.Period);
+                Assert.NotNull(window.UsedFraction);
+            }
+        );
     }
 }

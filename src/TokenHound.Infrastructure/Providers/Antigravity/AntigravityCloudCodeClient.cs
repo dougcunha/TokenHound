@@ -18,8 +18,9 @@ namespace TokenHound.Infrastructure.Providers.Antigravity;
 public sealed class AntigravityCloudCodeClient : IDisposable
 {
     private const string CREDENTIAL_TARGET = "gemini:antigravity";
-    private const string ENDPOINT_URL = "https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary";
+    private const string ENDPOINT_URL = "https://daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary";
     private const string EMPTY_PAYLOAD = "{}";
+    private const string USER_AGENT = "antigravity/cli/1.4.3 (aidev_client; os_type=windows; arch=amd64; auth_method=consumer)";
 
     private readonly HttpClient _httpClient;
     private readonly ICredentialStore _credentialStore;
@@ -121,6 +122,7 @@ public sealed class AntigravityCloudCodeClient : IDisposable
 
         using var request = new HttpRequestMessage(HttpMethod.Post, ENDPOINT_URL);
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+        request.Headers.TryAddWithoutValidation("User-Agent", USER_AGENT);
         request.Content = new StringContent(EMPTY_PAYLOAD, Encoding.UTF8, "application/json");
 
         using var response = await _httpClient.SendAsync(
@@ -139,8 +141,20 @@ public sealed class AntigravityCloudCodeClient : IDisposable
         var content = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         var envelope = JsonSerializer.Deserialize<AntigravityQuotaEnvelope>(content);
 
-        return envelope?.Response
+        return ResolveQuotaSummary(envelope)
             ?? throw new JsonException("Google Cloud Code quota response was empty.");
+    }
+
+    private static AntigravityQuotaSummaryResponse? ResolveQuotaSummary(AntigravityQuotaEnvelope? envelope)
+    {
+
+        if (envelope?.Response is not null)
+            return envelope.Response;
+
+        if (envelope?.Groups is not null)
+            return new AntigravityQuotaSummaryResponse { Groups = envelope.Groups };
+
+        return null;
     }
 
     private static string? ExtractTokenFromSecret(string secret)

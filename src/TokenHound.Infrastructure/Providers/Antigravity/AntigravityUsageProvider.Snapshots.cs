@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using TokenHound.Core.Models;
@@ -39,28 +40,67 @@ public sealed partial class AntigravityUsageProvider
         AntigravityBucketDto bucket,
         double? usedFraction,
         long? remainingUnits)
-        => new()
+    {
+        var groupName = group.DisplayName ?? group.GroupName;
+        var period = ResolveBucketPeriod(bucket);
+
+        return new LimitWindow
         {
-            Name = bucket.DisplayName ?? group.DisplayName ?? bucket.BucketId ?? "Quota Window",
-            GroupName = group.DisplayName,
-            Period = ResolveBucketPeriod(bucket),
+            Name = bucket.DisplayName ?? ResolvePeriodWindowName(period) ?? groupName ?? bucket.BucketId ?? "Quota Window",
+            GroupName = groupName,
+            Period = period,
             TotalUnits = usedFraction.HasValue ? 100 : null,
             UsedFraction = usedFraction,
             RemainingUnits = remainingUnits,
             ResetTimeUtc = bucket.ResetTime
         };
+    }
+
+    private static string? ResolvePeriodWindowName(TimeSpan? period)
+        => period switch
+        {
+            { TotalHours: 5 } => "5h Limit",
+            { TotalDays: 7 } => "Weekly Limit",
+            _ => null
+        };
 
     private static TimeSpan? ResolveBucketPeriod(AntigravityBucketDto bucket)
-        => bucket.Window switch
+        => ResolveQuotaTypePeriod(bucket.QuotaType) ?? bucket.Window switch
         {
             "5h" => TimeSpan.FromHours(5),
             "weekly" => TimeSpan.FromDays(7),
-            _ => bucket.DisplayName?.Contains("five", StringComparison.OrdinalIgnoreCase) == true
-                ? TimeSpan.FromHours(5)
-                : bucket.DisplayName?.Contains("week", StringComparison.OrdinalIgnoreCase) == true
-                    ? TimeSpan.FromDays(7)
-                    : null
+            _ => ResolveDisplayNamePeriod(bucket.DisplayName)
         };
+
+    private static TimeSpan? ResolveQuotaTypePeriod(JsonElement? quotaType)
+        => quotaType switch
+        {
+            { ValueKind: JsonValueKind.Number } element when element.TryGetInt32(out var code) => code switch
+            {
+                1 => TimeSpan.FromHours(5),
+                2 => TimeSpan.FromDays(7),
+                _ => null
+            },
+            { ValueKind: JsonValueKind.String } element => element.GetString() switch
+            {
+                "QUOTA_TYPE_FIVE_HOUR" => TimeSpan.FromHours(5),
+                "QUOTA_TYPE_WEEKLY" => TimeSpan.FromDays(7),
+                _ => null
+            },
+            _ => null
+        };
+
+    private static TimeSpan? ResolveDisplayNamePeriod(string? displayName)
+    {
+
+        if (displayName?.Contains("five", StringComparison.OrdinalIgnoreCase) == true)
+            return TimeSpan.FromHours(5);
+
+        if (displayName?.Contains("week", StringComparison.OrdinalIgnoreCase) == true)
+            return TimeSpan.FromDays(7);
+
+        return null;
+    }
 
     private static Snapshot CreateOfficialSnapshot(IReadOnlyList<LimitWindow> windows)
         => new()

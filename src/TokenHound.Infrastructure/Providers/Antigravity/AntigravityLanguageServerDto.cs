@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace TokenHound.Infrastructure.Providers.Antigravity;
@@ -20,6 +21,12 @@ public sealed record AntigravityBucketDto
     /// </summary>
     [JsonPropertyName("displayName")]
     public string? DisplayName { get; init; }
+
+    /// <summary>
+    /// Gets the protobuf quota type enum value (string name or numeric code).
+    /// </summary>
+    [JsonPropertyName("quotaType")]
+    public JsonElement? QuotaType { get; init; }
 
     /// <summary>
     /// Gets the remaining quota fraction between 0.0 and 1.0.
@@ -52,6 +59,12 @@ public sealed record AntigravityGroupDto
     public string? DisplayName { get; init; }
 
     /// <summary>
+    /// Gets the protobuf group name returned by the Language Server and Cloud Code APIs.
+    /// </summary>
+    [JsonPropertyName("groupName")]
+    public string? GroupName { get; init; }
+
+    /// <summary>
     /// Gets the list of quota buckets within this group.
     /// </summary>
     [JsonPropertyName("buckets")]
@@ -68,6 +81,12 @@ public sealed record AntigravityQuotaEnvelope
     /// </summary>
     [JsonPropertyName("response")]
     public AntigravityQuotaSummaryResponse? Response { get; init; }
+
+    /// <summary>
+    /// Gets the root-level groups of quota buckets returned directly by Google Cloud Code.
+    /// </summary>
+    [JsonPropertyName("groups")]
+    public IReadOnlyList<AntigravityGroupDto>? Groups { get; init; }
 }
 
 /// <summary>

@@ -26,8 +26,8 @@ This specification defines the integration with the **Google Antigravity / Gemin
 +---------------------------------------------------------------------------------+
 | Layer 2 (Official Remote): Google Cloud Code Backend                            |
 | - OAuth token read from Windows Credential Manager ('gemini:antigravity')       |
-| - POST https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary  |
-| - Note: Personal/free accounts return HTTP 403 #3501 (no license)               |
+| - POST https://daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary |
+| - Requires Antigravity CLI User-Agent (`aidev_client; ...; auth_method=consumer`) |
 +---------------------------------------------------------------------------------+
                                       | (Unlicensed account or no network)
                                       v
@@ -45,10 +45,12 @@ This specification defines the integration with the **Google Antigravity / Gemin
 Antigravity hosts an embedded Codeium-derived Language Server holding authorized Google client identity to query real-time user quotas.
 
 ### A. Process Discovery and CSRF Token Extraction on Windows 11
-The server launches with command-line arguments:
+Standalone servers launch with command-line arguments:
 `language_server.exe ... --https_server_port 0 --csrf_token <UUID_TOKEN> ...`
 
-In C# on Windows 11, the token is extracted by querying WMI:
+When running via the Antigravity CLI (`agy.exe`), the Language Server is embedded in-process inside the Go binary without a `--csrf_token` CLI flag, and `ANTIGRAVITY_CSRF_TOKEN=` is not allocated in process memory until a subprocess tool call runs. For `agy.exe`:
+1. **Primary (Go Struct Header Pair)**: Scan committed `PAGE_READWRITE` / `PAGE_EXECUTE_READWRITE` memory regions for an 8-byte aligned pair of 16-byte Go `string` headers `(HostPtr, HostLen, TokenPtr, TokenLen)` where `HostPtr` dereferences to `"localhost:<port>"` (or `"127.0.0.1:<port>"` / `"http://localhost:<port>"`) and `TokenPtr` (`TokenLen == 36`) dereferences to a valid 36-character UUID string.
+2. **Fallback**: Scan for the ASCII prefix `ANTIGRAVITY_CSRF_TOKEN=` followed by a valid 36-character UUID string.
 
 ```csharp
 using System;
@@ -164,12 +166,16 @@ If Antigravity is not actively running, but the user has an active licensed corp
 - **Body**: `{"metadata": {"pluginType": "GEMINI"}}` *(Note: Must use `GEMINI`, not `ANTIGRAVITY`).*
 
 ### Quota Request
-- **URL**: `POST https://cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`
-- **Headers**: `Authorization: Bearer <token>`, `Content-Type: application/json`
+- **URL**: `POST https://daily-cloudcode-pa.googleapis.com/v1internal:retrieveUserQuotaSummary`
+- **Headers**:
+  - `Authorization: Bearer <token>`
+  - `User-Agent: antigravity/cli/1.4.3 (aidev_client; os_type=windows; arch=amd64; auth_method=consumer)`
+  - `Content-Type: application/json`
 - **Body**: `{}` *(Empty JSON object. Sending extra fields causes "Unknown name" validation errors).*
+- **Response Schema**: The Cloud Code REST endpoint returns `"groups"` at the root JSON object (`{"groups": [{"groupName": "...", "buckets": [{"quotaType": 1, "remainingFraction": 0.96, "resetTime": "..."}]}]}`), whereas the local Language Server RPC wraps it inside `"response"` and serializes `quotaType` as string enums (`"QUOTA_TYPE_FIVE_HOUR"`, `"QUOTA_TYPE_WEEKLY"`). Both formats must be supported.
 - **Handling Unlicensed Accounts**:
-  - Personal Google accounts receive `HTTP 403` with message `#3501: You do not have a valid license of this product`.
-  - This is **not an authentication failure**. Catch the 403 and degrade smoothly to Layer 3.
+  - Without the Antigravity `User-Agent` header, consumer OAuth tokens are misclassified as legacy Code Assist clients (`UNSUPPORTED_CLIENT`) and rejected with `HTTP 403 #3501`.
+  - If an account genuinely lacks quota access and still returns `HTTP 403`, catch the 403 and degrade smoothly to Layer 3.
 
 ---
 

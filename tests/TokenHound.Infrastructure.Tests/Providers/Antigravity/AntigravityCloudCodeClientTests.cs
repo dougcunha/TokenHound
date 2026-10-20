@@ -153,6 +153,60 @@ public sealed class AntigravityCloudCodeClientTests
     }
 
     [Fact]
+    public async Task RetrieveUserQuotaSummaryAsync_WhenRootGroupsJsonReturned_DeserializesResponseAndSendsUserAgent()
+    {
+        const string ROOT_GROUPS_JSON = """
+        {
+          "groups": [
+            {
+              "groupName": "Gemini Models",
+              "buckets": [
+                {
+                  "quotaType": 1,
+                  "remainingFraction": 0.96,
+                  "resetTime": "2026-10-20T22:53:46Z"
+                }
+              ]
+            }
+          ]
+        }
+        """;
+
+        string? capturedUserAgent = null;
+        Uri? capturedUri = null;
+        var handler = new MockHttpMessageHandler(req =>
+        {
+            capturedUserAgent = req.Headers.UserAgent.ToString();
+            capturedUri = req.RequestUri;
+
+            return new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent(ROOT_GROUPS_JSON, Encoding.UTF8, "application/json")
+            };
+        });
+
+        var credStore = Substitute.For<ICredentialStore>();
+        credStore.ReadCredentialAsync("gemini:antigravity", Arg.Any<CancellationToken>())
+            .Returns(ValueTask.FromResult<string?>("valid-token"));
+
+        using var httpClient = new HttpClient(handler);
+        using var client = new AntigravityCloudCodeClient(
+            httpClient: httpClient,
+            credentialStore: credStore,
+            credentialsFilePath: "nonexistent.json"
+        );
+
+        var result = await client.RetrieveUserQuotaSummaryAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotNull(result);
+        Assert.NotNull(capturedUri);
+        Assert.Equal("daily-cloudcode-pa.googleapis.com", capturedUri.Host);
+        Assert.Contains("antigravity/cli/", capturedUserAgent, StringComparison.OrdinalIgnoreCase);
+        Assert.Single(result.Groups!);
+        Assert.Equal("Gemini Models", result.Groups![0].GroupName);
+    }
+
+    [Fact]
     public async Task RetrieveUserQuotaSummaryAsync_When403Forbidden_PreservesStatus()
     {
         // Arrange
