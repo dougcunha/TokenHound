@@ -84,6 +84,7 @@ internal static class ProviderStatusProjection
         {
             Key = row.Key,
             Label = row.Label,
+            ScopeText = row.ScopeText,
             ValueText = row.UsedFraction is { } fraction
                 ? ProviderStatusFormatter.FormatPercent(fraction)
                 : row.PrimaryQuantityText ?? UNMEASURED_TEXT,

@@ -82,6 +82,13 @@
                                FontWeight="SemiBold"
                                HorizontalAlignment="Right" />
                 </Grid>
+                <TextBlock Text="{Binding ScopeText}"
+                           FontSize="12"
+                           Foreground="{StaticResource TextMutedBrush}"
+                           TextTrimming="CharacterEllipsis"
+                           ToolTip="{Binding ScopeText}"
+                           Margin="0,2,0,0"
+                           Visibility="{Binding HasScope, Converter={StaticResource BooleanToVisibilityConverter}}" />
                 <ProgressBar x:Name="QuotaBar"
                              Style="{StaticResource QuotaBarStyle}"
                              Value="{Binding BarFraction, Mode=OneWay}"

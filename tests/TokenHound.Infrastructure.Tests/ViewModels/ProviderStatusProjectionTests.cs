@@ -51,6 +51,20 @@ public sealed class ProviderStatusProjectionTests
         account.Columns[0].HasBar.Should().BeTrue();
     }
 
+    /// <summary>Verifies that columns carry the HUD scope text, such as the Antigravity model group.</summary>
+    [Fact]
+    public void CreateAccount_WhenWindowHasGroup_ColumnShowsHudScope()
+    {
+
+        var window = CreateWindow("weekly", 0.29, FIXED_NOW.AddDays(6)) with { GroupName = "Claude Opus" };
+        var snapshot = CreateSnapshot("antigravity") with { LimitWindows = [window] };
+
+        var column = ProviderStatusProjection.CreateAccount("antigravity", snapshot, CreateFormatter()).Columns.Single();
+
+        column.ScopeText.Should().Be("Claude Opus");
+        column.HasScope.Should().BeTrue();
+    }
+
     /// <summary>Verifies that a window without a used fraction shows its quantity text and no bar.</summary>
     [Fact]
     public void CreateAccount_WhenWindowHasNoFraction_ShowsQuantityWithoutBar()

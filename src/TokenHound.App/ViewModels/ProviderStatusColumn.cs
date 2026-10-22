@@ -13,6 +13,13 @@ public sealed record ProviderStatusColumn
     /// <summary>Gets the quota or credit window label, identical to the HUD row label.</summary>
     public required string Label { get; init; }
 
+    /// <summary>Gets the scope the window applies to (for example a model group), identical to the HUD row scope.</summary>
+    public string? ScopeText { get; init; }
+
+    /// <summary>Gets a value indicating whether a scope line is shown.</summary>
+    public bool HasScope
+        => !string.IsNullOrWhiteSpace(ScopeText);
+
     /// <summary>Gets the used percentage text, or the quantity text when no used fraction is known.</summary>
     public required string ValueText { get; init; }
 
