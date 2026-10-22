@@ -11,7 +11,7 @@ public enum HudDockMode
     TopLeft,
 
     /// <summary>
-    /// Horizontal capsule centered on the top edge of the work area.
+    /// Horizontal capsule centered on the top edge of the work area by default; it can slide along the edge.
     /// </summary>
     TopCenter,
 
@@ -21,12 +21,12 @@ public enum HudDockMode
     TopRight,
 
     /// <summary>
-    /// Vertical capsule centered on the left edge of the work area.
+    /// Vertical capsule centered on the left edge of the work area by default; it can slide along the edge.
     /// </summary>
     LeftEdge,
 
     /// <summary>
-    /// Vertical capsule centered on the right edge of the work area.
+    /// Vertical capsule centered on the right edge of the work area by default; it can slide along the edge.
     /// </summary>
     RightEdge,
 

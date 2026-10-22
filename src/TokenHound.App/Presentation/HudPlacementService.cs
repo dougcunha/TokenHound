@@ -72,14 +72,55 @@ public sealed class HudPlacementService
         ArgumentNullException.ThrowIfNull(context);
 
         if (mode == HudDockMode.Free)
-            return Apply(Current with { Mode = nameof(HudDockMode.Free), Left = context.Left, Top = context.Top });
+        {
 
-        if (string.Equals(Current.Mode, mode.ToString(), StringComparison.OrdinalIgnoreCase))
+            return Apply(Current with
+            {
+                Mode = nameof(HudDockMode.Free),
+                Left = context.Left,
+                Top = context.Top,
+                EdgePosition = null
+            });
+        }
+
+        // Choosing the current mode again moves a HUD that was slid along its edge back to the mode's default position.
+        if (string.Equals(Current.Mode, mode.ToString(), StringComparison.OrdinalIgnoreCase) && Current.EdgePosition is null)
             return true;
 
         var display = Mode == HudDockMode.Free ? PreferHosting(context) : Current.Display;
 
-        return Apply(Current with { Mode = mode.ToString(), Display = display });
+        return Apply(Current with { Mode = mode.ToString(), Display = display, EdgePosition = null });
+    }
+
+    /// <summary>
+    /// Records a completed drag of a docked HUD along its edge. The HUD keeps its edge; on the top edge it becomes
+    /// Top Left or Top Right at an end of the edge and Top Center between the ends.
+    /// </summary>
+    /// <param name="position">The dropped position along the edge, from 0 (left or top end) to 1 (right or bottom end).</param>
+    /// <returns><see langword="false"/> only when the change could not be persisted.</returns>
+    public bool RecordEdgeDrag(double position)
+    {
+
+        if (!double.IsFinite(position))
+            throw new ArgumentOutOfRangeException(nameof(position), position, "The edge position must be finite.");
+
+        var mode = Mode;
+        var edge = HudEdgeLayout.For(mode).Edge;
+        var clamped = Math.Clamp(position, 0, 1);
+
+        if (edge == HudEdge.None)
+            return true;
+
+        var (next, stored) = edge != HudEdge.Top
+            ? (mode, (double?)clamped)
+            : clamped switch
+            {
+                <= 0 => (HudDockMode.TopLeft, (double?)null),
+                >= 1 => (HudDockMode.TopRight, null),
+                _ => (HudDockMode.TopCenter, clamped)
+            };
+
+        return Apply(Current with { Mode = next.ToString(), EdgePosition = stored });
     }
 
     /// <summary>
@@ -97,7 +138,7 @@ public sealed class HudPlacementService
     /// <param name="top">The dropped vertical offset in device-independent pixels.</param>
     /// <returns><see langword="false"/> only when the change could not be persisted.</returns>
     public bool RecordDrag(double left, double top)
-        => Apply(Current with { Mode = nameof(HudDockMode.Free), Left = left, Top = top });
+        => Apply(Current with { Mode = nameof(HudDockMode.Free), Left = left, Top = top, EdgePosition = null });
 
     /// <summary>
     /// Stores a corrected Free position after the HUD was clamped back onto a display, without changing the mode.

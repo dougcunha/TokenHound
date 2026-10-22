@@ -136,6 +136,78 @@ public sealed class HudPlacementServiceTests
     }
 
     [Fact]
+    public void RecordEdgeDrag_OnSideEdge_KeepsModeAndDisplay()
+    {
+
+        var service = CreateService(new HudPositionSettings { Mode = "RightEdge", Display = SECONDARY_PREFERENCE });
+
+        service.RecordEdgeDrag(0.2).Should().BeTrue();
+
+        service.Mode.Should().Be(HudDockMode.RightEdge);
+        service.Current.EdgePosition.Should().Be(0.2);
+        service.Current.Display.Should().Be(SECONDARY_PREFERENCE);
+        _saved.Should().ContainSingle();
+    }
+
+    [Theory]
+    [InlineData("TopLeft", 0.3, HudDockMode.TopCenter, 0.3)]
+    [InlineData("TopRight", 0.7, HudDockMode.TopCenter, 0.7)]
+    [InlineData("TopCenter", 0, HudDockMode.TopLeft, null)]
+    [InlineData("TopCenter", 1, HudDockMode.TopRight, null)]
+    public void RecordEdgeDrag_OnTopEdge_UsesCornerModesOnlyAtTheEnds(
+        string mode,
+        double position,
+        HudDockMode expectedMode,
+        double? expectedPosition
+    )
+    {
+
+        var service = CreateService(new HudPositionSettings { Mode = mode });
+
+        service.RecordEdgeDrag(position);
+
+        service.Mode.Should().Be(expectedMode);
+        service.Current.EdgePosition.Should().Be(expectedPosition);
+    }
+
+    [Fact]
+    public void RecordEdgeDrag_WhenFree_DoesNotSave()
+    {
+
+        var service = CreateService(new HudPositionSettings { Mode = "Free", Left = 10, Top = 20 });
+
+        service.RecordEdgeDrag(0.5).Should().BeTrue();
+
+        service.Current.EdgePosition.Should().BeNull();
+        _saved.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void SelectMode_CurrentModeAfterEdgeDrag_ResetsEdgePosition()
+    {
+
+        var service = CreateService(new HudPositionSettings { Mode = "LeftEdge", EdgePosition = 0.1 });
+
+        service.SelectMode(HudDockMode.LeftEdge, Context(PRIMARY)).Should().BeTrue();
+
+        service.Mode.Should().Be(HudDockMode.LeftEdge);
+        service.Current.EdgePosition.Should().BeNull();
+        _saved.Should().ContainSingle();
+    }
+
+    [Fact]
+    public void RecordDrag_AfterEdgeDrag_ClearsEdgePosition()
+    {
+
+        var service = CreateService(new HudPositionSettings { Mode = "TopCenter", EdgePosition = 0.8 });
+
+        service.RecordDrag(640, 220);
+
+        service.Mode.Should().Be(HudDockMode.Free);
+        service.Current.EdgePosition.Should().BeNull();
+    }
+
+    [Fact]
     public void Apply_WhenSaveFails_StillUpdatesStateAndNotifies()
     {
 

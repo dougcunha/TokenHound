@@ -221,7 +221,8 @@ public sealed class HudPositionStoreTests : IDisposable
             Left = 12,
             Top = 0,
             Mode = nameof(HudDockMode.RightEdge),
-            Display = display
+            Display = display,
+            EdgePosition = 0.25
         });
 
         saved.Should().BeTrue();
@@ -231,6 +232,7 @@ public sealed class HudPositionStoreTests : IDisposable
         restored.Mode.Should().Be(nameof(HudDockMode.RightEdge));
         restored.Display.Should().Be(display);
         restored.Left.Should().Be(12);
+        restored.EdgePosition.Should().Be(0.25);
         restored.ResolveMode().Mode.Should().Be(HudDockMode.RightEdge);
     }
 

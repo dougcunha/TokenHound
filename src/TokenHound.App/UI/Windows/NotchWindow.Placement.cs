@@ -129,7 +129,8 @@ public sealed partial class NotchWindow
             mode,
             target.WorkArea,
             HudContourTransform.PixelExtent(ActualWidth, dpi.DpiScaleX),
-            HudContourTransform.PixelExtent(ActualHeight, dpi.DpiScaleY)
+            HudContourTransform.PixelExtent(ActualHeight, dpi.DpiScaleY),
+            placement.Current.EdgePosition
         );
 
         if ((int)left == (int)window.Left && (int)top == (int)window.Top)

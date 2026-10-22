@@ -114,6 +114,14 @@ public sealed partial class NotchWindow : Window
             return new IntPtr(MA_NOACTIVATE);
         }
 
+        if (msg == WM_MOVING && ConstrainDockedMove(lParam))
+        {
+
+            handled = true;
+
+            return new IntPtr(1);
+        }
+
         if (msg == WM_DISPLAYCHANGE || (msg == WM_SETTINGCHANGE && wParam.ToInt64() == SPI_SETWORKAREA))
             SchedulePlacement();
 
@@ -143,12 +151,28 @@ public sealed partial class NotchWindow : Window
             return;
 
         var (left, top) = (Left, Top);
+        var track = CreateEdgeTrack();
+        _edgeDrag = track;
 
-        DragMove();
+        try
+        {
 
-        // DragMove also runs on a plain click; only a real move switches the HUD to Free.
-        if (Left != left || Top != top)
+            DragMove();
+        }
+        finally
+        {
+
+            _edgeDrag = null;
+        }
+
+        // DragMove also runs on a plain click; only a real move changes the placement.
+        if (Left == left && Top == top)
+            return;
+
+        if (track is null)
             _placement?.RecordDrag(Left, Top);
+        else
+            RecordEdgeDrop(track);
     }
 
     private void OnCapsuleContextMenuOpening(object sender, ContextMenuEventArgs e)

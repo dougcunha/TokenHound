@@ -18,7 +18,7 @@ TokenHound is a lightweight, peripheral desktop notch / HUD crafted specifically
 
 ## Key Features
 
-- Dock the HUD at the top left, top center, top right, left edge, or right edge of your chosen monitor. Side placements use a vertical capsule. Dragging switches to Free mode, and placement is saved across launches.
+- Dock the HUD at the top left, top center, top right, left edge, or right edge of your chosen monitor. Side placements use a vertical capsule. Drag a docked HUD to slide it along its edge; on the top edge it becomes Top left or Top right at the corners. Choose Free in the Position menu to place it anywhere. Placement is saved across launches.
 - **Zero Focus Disruption (`WS_EX_NOACTIVATE`)**: Built using native Win32 interop so the notch never steals keyboard or window focus from your IDE, terminal, or browser.
 - Adjust HUD size in Settings. Changes apply immediately and are saved across launches.
 - Translucent (Acrylic) HUD background on Windows 11, on by default and switchable in Settings > General, with a transparency slider from 0 to 50 % (default 7 %; higher values reduce contrast over bright backgrounds). Settings explains why when Windows keeps it off. The HUD uses the solid background while Windows transparency effects are off, or while energy saver or high contrast is on.

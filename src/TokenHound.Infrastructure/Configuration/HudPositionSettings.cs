@@ -28,6 +28,12 @@ public sealed record HudPositionSettings
     public HudDisplayPreference? Display { get; init; }
 
     /// <summary>
+    /// Gets the position of a docked HUD along its edge, from 0 (left or top end) to 1 (right or bottom end),
+    /// or <see langword="null"/> to use the default position of the mode.
+    /// </summary>
+    public double? EdgePosition { get; init; }
+
+    /// <summary>
     /// Attempts to read a usable placement from the persisted coordinates.
     /// </summary>
     /// <param name="left">Receives the horizontal offset when available.</param>
