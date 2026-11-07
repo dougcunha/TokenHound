@@ -217,6 +217,10 @@ url = "http://127.0.0.1:37653/mcp"
 
 For response fields, lookup states, null semantics, and the privacy boundary, see [docs/MCP.md](docs/MCP.md).
 
+## HUD Feed
+
+While TokenHound is running, it also writes the HUD content to `%LOCALAPPDATA%\TokenHound\hud.json`: the rings in HUD order, their hover card rows, and the busy state of each agent. Other local apps, such as a Herdr mod, read this file to show the same data. TokenHound replaces the file after each HUD change, every 30 seconds, and one last time at exit. See [docs/HUD-FEED.md](docs/HUD-FEED.md) for the contract.
+
 ---
 
 ## Technical Documentation
@@ -230,6 +234,7 @@ For in-depth specifications and implementation guides, explore the `docs/` folde
 - [docs/specs/12-PROVIDER-OPENCODE.md](docs/specs/12-PROVIDER-OPENCODE.md) - OpenCode Go credential borrowing, official quota telemetry, and read-only session activity.
 - [docs/specs/](docs/specs/) - Dedicated specifications for each supported AI provider.
 - [docs/MCP.md](docs/MCP.md) - Local MCP server (SSE and Streamable HTTP) exposing the current provider metrics to MCP clients.
+- [docs/HUD-FEED.md](docs/HUD-FEED.md) - The `hud.json` file that shows the HUD content to other local apps, such as a Herdr mod.
 
 ---
 

@@ -78,6 +78,8 @@
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderRingViewModel.cs" Link="ViewModels\ProviderRingViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderRingViewModel.Status.cs" Link="ViewModels\ProviderRingViewModel.Status.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\NotchViewModel.cs" Link="ViewModels\NotchViewModel.cs" />
+    <Compile Include="..\..\src\TokenHound.App\HudFeed\HudFeedProjection.cs" Link="HudFeed\HudFeedProjection.cs" />
+    <Compile Include="..\..\src\TokenHound.App\HudFeed\HudFeedPublisher.cs" Link="HudFeed\HudFeedPublisher.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\HudActionsViewModel.cs" Link="ViewModels\HudActionsViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderToggleViewModel.cs" Link="ViewModels\ProviderToggleViewModel.cs" />
     <Compile Include="..\..\src\TokenHound.App\ViewModels\ProviderUsageRow.cs" Link="ViewModels\ProviderUsageRow.cs" />

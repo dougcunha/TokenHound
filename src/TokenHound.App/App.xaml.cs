@@ -388,6 +388,8 @@ public partial class App : Application
         foreach (var resource in disposableResources.OfType<IAsyncDisposable>())
             _lifetime.TrackAsyncResource(resource);
 
+        StartHudFeed(_notchViewModel);
+
         _actionsViewModel = new HudActionsViewModel(
             usageStore.RefreshNowAsync,
             ShutdownAsync,

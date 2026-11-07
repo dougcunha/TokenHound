@@ -2,6 +2,8 @@
 
 While TokenHound is running, it serves the provider metrics behind the HUD to local MCP clients. The server reads TokenHound's in-memory state; a call never triggers a provider refresh, never changes the polling schedule, and never touches rate-limit deadlines.
 
+To show the HUD itself in another app (the same rings, texts, and activity state), read the [HUD feed](HUD-FEED.md) file instead.
+
 ## Endpoint
 
 | Transport | URL |
